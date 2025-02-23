@@ -1,4 +1,5 @@
 import { format } from "date-fns";
+import { convert } from "@lorefnon/currency-in-words";
 
 export const generateInvoiceNumber = () => {
   const date = new Date();
@@ -16,73 +17,46 @@ export const calculateAdjustment = (
   return (amount * adjustment.value) / 100;
 };
 
-const ONES = [
-  "", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
-  "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen",
-  "seventeen", "eighteen", "nineteen"
-];
-
-const TENS = [
-  "", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"
-];
-
-const SCALES = ["", "thousand", "million", "billion", "trillion"];
-
-function convertLessThanThousand(num: number): string {
-  if (num === 0) return "";
-  
-  if (num < 20) return ONES[num];
-  
-  if (num < 100) {
-    const remainder = num % 10;
-    return TENS[Math.floor(num / 10)] + (remainder ? "-" + ONES[remainder] : "");
-  }
-  
-  const hundreds = Math.floor(num / 100);
-  const remainder = num % 100;
-  return ONES[hundreds] + " hundred" + (remainder ? " and " + convertLessThanThousand(remainder) : "");
-}
-
-export function numberToWords(num: number): string {
-  if (num === 0) return "zero";
-  
-  let words = "";
-  let scaleIndex = 0;
-  
-  // Handle negative numbers
-  if (num < 0) {
-    words = "negative ";
-    num = Math.abs(num);
-  }
-  
-  // Split number into groups of three digits and convert each group
-  while (num > 0) {
-    const chunk = num % 1000;
-    if (chunk !== 0) {
-      const chunkWords = convertLessThanThousand(chunk);
-      words = chunkWords + (SCALES[scaleIndex] ? " " + SCALES[scaleIndex] + " " : "") + words;
-    }
-    num = Math.floor(num / 1000);
-    scaleIndex++;
-  }
-  
-  // Clean up extra spaces and return
-  return words.trim();
-}
-
 export function formatAmountInWords(amount: number, currency: string): string {
-  // Split into whole and decimal parts
-  const wholePart = Math.floor(amount);
-  const decimalPart = Math.round((amount - wholePart) * 100);
-  
-  const wholeWords = numberToWords(wholePart);
-  const decimalWords = decimalPart > 0 ? numberToWords(decimalPart) : "";
-  
-  let result = wholeWords + " " + currency;
-  if (decimalPart > 0) {
-    result += " and " + decimalWords + " cents";
+  try {
+    // Convert the amount to a string with 2 decimal places
+    const amountStr = amount.toFixed(2);
+    
+    // Convert to words using the international format
+    const words = convert(amountStr, { format: 'intl', lang: 'en' });
+    
+    // Add the currency
+    const result = `${words} ${currency}`;
+    
+    // Capitalize the first letter
+    return result.charAt(0).toUpperCase() + result.slice(1);
+  } catch (error) {
+    // Fallback in case of any error
+    return `${amount.toFixed(2)} ${currency}`;
   }
-  
-  // Capitalize first letter
-  return result.charAt(0).toUpperCase() + result.slice(1);
+}
+
+export interface PaymentInfo {
+  invoiceNumber: string;
+  amount: number;
+  currency: string;
+  customerEmail: string;
+  customerName: string;
+}
+
+export function handleCreditCardPayment(paymentInfo: PaymentInfo): Promise<void> {
+  // This is a placeholder function that would integrate with your payment processor
+  // You would typically integrate with Stripe, PayPal, or another payment processor here
+  return new Promise((resolve, reject) => {
+    try {
+      // Here you would:
+      // 1. Create a payment intent with your payment processor
+      // 2. Redirect to the payment page or open a payment modal
+      // 3. Handle the payment result
+      console.log('Processing payment:', paymentInfo);
+      resolve();
+    } catch (error) {
+      reject(error);
+    }
+  });
 }

@@ -1,9 +1,8 @@
 import { InvoicePreviewHeader } from "./InvoicePreviewHeader";
-import { InvoiceBillingInfo } from "./InvoiceBillingInfo";
+import { InvoicePreviewContent } from "./InvoicePreviewContent";
 import { InvoiceFooter } from "./InvoiceFooter";
 import { InvoiceActions } from "../InvoiceActions";
 import { Card } from "@/components/ui/card";
-import { InvoicePreviewContent } from "./InvoicePreviewContent";
 import { InvoiceFormItem, ProfileData } from "../types/invoice";
 import { logger } from "@/utils/logger";
 
@@ -66,63 +65,40 @@ export const InvoicePreviewContainer = ({
     profileData
   });
 
-  const formatTotalInWords = (amount: number) => {
-    return `${amount.toFixed(2)} ${formData.currency}`;
-  };
-
   const totals = calculateTotal();
-  const totalInWords = formatTotalInWords(totals.total);
 
   return (
-    <div className="space-y-6">
-      <Card className="p-4 shadow-lg bg-white/80 backdrop-blur-sm border-0">
-        <InvoiceActions 
-          formData={formData}
-          showDiscount={formData.adjustments.discount.value > 0}
-          showTax={formData.adjustments.tax.value > 0}
-          showShipping={formData.adjustments.shipping.value > 0}
-          paymentMethod={formData.paymentMethod || ''}
-          calculateTotal={calculateTotal}
-          isEditing={isEditing}
-          initialData={initialData}
+    <div className="invoice-preview max-w-4xl mx-auto">
+      <div id="invoice-preview" className="space-y-4 scale-[0.95] origin-top">
+        <InvoicePreviewHeader
+          logo={logo}
+          invoiceNumber={formData.invoiceNumber}
+          profileData={profileData}
+          issueDate={formData.issueDate}
+          dueDate={formData.dueDate}
+          currency={formData.currency}
         />
-      </Card>
 
-      <div className="flex items-center gap-2 pb-2 border-b">
-        <h2 className="text-lg font-semibold">Live Preview</h2>
-        <span className="text-sm text-muted-foreground">
-          (Updates in real-time as you edit)
-        </span>
+        <InvoicePreviewContent
+          items={formData.items}
+          currency={formData.currency}
+          totals={totals}
+          to={formData.to}
+        />
+
+        <InvoiceFooter
+          profileData={profileData}
+          additionalNotes={formData.additionalNotes}
+          paymentTerms={formData.paymentTerms}
+          signature={signature}
+          paymentMethod={formData.paymentMethod}
+          invoiceNumber={formData.invoiceNumber}
+          amount={totals.total}
+          currency={formData.currency}
+          customerEmail={formData.to.email}
+          customerName={formData.to.name}
+        />
       </div>
-
-      <Card className="p-8 shadow-lg bg-white/80 backdrop-blur-sm border-0" id="invoice-preview">
-        <div className="invoice-preview space-y-8">
-          <InvoicePreviewHeader
-            logo={logo}
-            invoiceNumber={formData.invoiceNumber}
-            profileData={profileData}
-            issueDate={formData.issueDate}
-            dueDate={formData.dueDate}
-            currency={formData.currency}
-          />
-
-          <InvoicePreviewContent
-            items={formData.items}
-            currency={formData.currency}
-            totals={totals}
-            to={formData.to}
-          />
-
-          <InvoiceFooter
-            profileData={profileData}
-            additionalNotes={formData.additionalNotes}
-            paymentTerms={formData.paymentTerms}
-            signature={signature}
-            paymentMethod={formData.paymentMethod}
-          />
-
-        </div>
-      </Card>
     </div>
   );
 };

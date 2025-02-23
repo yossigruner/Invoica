@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Loading } from "@/components/ui/loading";
+import { Eye, EyeOff } from "lucide-react";
 
 const CURRENCY_OPTIONS = [
   { value: 'USD', label: 'United States Dollar (USD)' },
@@ -27,10 +28,36 @@ const CURRENCY_OPTIONS = [
 
 type CurrencyCode = typeof CURRENCY_OPTIONS[number]['value'];
 
+interface Profile {
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  zip: string;
+  country: string;
+  company_name: string;
+  company_logo?: string;
+  signature?: string;
+  bank_name: string;
+  account_name: string;
+  account_number: string;
+  swift_code: string;
+  iban: string;
+  preferred_currency: string;
+  business_type: string;
+  tax_number: string;
+  clover_api_key: string;
+  clover_merchant_id: string;
+  is_profile_completed: boolean;
+}
+
 const Profile = () => {
   const navigate = useNavigate();
   const { profile, loading: profileLoading, error: profileError, updateProfile } = useProfile();
   const [signatureOpen, setSignatureOpen] = useState(false);
+  const [showApiKey, setShowApiKey] = useState(false);
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
@@ -50,7 +77,9 @@ const Profile = () => {
     account_number: '',
     swift_code: '',
     iban: '',
-    preferred_currency: 'USD'
+    preferred_currency: 'USD',
+    clover_api_key: '',
+    clover_merchant_id: '',
   });
 
   // Load profile data when component mounts
@@ -65,10 +94,11 @@ const Profile = () => {
     }
   }, [profile]);
 
-  const handleInputChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [field]: e.target.value
+      [name]: value,
     }));
   };
 
@@ -80,15 +110,18 @@ const Profile = () => {
   };
 
   const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files[0];
-    if (file) {
+    if (event.target.files && event.target.files[0]) {
+      const file = event.target.files[0];
       const reader = new FileReader();
       reader.onload = (e) => {
-        const result = e.target.result as string;
-        setFormData(prev => ({
-          ...prev,
-          company_logo: result
-        }));
+        const target = e.target;
+        if (target && target.result) {
+          const result = target.result as string;
+          setFormData(prev => ({
+            ...prev,
+            company_logo: result
+          }));
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -99,16 +132,46 @@ const Profile = () => {
     logger.info('Updating profile');
 
     try {
-      await updateProfile({
-        ...formData,
-        is_profile_completed: true
-      });
+      const profileData: Partial<Profile> = {
+        is_profile_completed: true,
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        email: formData.email,
+        phone: formData.phone,
+        address: formData.address,
+        city: formData.city,
+        zip: formData.zip,
+        country: formData.country,
+        company_name: formData.company_name,
+        company_logo: formData.company_logo || undefined,
+        bank_name: formData.bank_name,
+        account_name: formData.account_name,
+        account_number: formData.account_number,
+        swift_code: formData.swift_code,
+        iban: formData.iban,
+        preferred_currency: formData.preferred_currency,
+        clover_api_key: formData.clover_api_key,
+        clover_merchant_id: formData.clover_merchant_id,
+      };
+
+      await updateProfile(profileData);
       
       toast.success('Profile updated successfully!');
     } catch (error) {
       logger.error('Failed to update profile', error);
       toast.error('Failed to update profile. Please try again.');
     }
+  };
+
+  const handleRemoveLogo = () => {
+    const logoElement = document.querySelector('#company-logo') as HTMLImageElement;
+    if (logoElement) {
+      logoElement.src = '';
+    }
+    setFormData((prev) => ({
+      ...prev,
+      company_logo: null,
+    }));
   };
 
   if (profileLoading) {
@@ -144,7 +207,6 @@ const Profile = () => {
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary-300 via-primary-500 to-primary-700" />
           
           <div className="text-center mb-10 relative">
-            <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-6xl opacity-5 font-bold">PROFILE</span>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-primary-500 to-primary-700 bg-clip-text text-transparent">
               Profile Settings
             </h1>
@@ -168,7 +230,7 @@ const Profile = () => {
                   <Input
                     id="first_name"
                     value={formData.first_name}
-                    onChange={handleInputChange('first_name')}
+                    onChange={handleInputChange}
                     placeholder="Enter your first name"
                     className="h-11 transition-all border-gray-200 hover:border-primary-300 focus:border-primary-500 focus:ring-primary-500/20"
                   />
@@ -178,7 +240,7 @@ const Profile = () => {
                   <Input
                     id="last_name"
                     value={formData.last_name}
-                    onChange={handleInputChange('last_name')}
+                    onChange={handleInputChange}
                     placeholder="Enter your last name"
                     className="h-11 transition-all border-gray-200 hover:border-primary-300 focus:border-primary-500 focus:ring-primary-500/20"
                   />
@@ -189,7 +251,7 @@ const Profile = () => {
                     id="email"
                     type="email"
                     value={formData.email}
-                    onChange={handleInputChange('email')}
+                    onChange={handleInputChange}
                     placeholder="Enter your email"
                     className="h-11 transition-all border-gray-200 hover:border-primary-300 focus:border-primary-500 focus:ring-primary-500/20"
                   />
@@ -199,7 +261,7 @@ const Profile = () => {
                   <Input
                     id="phone"
                     value={formData.phone}
-                    onChange={handleInputChange('phone')}
+                    onChange={handleInputChange}
                     placeholder="Enter your phone number"
                     className="h-11 transition-all border-gray-200 hover:border-primary-300 focus:border-primary-500 focus:ring-primary-500/20"
                   />
@@ -209,7 +271,7 @@ const Profile = () => {
                   <Input
                     id="address"
                     value={formData.address}
-                    onChange={handleInputChange('address')}
+                    onChange={handleInputChange}
                     placeholder="Enter your street address"
                     className="h-11 transition-all border-gray-200 hover:border-primary-300 focus:border-primary-500 focus:ring-primary-500/20"
                   />
@@ -219,7 +281,7 @@ const Profile = () => {
                   <Input
                     id="city"
                     value={formData.city}
-                    onChange={handleInputChange('city')}
+                    onChange={handleInputChange}
                     placeholder="Enter your city"
                     className="h-11 transition-all border-gray-200 hover:border-primary-300 focus:border-primary-500 focus:ring-primary-500/20"
                   />
@@ -229,7 +291,7 @@ const Profile = () => {
                   <Input
                     id="country"
                     value={formData.country}
-                    onChange={handleInputChange('country')}
+                    onChange={handleInputChange}
                     placeholder="Enter your country"
                     className="h-11 transition-all border-gray-200 hover:border-primary-300 focus:border-primary-500 focus:ring-primary-500/20"
                   />
@@ -239,7 +301,7 @@ const Profile = () => {
                   <Input
                     id="zip"
                     value={formData.zip}
-                    onChange={handleInputChange('zip')}
+                    onChange={handleInputChange}
                     placeholder="Enter your ZIP code"
                     className="h-11 transition-all border-gray-200 hover:border-primary-300 focus:border-primary-500 focus:ring-primary-500/20"
                   />
@@ -264,7 +326,7 @@ const Profile = () => {
                   <Input
                     id="company_name"
                     value={formData.company_name}
-                    onChange={handleInputChange('company_name')}
+                    onChange={handleInputChange}
                     placeholder="Enter your company name"
                     className="h-11 transition-all border-gray-200 hover:border-primary-300 focus:border-primary-500 focus:ring-primary-500/20"
                   />
@@ -274,7 +336,7 @@ const Profile = () => {
                   <Input
                     id="business_type"
                     value={formData.business_type}
-                    onChange={handleInputChange('business_type')}
+                    onChange={handleInputChange}
                     placeholder="Enter your business type"
                     className="h-11 transition-all border-gray-200 hover:border-primary-300 focus:border-primary-500 focus:ring-primary-500/20"
                   />
@@ -284,7 +346,7 @@ const Profile = () => {
                   <Input
                     id="tax_number"
                     value={formData.tax_number}
-                    onChange={handleInputChange('tax_number')}
+                    onChange={handleInputChange}
                     placeholder="Enter your tax number"
                     className="h-11 transition-all border-gray-200 hover:border-primary-300 focus:border-primary-500 focus:ring-primary-500/20"
                   />
@@ -292,9 +354,14 @@ const Profile = () => {
 
                 <div className="space-y-2 md:col-span-2 group">
                   <Label className="text-gray-700">Company Logo</Label>
-                  <input type="file" id="logo" className="hidden" accept="image/*" onChange={handleLogoUpload} />
+                  <input type="file" id="logo-upload" className="hidden" accept="image/*" onChange={handleLogoUpload} />
                   <div
-                    onClick={() => { document.getElementById("logo").click(); }}
+                    onClick={() => { 
+                      const logoInput = document.getElementById("logo-upload");
+                      if (logoInput) {
+                        logoInput.click();
+                      }
+                    }}
                     className="mt-2 border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all hover:border-primary-400 hover:bg-primary-50/50 group"
                   >
                     {formData.company_logo ? (
@@ -360,7 +427,7 @@ const Profile = () => {
                   <Input
                     id="bank_name"
                     value={formData.bank_name}
-                    onChange={handleInputChange('bank_name')}
+                    onChange={handleInputChange}
                     placeholder="Enter your bank name"
                     className="h-11 transition-all border-gray-200 hover:border-primary-300 focus:border-primary-500 focus:ring-primary-500/20"
                   />
@@ -370,7 +437,7 @@ const Profile = () => {
                   <Input
                     id="account_name"
                     value={formData.account_name}
-                    onChange={handleInputChange('account_name')}
+                    onChange={handleInputChange}
                     placeholder="Enter account name"
                     className="h-11 transition-all border-gray-200 hover:border-primary-300 focus:border-primary-500 focus:ring-primary-500/20"
                   />
@@ -380,7 +447,7 @@ const Profile = () => {
                   <Input
                     id="account_number"
                     value={formData.account_number}
-                    onChange={handleInputChange('account_number')}
+                    onChange={handleInputChange}
                     placeholder="Enter account number"
                     className="h-11 transition-all border-gray-200 hover:border-primary-300 focus:border-primary-500 focus:ring-primary-500/20"
                   />
@@ -390,7 +457,7 @@ const Profile = () => {
                   <Input
                     id="swift_code"
                     value={formData.swift_code}
-                    onChange={handleInputChange('swift_code')}
+                    onChange={handleInputChange}
                     placeholder="Enter SWIFT/BIC code"
                     className="h-11 transition-all border-gray-200 hover:border-primary-300 focus:border-primary-500 focus:ring-primary-500/20"
                   />
@@ -400,7 +467,7 @@ const Profile = () => {
                   <Input
                     id="iban"
                     value={formData.iban}
-                    onChange={handleInputChange('iban')}
+                    onChange={handleInputChange}
                     placeholder="Enter IBAN"
                     className="h-11 transition-all border-gray-200 hover:border-primary-300 focus:border-primary-500 focus:ring-primary-500/20"
                   />
@@ -431,6 +498,81 @@ const Profile = () => {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+              </div>
+            </div>
+
+            {/* Payment Integration Section */}
+            <div className="space-y-6 rounded-lg bg-gray-50/50 p-6 transition-all hover:bg-white hover:shadow-md">
+              <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
+                <div className="bg-primary-100 p-2 rounded-lg">
+                  <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                  </svg>
+                </div>
+                <h2 className="text-xl font-semibold text-gray-800">Payment Integration</h2>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2 group">
+                  <Label htmlFor="clover_api_key" className="text-gray-700 group-hover:text-primary-600 transition-colors">
+                    Clover API Key
+                    <span className="ml-1 text-xs text-gray-500">(Securely Stored)</span>
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="clover_api_key"
+                      type={showApiKey ? "text" : "password"}
+                      name="clover_api_key"
+                      value={formData.clover_api_key || ''}
+                      onChange={handleInputChange}
+                      placeholder="Enter your Clover API key"
+                      className="h-11 font-mono transition-all border-gray-200 hover:border-primary-300 focus:border-primary-500 focus:ring-primary-500/20 pr-10"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-0 top-0 h-11 w-11 px-3 text-gray-400 hover:text-gray-600"
+                      onClick={() => setShowApiKey(!showApiKey)}
+                    >
+                      {showApiKey ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-gray-500">Your private API key from Clover dashboard</p>
+                </div>
+                <div className="space-y-2 group">
+                  <Label htmlFor="clover_merchant_id" className="text-gray-700 group-hover:text-primary-600 transition-colors">
+                    Clover Merchant ID
+                  </Label>
+                  <Input
+                    id="clover_merchant_id"
+                    name="clover_merchant_id"
+                    value={formData.clover_merchant_id || ''}
+                    onChange={handleInputChange}
+                    placeholder="Enter your Clover Merchant ID"
+                    className="h-11 font-mono uppercase transition-all border-gray-200 hover:border-primary-300 focus:border-primary-500 focus:ring-primary-500/20"
+                  />
+                  <p className="text-xs text-gray-500">Your Merchant ID from Clover dashboard</p>
+                </div>
+              </div>
+
+              <div className="mt-4 p-4 bg-primary-50 rounded-lg border border-primary-100">
+                <div className="flex items-start gap-3">
+                  <svg className="w-5 h-5 text-primary-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div className="text-sm">
+                    <p className="text-primary-900 font-medium">Secure Payment Processing</p>
+                    <p className="text-primary-700 mt-1">
+                      Your Clover credentials are encrypted before storage and are only used for processing credit card payments.
+                      Make sure to keep these credentials secure and never share them with anyone.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>

@@ -44,6 +44,8 @@ export interface Profile {
   iban: string;
   preferred_currency: string;
   is_profile_completed: boolean;
+  clover_api_key: string;
+  clover_merchant_id: string;
   created_at: string;
   updated_at: string;
 }

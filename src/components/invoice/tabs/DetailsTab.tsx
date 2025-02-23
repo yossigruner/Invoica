@@ -21,9 +21,10 @@ interface DetailsTabProps {
   };
   onInputChange: (section: keyof InvoiceFormData | "", field: string, value: string | number) => void;
   onDateChange: (field: string, date: Date | undefined) => void;
+  isEditing?: boolean;
 }
 
-export const DetailsTab = ({ formData, onInputChange, onDateChange }: DetailsTabProps) => {
+export const DetailsTab = ({ formData, onInputChange, onDateChange, isEditing }: DetailsTabProps) => {
   const [issueDateOpen, setIssueDateOpen] = useState(false);
   const [dueDateOpen, setDueDateOpen] = useState(false);
 
@@ -47,7 +48,12 @@ export const DetailsTab = ({ formData, onInputChange, onDateChange }: DetailsTab
       
       <div className="space-y-4">
         <div className="grid gap-2">
-          <Label htmlFor="invoice-number">Invoice Number:</Label>
+          <Label htmlFor="invoice-number">
+            Invoice Number:
+            {isEditing && (
+              <span className="ml-2 text-sm text-muted-foreground">(Cannot be changed)</span>
+            )}
+          </Label>
           <div className="flex gap-2">
             <Input 
               id="invoice-number" 
@@ -55,12 +61,14 @@ export const DetailsTab = ({ formData, onInputChange, onDateChange }: DetailsTab
               value={formData.invoiceNumber}
               onChange={(e) => { onInputChange("", "invoiceNumber", e.target.value); }}
               className="flex-1"
+              disabled={isEditing}
             />
             <Button 
               variant="outline"
               onClick={handleGenerateInvoiceNumber}
               type="button"
-              className="flex gap-2 items-center hover:bg-primary hover:text-white transition-colors"
+              className="flex gap-2 items-center hover:bg-primary hover:text-white transition-colors disabled:opacity-50"
+              disabled={isEditing}
             >
               <RefreshCcw className="h-4 w-4" />
               Generate

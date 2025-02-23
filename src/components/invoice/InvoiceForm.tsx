@@ -7,10 +7,6 @@ import { PaymentTab } from "./tabs/PaymentTab";
 import { ItemsTab } from "./tabs/ItemsTab";
 import { SummaryTab } from "./tabs/SummaryTab";
 import { InvoicePreviewContainer } from "./preview/InvoicePreviewContainer";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Plus, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useInvoiceForm } from "./hooks/useInvoiceForm";
 import { InvoiceFormHeader } from "./header/InvoiceFormHeader";
@@ -23,7 +19,9 @@ import { logger } from "@/utils/logger";
 import { Loading } from "@/components/ui/loading";
 import { CustomerData } from "./types/invoice";
 import { Invoice } from "@/types";
-import { useInvoiceFormState } from "./hooks/useInvoiceFormState";
+import { Save, Mail, MessageSquare, FileDown } from "lucide-react";
+import html2pdf from "html2pdf.js";
+import { format } from "date-fns";
 
 const TABS = ["from", "details", "items", "payment", "summary"] as const;
 
@@ -213,6 +211,42 @@ export const InvoiceForm = ({ initialData, isEditing }: InvoiceFormProps) => {
     }
   };
 
+  const handleGeneratePDF = async () => {
+    try {
+      const element = document.getElementById('invoice-preview');
+      if (!element) {
+        toast.error("Invoice preview not found");
+        return;
+      }
+
+      const opt = {
+        margin: [0.2, 0.2], // Reduced margins even further
+        filename: `invoice-${formData.invoiceNumber}-${format(new Date(), 'yyyy-MM-dd')}.pdf`,
+        image: { type: 'jpeg', quality: 0.95 },
+        html2canvas: { 
+          scale: 1, // Reduced scale to fit content
+          useCORS: true,
+          logging: false,
+          letterRendering: true
+        },
+        jsPDF: { 
+          unit: 'in', 
+          format: 'a4',
+          orientation: 'portrait',
+          compress: true,
+          precision: 16
+        },
+        pagebreak: { mode: 'avoid-all' } // Prevent any page breaks
+      };
+
+      await html2pdf().set(opt).from(element).save();
+      toast.success("PDF generated successfully!");
+    } catch (error) {
+      logger.error('Failed to generate PDF:', error);
+      toast.error("Failed to generate PDF");
+    }
+  };
+
   if (profileLoading || loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -222,16 +256,11 @@ export const InvoiceForm = ({ initialData, isEditing }: InvoiceFormProps) => {
   }
 
   return (
-    <Card className="p-6 shadow-lg bg-white/80 backdrop-blur-sm">
-      <div className="space-y-6">
-        <InvoiceFormHeader
-          isEditing={isEditing}
-          currentTab={currentTab}
-          setCurrentTab={setCurrentTab}
-        />
-
-        <div className="grid lg:grid-cols-2 gap-6">
-          <div>
+    <div className="space-y-6">
+      <div className="grid lg:grid-cols-2 gap-6">
+        {/* Left column - Form */}
+        <div className="space-y-6">
+          <Card className="p-6 shadow-lg bg-white/80 backdrop-blur-sm">
             <Tabs value={currentTab} onValueChange={handleTabChange} className="w-full">
               <InvoiceFormTabs currentTab={currentTab} completedTabs={completedTabs} />
 
@@ -248,6 +277,7 @@ export const InvoiceForm = ({ initialData, isEditing }: InvoiceFormProps) => {
                     formData={formData}
                     onInputChange={handleInputChange}
                     onDateChange={handleDateChange}
+                    isEditing={isEditing}
                   />
                 </TabsContent>
 
@@ -300,21 +330,66 @@ export const InvoiceForm = ({ initialData, isEditing }: InvoiceFormProps) => {
                 initialData={initialData}
               />
             </Tabs>
-          </div>
+          </Card>
+        </div>
 
-          <div className="lg:sticky lg:top-6">
-            <InvoicePreviewContainer
-              formData={formData}
-              profileData={profileData}
-              logo={logo}
-              signature={signature}
-              calculateTotal={calculateTotal}
-              isEditing={isEditing}
-              initialData={initialData}
-            />
-          </div>
+        {/* Right column - Actions and Preview */}
+        <div className="space-y-6">
+          <Card className="p-6 shadow-lg bg-white/80 backdrop-blur-sm">
+            <h2 className="text-lg font-semibold mb-4">Actions</h2>
+            <p className="text-sm text-gray-500 mb-4">Operations and preview</p>
+            <div className="grid grid-cols-1 gap-4">
+              <div className="grid grid-cols-2 gap-4">
+                <button 
+                  onClick={handleSaveInvoice}
+                  disabled={loading}
+                  className="p-4 rounded-lg border border-gray-200 hover:border-primary/20 hover:bg-primary/5 transition-colors text-center font-medium flex items-center justify-center gap-2"
+                >
+                  <Save className="h-4 w-4" />
+                  {loading ? "Saving..." : isEditing ? "Update Draft" : "Save Draft"}
+                </button>
+                <button className="p-4 rounded-lg border border-gray-200 hover:border-primary/20 hover:bg-primary/5 transition-colors text-center flex items-center justify-center gap-2">
+                  <Mail className="h-4 w-4" />
+                  Send via Email
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <button className="p-4 rounded-lg border border-gray-200 hover:border-primary/20 hover:bg-primary/5 transition-colors text-center flex items-center justify-center gap-2">
+                  <MessageSquare className="h-4 w-4" />
+                  Send via SMS
+                </button>
+                <button 
+                  onClick={handleGeneratePDF}
+                  className="p-4 rounded-lg border border-gray-200 hover:border-primary/20 hover:bg-primary/5 transition-colors text-center flex items-center justify-center gap-2"
+                >
+                  <FileDown className="h-4 w-4" />
+                  Generate PDF
+                </button>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-6 shadow-lg bg-white/80 backdrop-blur-sm lg:sticky lg:top-6">
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-semibold">Live Preview</h2>
+                <span className="text-sm text-gray-500">(Updates in real-time as you edit)</span>
+              </div>
+              <div id="invoice-preview">
+                <InvoicePreviewContainer
+                  formData={formData}
+                  profileData={profileData}
+                  logo={logo}
+                  signature={signature}
+                  calculateTotal={calculateTotal}
+                  isEditing={isEditing}
+                  initialData={initialData}
+                />
+              </div>
+            </div>
+          </Card>
         </div>
       </div>
-    </Card>
+    </div>
   );
 };

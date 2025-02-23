@@ -117,7 +117,7 @@ export const useInvoiceFormState = (customerData: CustomerData | null, initialDa
   const [showDiscount, setShowDiscount] = useState(initialData?.discount_value > 0);
   const [showTax, setShowTax] = useState(initialData?.tax_value > 0);
   const [showShipping, setShowShipping] = useState(initialData?.shipping_value > 0);
-  const [paymentMethod, setPaymentMethod] = useState<"bank" | "other">(initialData?.payment_method === "other" ? "other" : "bank");
+  const [paymentMethod, setPaymentMethod] = useState<string>(initialData?.payment_method || "bank");
 
   return {
     formData,

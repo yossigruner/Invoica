@@ -39,16 +39,16 @@ export const InvoiceAdjustments = ({ currency, totals }: InvoiceAdjustmentsProps
             </tr>
           )}
           {totals.shipping > 0 && (
-            <tr>
-              <td colSpan={3} className="pt-1 text-right">Shipping:</td>
-              <td className="pt-1 text-right">
+            <tr className="border-b">
+              <td colSpan={3} className="py-2 text-right">Shipping:</td>
+              <td className="py-2 text-right">
                 +{totals.shipping.toFixed(2)} {currency}
               </td>
             </tr>
           )}
           <tr className="border-t">
-            <td colSpan={3} className="pt-2 text-right font-semibold">Total:</td>
-            <td className="pt-2 text-right font-semibold">
+            <td colSpan={3} className="pt-4 text-right font-semibold">Total:</td>
+            <td className="pt-4 text-right font-semibold">
               {totals.total.toFixed(2)} {currency}
             </td>
           </tr>

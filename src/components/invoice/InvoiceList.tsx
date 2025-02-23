@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Search, Calendar, Download, Eye, FileDown, Mail, Trash2 } from "lucide-react";
+import { Search, Calendar, Download, Eye, FileDown, Mail, Trash2, Edit } from "lucide-react";
 import { useInvoices } from "@/hooks/useInvoices";
 import { useState, useMemo } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -15,6 +15,7 @@ import { useNavigate } from "react-router-dom";
 import { Loading } from "@/components/ui/loading";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Invoice } from "@/types";
 
 const PAGE_SIZE_OPTIONS = [5, 10, 25, 50];
@@ -29,12 +30,14 @@ const statusColors = {
 
 export const InvoiceList = () => {
   const navigate = useNavigate();
-  const { invoices, loading, deleteInvoice } = useInvoices();
+  const { invoices, loading, deleteInvoice, updateInvoiceStatus } = useInvoices();
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [pageSize, setPageSize] = useState(PAGE_SIZE_OPTIONS[0]);
   const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null);
+  const [showStatusDialog, setShowStatusDialog] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
 
   const filteredInvoices = useMemo(() => {
     return invoices.filter((invoice) => {
@@ -105,6 +108,24 @@ export const InvoiceList = () => {
       setInvoiceToDelete(null);
     } catch (error) {
       toast.error("Failed to delete invoice");
+    }
+  };
+
+  const handleStatusUpdate = async (invoice: Invoice) => {
+    setSelectedInvoice(invoice);
+    setShowStatusDialog(true);
+  };
+
+  const handleStatusChange = async (newStatus: 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled') => {
+    if (!selectedInvoice) return;
+    
+    try {
+      await updateInvoiceStatus(selectedInvoice.id, newStatus);
+      setShowStatusDialog(false);
+      setSelectedInvoice(null);
+      toast.success("Invoice status updated successfully");
+    } catch (error) {
+      toast.error("Failed to update invoice status");
     }
   };
 
@@ -212,7 +233,8 @@ export const InvoiceList = () => {
                   <TableCell>
                     <Badge 
                       variant="secondary"
-                      className={statusColors[invoice.status]}
+                      className={cn(statusColors[invoice.status], "cursor-pointer")}
+                      onClick={() => handleStatusUpdate(invoice)}
                     >
                       {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
                     </Badge>
@@ -246,6 +268,14 @@ export const InvoiceList = () => {
                       className="hover:bg-red-50 hover:text-red-600"
                     >
                       <Trash2 className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => handleStatusUpdate(invoice)}
+                      className="hover:bg-blue-50 hover:text-blue-600"
+                    >
+                      <Edit className="h-4 w-4" />
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -319,6 +349,41 @@ export const InvoiceList = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={showStatusDialog} onOpenChange={setShowStatusDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              Update Invoice Status
+            </DialogTitle>
+            <DialogDescription className="text-gray-500">
+              Select a new status for invoice {selectedInvoice?.invoice_number}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <Select
+              defaultValue={selectedInvoice?.status}
+              onValueChange={(value) => handleStatusChange(value as Invoice['status'])}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select new status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="draft">Draft</SelectItem>
+                <SelectItem value="sent">Sent</SelectItem>
+                <SelectItem value="paid">Paid</SelectItem>
+                <SelectItem value="overdue">Overdue</SelectItem>
+                <SelectItem value="cancelled">Cancelled</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowStatusDialog(false)}>
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }; 

@@ -7,6 +7,7 @@ import { logger } from "@/utils/logger";
 import { Loading } from "@/components/ui/loading";
 import type { Invoice } from "@/types";
 import { useAuth } from "@/hooks/useAuth";
+import { FileText } from "lucide-react";
 
 const CreateInvoice = () => {
   const { id } = useParams();
@@ -111,6 +112,16 @@ const CreateInvoice = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-100">
       <div className="container mx-auto px-4 py-6">
+        <div className="mb-6">
+          <h2 className="text-3xl font-bold bg-gradient-to-r from-primary-500 to-primary-700 bg-clip-text text-transparent flex items-center gap-2">
+            <FileText className="h-8 w-8 stroke-primary-600" />
+            {id ? 'Edit Invoice' : 'Create Invoice'}
+          </h2>
+          <p className="text-gray-500 mt-1">
+            {id ? 'Update the invoice details below' : 'Generate a new invoice for your customer'}
+          </p>
+        </div>
+
         <InvoiceForm initialData={invoiceData} isEditing={!!id} />
       </div>
     </div>

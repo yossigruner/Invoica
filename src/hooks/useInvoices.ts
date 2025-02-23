@@ -544,6 +544,60 @@ export const useInvoices = () => {
     }
   };
 
+  const updateInvoiceStatus = async (id: string, status: 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled') => {
+    try {
+      setLoading(true);
+      logger.info('Updating invoice status', { id, status });
+
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) {
+        logger.error('User auth error:', userError);
+        throw userError;
+      }
+      if (!user) {
+        logger.error('No user found');
+        throw new Error('No user found');
+      }
+
+      const { data: invoice, error: updateError } = await supabase
+        .from('invoices')
+        .update({ status })
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .select()
+        .single();
+
+      if (updateError) {
+        logger.error('Failed to update invoice status:', updateError);
+        throw updateError;
+      }
+
+      // Update local state
+      setInvoices(prev => prev.map(inv => 
+        inv.id === id ? { ...inv, status } : inv
+      ));
+
+      // Update cache
+      setInvoiceCache(prev => ({
+        ...prev,
+        [id]: { ...prev[id], status }
+      }));
+
+      logger.success('Invoice status updated successfully', { id, status });
+      return invoice;
+    } catch (error) {
+      const err = error as Error;
+      logger.error('Failed to update invoice status', { 
+        error: err.message,
+        stack: err.stack,
+        name: err.name 
+      });
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     invoices,
     createInvoice,
@@ -551,6 +605,7 @@ export const useInvoices = () => {
     deleteInvoice,
     fetchInvoices,
     fetchInvoice,
+    updateInvoiceStatus,
     loading,
     error
   };

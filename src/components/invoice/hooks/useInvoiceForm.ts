@@ -47,16 +47,25 @@ export const useInvoiceForm = (customerData: CustomerData | null, initialData?: 
     }));
   }, [paymentMethod, setFormData]);
 
-  const handleInputChange = useCallback((section: keyof InvoiceFormData, field: string, value: string | number) => {
-    setFormData(prev => ({
-      ...prev,
-      [section]: typeof prev[section] === 'object'
-        ? {
-            ...prev[section],
-            [field]: value
-          }
-        : value
-    }));
+  const handleInputChange = useCallback((section: keyof InvoiceFormData | "", field: string, value: string | number) => {
+    setFormData(prev => {
+      if (!section) {
+        // Direct field update
+        return {
+          ...prev,
+          [field]: value
+        };
+      }
+      
+      // Nested object update
+      return {
+        ...prev,
+        [section]: {
+          ...(prev[section] as object),
+          [field]: value
+        }
+      };
+    });
   }, [setFormData]);
 
   const handleDateChange = useCallback((field: string, date: Date | undefined) => {

@@ -32,31 +32,31 @@ export const InvoicePreviewContent = ({
   to
 }: InvoicePreviewContentProps) => {
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <InvoiceBillingInfo billingInfo={to} />
 
       <div className="w-full avoid-break">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left">
-              <th className="pb-2">ITEM</th>
-              <th className="pb-2">QTY</th>
-              <th className="pb-2">RATE</th>
-              <th className="pb-2 text-right">AMOUNT</th>
+            <tr className="text-left border-b">
+              <th className="py-1">ITEM</th>
+              <th className="py-1">QTY</th>
+              <th className="py-1">RATE</th>
+              <th className="py-1 text-right">AMOUNT</th>
             </tr>
           </thead>
           <tbody>
             {items.map((item, index) => (
-              <tr key={index} className="border-t">
-                <td className="py-2">
+              <tr key={index} className="border-b border-gray-100">
+                <td className="py-1">
                   {item.name || ''}
                   {item.description && (
-                    <p className="text-xs text-gray-500 mt-0.5">{item.description}</p>
+                    <p className="text-xs text-gray-500">{item.description}</p>
                   )}
                 </td>
-                <td className="py-2">{item.quantity || ''}</td>
-                <td className="py-2">{item.rate || ''} {currency}</td>
-                <td className="py-2 text-right">
+                <td className="py-1">{item.quantity || ''}</td>
+                <td className="py-1">{item.rate || ''} {currency}</td>
+                <td className="py-1 text-right">
                   {(Number(item.quantity) * Number(item.rate)).toFixed(2)} {currency}
                 </td>
               </tr>
