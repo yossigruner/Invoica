@@ -1,17 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { InvoiceItemForm } from "../InvoiceItemForm";
-
-interface InvoiceItem {
-  name: string;
-  quantity: number;
-  rate: number;
-  description: string;
-}
+import { InvoiceFormItem } from "../types/invoice";
+import { logger } from "@/utils/logger";
+import { useEffect } from "react";
 
 interface ItemsTabProps {
   formData: {
-    items: InvoiceItem[];
+    items: InvoiceFormItem[];
     currency: string;
   };
   onItemChange: (index: number, field: string, value: string | number) => void;
@@ -27,12 +23,29 @@ export const ItemsTab = ({
   onMoveItem,
   onAddItem
 }: ItemsTabProps) => {
+  // Log items when they change
+  useEffect(() => {
+    logger.info('ItemsTab received items:', {
+      itemsCount: formData.items.length,
+      items: formData.items
+    });
+  }, [formData.items]);
+
+  if (!Array.isArray(formData.items)) {
+    logger.error('Invalid items array:', formData.items);
+    return (
+      <div className="p-4 text-red-500">
+        Error: Invalid items data
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="space-y-4">
         {formData.items.map((item, index) => (
           <InvoiceItemForm
-            key={index}
+            key={item.id || index}
             item={item}
             index={index}
             currency={formData.currency}

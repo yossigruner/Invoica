@@ -32,7 +32,7 @@ export const SignInForm = ({ onForgotPassword }: SignInFormProps) => {
             id="email"
             type="email"
             value={formData.email}
-            onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+            onChange={(e) => { setFormData(prev => ({ ...prev, email: e.target.value })); }}
             placeholder="Enter your email"
             className="h-12"
             required
@@ -44,7 +44,7 @@ export const SignInForm = ({ onForgotPassword }: SignInFormProps) => {
             id="password"
             type="password"
             value={formData.password}
-            onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+            onChange={(e) => { setFormData(prev => ({ ...prev, password: e.target.value })); }}
             placeholder="Enter your password"
             className="h-12"
             required

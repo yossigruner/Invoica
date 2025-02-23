@@ -1,95 +1,100 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { logger } from "@/utils/logger";
-
-interface CustomerFormData {
-  to: {
-    name: string;
-    address: string;
-    zip: string;
-    city: string;
-    country: string;
-    email: string;
-    phone: string;
-  };
-}
+import { InvoiceFormData } from "../types/invoice";
 
 interface CustomerInfoTabProps {
-  formData: CustomerFormData;
-  onInputChange: (section: string, field: string, value: string) => void;
+  formData: {
+    to: {
+      name: string;
+      address: string;
+      zip: string;
+      city: string;
+      country: string;
+      email: string;
+      phone: string;
+    };
+  };
+  onInputChange: (section: keyof InvoiceFormData | "", field: string, value: string | number) => void;
 }
 
 export const CustomerInfoTab = ({ formData, onInputChange }: CustomerInfoTabProps) => {
   logger.info('Rendering CustomerInfoTab with data:', { formData });
   
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-semibold">Bill To:</h3>
-      <div className="grid gap-4">
+    <div className="space-y-6">
+      <h3 className="text-lg font-semibold">Customer Information:</h3>
+      
+      <div className="space-y-4">
         <div className="grid gap-2">
-          <Label htmlFor="to-name">Name:</Label>
+          <Label htmlFor="customer-name">Name:</Label>
           <Input 
-            id="to-name" 
-            placeholder="Receiver name" 
+            id="customer-name" 
+            placeholder="Customer name" 
             value={formData.to.name}
-            onChange={(e) => onInputChange("to", "name", e.target.value)}
+            onChange={(e) => { onInputChange("to", "name", e.target.value); }}
           />
         </div>
+
         <div className="grid gap-2">
-          <Label htmlFor="to-address">Address:</Label>
+          <Label htmlFor="customer-address">Address:</Label>
           <Input 
-            id="to-address" 
-            placeholder="Receiver address"
+            id="customer-address" 
+            placeholder="Customer address" 
             value={formData.to.address}
-            onChange={(e) => onInputChange("to", "address", e.target.value)}
+            onChange={(e) => { onInputChange("to", "address", e.target.value); }}
           />
         </div>
+
         <div className="grid grid-cols-2 gap-4">
           <div className="grid gap-2">
-            <Label htmlFor="to-zip">ZIP:</Label>
+            <Label htmlFor="customer-zip">ZIP:</Label>
             <Input 
-              id="to-zip" 
-              placeholder="Receiver ZIP code"
+              id="customer-zip" 
+              placeholder="ZIP code" 
               value={formData.to.zip}
-              onChange={(e) => onInputChange("to", "zip", e.target.value)}
+              onChange={(e) => { onInputChange("to", "zip", e.target.value); }}
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="to-city">City:</Label>
+            <Label htmlFor="customer-city">City:</Label>
             <Input 
-              id="to-city" 
-              placeholder="Receiver city"
+              id="customer-city" 
+              placeholder="City" 
               value={formData.to.city}
-              onChange={(e) => onInputChange("to", "city", e.target.value)}
+              onChange={(e) => { onInputChange("to", "city", e.target.value); }}
             />
           </div>
         </div>
+
         <div className="grid gap-2">
-          <Label htmlFor="to-country">Country:</Label>
+          <Label htmlFor="customer-country">Country:</Label>
           <Input 
-            id="to-country" 
-            placeholder="Receiver country"
+            id="customer-country" 
+            placeholder="Country" 
             value={formData.to.country}
-            onChange={(e) => onInputChange("to", "country", e.target.value)}
+            onChange={(e) => { onInputChange("to", "country", e.target.value); }}
           />
         </div>
+
         <div className="grid gap-2">
-          <Label htmlFor="to-email">Email:</Label>
+          <Label htmlFor="customer-email">Email:</Label>
           <Input 
-            id="to-email" 
+            id="customer-email" 
             type="email" 
-            placeholder="Receiver email"
+            placeholder="Customer email" 
             value={formData.to.email}
-            onChange={(e) => onInputChange("to", "email", e.target.value)}
+            onChange={(e) => { onInputChange("to", "email", e.target.value); }}
           />
         </div>
+
         <div className="grid gap-2">
-          <Label htmlFor="to-phone">Phone:</Label>
+          <Label htmlFor="customer-phone">Phone:</Label>
           <Input 
-            id="to-phone" 
-            placeholder="Receiver phone number"
+            id="customer-phone" 
+            placeholder="Customer phone" 
             value={formData.to.phone}
-            onChange={(e) => onInputChange("to", "phone", e.target.value)}
+            onChange={(e) => { onInputChange("to", "phone", e.target.value); }}
           />
         </div>
       </div>

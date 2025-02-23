@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Search, Calendar, Download, Eye, FileDown, Mail } from "lucide-react";
+import { Search, Calendar, Download, Eye, FileDown, Mail, Trash2 } from "lucide-react";
 import { useInvoices } from "@/hooks/useInvoices";
 import { useState, useMemo } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -14,6 +14,8 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { Loading } from "@/components/ui/loading";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Invoice } from "@/types";
 
 const PAGE_SIZE_OPTIONS = [5, 10, 25, 50];
 
@@ -27,11 +29,12 @@ const statusColors = {
 
 export const InvoiceList = () => {
   const navigate = useNavigate();
-  const { invoices, loading } = useInvoices();
+  const { invoices, loading, deleteInvoice } = useInvoices();
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [pageSize, setPageSize] = useState(PAGE_SIZE_OPTIONS[0]);
+  const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null);
 
   const filteredInvoices = useMemo(() => {
     return invoices.filter((invoice) => {
@@ -89,6 +92,22 @@ export const InvoiceList = () => {
     navigate(`/edit-invoice/${invoiceId}`);
   };
 
+  const handleDeleteInvoice = async (invoice: Invoice) => {
+    setInvoiceToDelete(invoice);
+  };
+
+  const confirmDelete = async () => {
+    if (!invoiceToDelete) return;
+
+    try {
+      await deleteInvoice(invoiceToDelete.id);
+      toast.success("Invoice deleted successfully");
+      setInvoiceToDelete(null);
+    } catch (error) {
+      toast.error("Failed to delete invoice");
+    }
+  };
+
   // Reset to first page when page size changes
   const handlePageSizeChange = (value: string) => {
     setPageSize(Number(value));
@@ -107,7 +126,7 @@ export const InvoiceList = () => {
           <Input
             placeholder="Search invoices..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => { setSearchQuery(e.target.value); }}
             className="pl-10 bg-white/50 backdrop-blur-sm focus:bg-white transition-all"
           />
         </div>
@@ -123,7 +142,7 @@ export const InvoiceList = () => {
             >
               <Calendar className="mr-2 h-4 w-4" />
               {dateRange?.from ? (
-                dateRange.to ? (
+                dateRange?.to ? (
                   <>
                     {format(dateRange.from, "LLL dd, y")} -{" "}
                     {format(dateRange.to, "LLL dd, y")}
@@ -202,7 +221,7 @@ export const InvoiceList = () => {
                     <Button 
                       variant="ghost" 
                       size="icon"
-                      onClick={() => handleViewInvoice(invoice.id)}
+                      onClick={() => { handleViewInvoice(invoice.id); }}
                     >
                       <Eye className="h-4 w-4" />
                     </Button>
@@ -219,6 +238,14 @@ export const InvoiceList = () => {
                       onClick={() => toast.info("Send email coming soon")}
                     >
                       <Mail className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => handleDeleteInvoice(invoice)}
+                      className="hover:bg-red-50 hover:text-red-600"
+                    >
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -252,7 +279,7 @@ export const InvoiceList = () => {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            onClick={() => { setCurrentPage((p) => Math.max(1, p - 1)); }}
             disabled={currentPage === 1}
           >
             Previous
@@ -263,13 +290,35 @@ export const InvoiceList = () => {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            onClick={() => { setCurrentPage((p) => Math.min(totalPages, p + 1)); }}
             disabled={currentPage === totalPages || totalPages === 0}
           >
             Next
           </Button>
         </div>
       </div>
+
+      <AlertDialog open={!!invoiceToDelete} onOpenChange={() => setInvoiceToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete invoice{" "}
+              <span className="font-medium">{invoiceToDelete?.invoice_number}</span> and
+              all associated data from the system.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              Delete Invoice
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }; 

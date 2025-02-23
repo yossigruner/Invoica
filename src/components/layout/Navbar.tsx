@@ -8,7 +8,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { useEffect, useState } from "react";
-import { supabase } from "@/db/config";
+import { supabase } from "@/lib/supabase";
 
 export const Navbar = () => {
   const location = useLocation();
@@ -27,7 +27,7 @@ export const Navbar = () => {
       setIsAuthenticated(!!session);
     });
 
-    return () => subscription.unsubscribe();
+    return () => { subscription.unsubscribe(); };
   }, []);
 
   return (

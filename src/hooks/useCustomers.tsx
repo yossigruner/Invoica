@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/db/config';
+import { supabase } from '@/lib/supabase';
 import { logger } from '@/utils/logger';
-import { Customer } from '@/db/types';
+import { Customer } from '@/types';
 import { toast } from 'sonner';
 
 export const PAGE_SIZE_OPTIONS: number[] = [5, 10, 25, 50];
@@ -45,7 +45,7 @@ export const useCustomers = () => {
       }
 
       logger.info('Customers fetched successfully', { 
-        count: data?.length,
+        count: data.length,
         customers: data 
       });
 

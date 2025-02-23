@@ -21,34 +21,46 @@ import { useInvoices } from "@/hooks/useInvoices";
 import { toast } from "sonner";
 import { logger } from "@/utils/logger";
 import { Loading } from "@/components/ui/loading";
+import { CustomerData } from "./types/invoice";
+import { Invoice } from "@/types";
+import { useInvoiceFormState } from "./hooks/useInvoiceFormState";
 
 const TABS = ["from", "details", "items", "payment", "summary"] as const;
 
 interface InvoiceFormProps {
-  initialData?: any;
+  initialData?: Invoice | null;
   isEditing?: boolean;
+}
+
+interface LocationState {
+  customer?: CustomerData;
 }
 
 export const InvoiceForm = ({ initialData, isEditing }: InvoiceFormProps) => {
   const location = useLocation();
-  const customerData = location.state?.customer;
+  const state = location.state as LocationState;
+  const customerData = state?.customer || null;
   const navigate = useNavigate();
   const [currentTab, setCurrentTab] = useState<TabType>("from");
   const [completedTabs, setCompletedTabs] = useState<TabType[]>([]);
-  const { loading: profileLoading } = useProfile();
+  const { profile, loading: profileLoading } = useProfile();
+
   const {
     formData,
     setFormData,
     profileData,
+    setProfileData,
     logo,
+    setLogo,
     signature,
+    setSignature,
     showDiscount,
-    showTax,
-    showShipping,
-    paymentMethod,
     setShowDiscount,
+    showTax,
     setShowTax,
+    showShipping,
     setShowShipping,
+    paymentMethod,
     setPaymentMethod,
     handleInputChange,
     handleDateChange,
@@ -58,69 +70,45 @@ export const InvoiceForm = ({ initialData, isEditing }: InvoiceFormProps) => {
     handleAdjustmentChange,
     calculateTotal,
     handleMoveItem
-  } = useInvoiceForm(customerData);
+  } = useInvoiceForm(customerData, initialData);
+
   const { createInvoice, updateInvoice, loading } = useInvoices();
 
-  // Handle initial data when editing
+  // Update profile data when profile is loaded
   useEffect(() => {
-    if (isEditing && initialData) {
-      logger.info('Setting initial invoice data for editing', { 
-        invoiceId: initialData.id,
-        initialData
+    if (profile) {
+      logger.info('Setting profile data:', { profile });
+      setProfileData({
+        name: profile.company_name || `${profile.first_name} ${profile.last_name}`.trim(),
+        address: profile.address || '',
+        city: profile.city || '',
+        zip: profile.zip || '',
+        country: profile.country || '',
+        email: profile.email || '',
+        phone: profile.phone || '',
+        bankName: profile.bank_name || '',
+        accountName: profile.account_name || '',
+        accountNumber: profile.account_number || '',
+        swiftCode: profile.swift_code || '',
+        iban: profile.iban || ''
       });
       
-      try {
-        setFormData({
-          to: {
-            name: initialData.billing_name || '',
-            email: initialData.billing_email || '',
-            phone: initialData.billing_phone || '',
-            address: initialData.billing_address || '',
-            city: initialData.billing_city || '',
-            zip: initialData.billing_zip || '',
-            country: initialData.billing_country || '',
-          },
-          invoiceNumber: initialData.invoice_number,
-          issueDate: initialData.issue_date,
-          dueDate: initialData.due_date || '',
-          currency: initialData.currency,
-          items: initialData.invoice_items?.map((item: any) => ({
-            name: item.name,
-            description: item.description || '',
-            quantity: item.quantity,
-            rate: item.rate,
-          })) || [],
-          additionalNotes: initialData.additional_notes || '',
-          paymentTerms: initialData.payment_terms || '',
-          adjustments: {
-            discount: {
-              value: initialData.discount_value || 0,
-              type: initialData.discount_type || 'percentage'
-            },
-            tax: {
-              value: initialData.tax_value || 0,
-              type: initialData.tax_type || 'percentage'
-            },
-            shipping: {
-              value: initialData.shipping_value || 0,
-              type: initialData.shipping_type || 'amount'
-            }
-          }
-        });
-
-        // Set adjustment visibility based on values
-        setShowDiscount(!!initialData.discount_value);
-        setShowTax(!!initialData.tax_value);
-        setShowShipping(!!initialData.shipping_value);
-        setPaymentMethod(initialData.payment_method || 'bank');
-
-        logger.success('Successfully set initial invoice data');
-      } catch (error) {
-        logger.error('Failed to set initial invoice data', error);
-        toast.error('Failed to load invoice data');
+      if (profile.company_logo) {
+        setLogo(profile.company_logo);
+      }
+      
+      if (profile.signature) {
+        setSignature(profile.signature);
       }
     }
-  }, [isEditing, initialData, setFormData, setShowDiscount, setShowTax, setShowShipping, setPaymentMethod]);
+  }, [profile, setProfileData, setLogo, setSignature]);
+
+  useEffect(() => {
+    logger.info('Form data updated:', {
+      itemsCount: formData.items.length,
+      items: formData.items
+    });
+  }, [formData.items]);
 
   const isTabComplete = (tab: TabType): boolean => {
     switch (tab) {
@@ -151,19 +139,20 @@ export const InvoiceForm = ({ initialData, isEditing }: InvoiceFormProps) => {
     updateCompletedTabs();
   }, [formData]);
 
-  const handleTabChange = (value: TabType) => {
+  const handleTabChange = (value: string) => {
+    const tabValue = value as TabType;
     const currentIndex = TABS.indexOf(currentTab);
-    const newIndex = TABS.indexOf(value);
+    const newIndex = TABS.indexOf(tabValue);
 
     // Allow moving backwards freely
     if (newIndex < currentIndex) {
-      setCurrentTab(value);
+      setCurrentTab(tabValue);
       return;
     }
 
     // For forward movement, check if current tab data is valid
     if (isTabComplete(currentTab)) {
-      setCurrentTab(value);
+      setCurrentTab(tabValue);
     } else {
       const errorMessages = {
         from: "Please enter customer name",
@@ -276,7 +265,7 @@ export const InvoiceForm = ({ initialData, isEditing }: InvoiceFormProps) => {
                   <PaymentTab
                     formData={formData}
                     paymentMethod={paymentMethod}
-                    setPaymentMethod={setPaymentMethod}
+                    setPaymentMethod={(value: string) => setPaymentMethod(value as "bank" | "other")}
                     onInputChange={handleInputChange}
                   />
                 </TabsContent>
@@ -307,6 +296,8 @@ export const InvoiceForm = ({ initialData, isEditing }: InvoiceFormProps) => {
                 showShipping={showShipping}
                 paymentMethod={paymentMethod}
                 calculateTotal={calculateTotal}
+                isEditing={isEditing}
+                initialData={initialData}
               />
             </Tabs>
           </div>
@@ -318,6 +309,8 @@ export const InvoiceForm = ({ initialData, isEditing }: InvoiceFormProps) => {
               logo={logo}
               signature={signature}
               calculateTotal={calculateTotal}
+              isEditing={isEditing}
+              initialData={initialData}
             />
           </div>
         </div>

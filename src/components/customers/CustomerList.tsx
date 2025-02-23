@@ -1,5 +1,5 @@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Customer } from "@/types/customer";
+import { Customer } from "@/types";
 import { useState, useEffect } from "react";
 import { CustomerSearch } from "./CustomerSearch";
 import { CustomerTable } from "./CustomerTable";
@@ -12,9 +12,9 @@ import { Loading } from "@/components/ui/loading";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 
-type CustomerListProps = {
+interface CustomerListProps {
   onEdit: (customer: Customer) => void;
-};
+}
 
 export const CustomerList = ({ onEdit }: CustomerListProps) => {
   const { 
@@ -37,9 +37,9 @@ export const CustomerList = ({ onEdit }: CustomerListProps) => {
   // Add effect to log customers state
   useEffect(() => {
     logger.info('CustomerList state:', {
-      customersCount: customers?.length,
+      customersCount: customers.length,
       loading,
-      error: error?.message,
+      error: error?.message || 'none',
       currentPage,
       pageSize,
       totalPages,
@@ -53,13 +53,13 @@ export const CustomerList = ({ onEdit }: CustomerListProps) => {
       fetchCustomers();
     }, 5000); // Fetch every 5 seconds
 
-    return () => clearInterval(interval);
+    return () => { clearInterval(interval); };
   }, [fetchCustomers]);
 
   const handleDelete = async (customer: Customer) => {
     try {
       logger.info('Deleting customer', { customerId: customer.id });
-      await deleteCustomer(customer.id);
+      setCustomerToDelete(customer);
     } catch (error) {
       logger.error('Failed to delete customer', error);
     }
@@ -95,7 +95,7 @@ export const CustomerList = ({ onEdit }: CustomerListProps) => {
   }
 
   // Debug output for empty customers
-  if (!customers?.length) {
+  if (!customers.length) {
     logger.warn('No customers available to display', {
       customers,
       loading,
@@ -110,7 +110,7 @@ export const CustomerList = ({ onEdit }: CustomerListProps) => {
         <Input
           placeholder="Search customers..."
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => { setSearchQuery(e.target.value); }}
           className="pl-10"
         />
       </div>
@@ -127,10 +127,10 @@ export const CustomerList = ({ onEdit }: CustomerListProps) => {
         pageSize={pageSize}
         onPageChange={setCurrentPage}
         onPageSizeChange={setPageSize}
-        totalItems={customers?.length || 0}
+        totalItems={customers.length || 0}
       />
 
-      <AlertDialog open={!!customerToDelete} onOpenChange={() => setCustomerToDelete(null)}>
+      <AlertDialog open={!!customerToDelete} onOpenChange={() => { setCustomerToDelete(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>

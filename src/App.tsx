@@ -1,11 +1,9 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
-import { toast } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { Footer } from "./components/layout/Footer";
-import { DebugButton } from "./components/DebugButton";
 import { logger } from "@/utils/logger";
 import { Navbar } from "./components/layout/Navbar";
 import Index from "./pages/Index";
@@ -21,7 +19,7 @@ import AboutUs from "./pages/AboutUs";
 import ContactUs from "./pages/ContactUs";
 import Faq from "./pages/Faq";
 import { useEffect } from "react";
-import { supabase } from "./db/config";
+import { supabase } from "@/lib/supabase";
 
 const queryClient = new QueryClient();
 
@@ -76,7 +74,6 @@ const Layout = ({ children, includeFooter = true }: { children: React.ReactNode;
         {children}
       </main>
       {includeFooter && <Footer />}
-      <DebugButton />
     </div>
   );
 };

@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState, useRef, useEffect } from "react";
 import SignaturePad from "react-signature-canvas";
 import { toast } from "sonner";
+import './signature.css';
 
 interface SignatureDialogProps {
   open: boolean;
@@ -13,10 +14,10 @@ interface SignatureDialogProps {
 }
 
 const SIGNATURE_FONTS = [
-  { name: 'Signature 1', font: 'Dancing Script', class: 'font-["Dancing_Script"]' },
-  { name: 'Signature 2', font: 'Great Vibes', class: 'font-["Great_Vibes"]' },
-  { name: 'Signature 3', font: 'Pacifico', class: 'font-["Pacifico"]' },
-  { name: 'Signature 4', font: 'Alex Brush', class: 'font-["Alex_Brush"]' },
+  { name: 'Signature 1', font: 'Dancing Script', class: 'signature-font-dancing-script' },
+  { name: 'Signature 2', font: 'Great Vibes', class: 'signature-font-great-vibes' },
+  { name: 'Signature 3', font: 'Pacifico', class: 'signature-font-pacifico' },
+  { name: 'Signature 4', font: 'Alex Brush', class: 'signature-font-alex-brush' },
 ];
 
 export const SignatureDialog = ({ open, onClose, onSave }: SignatureDialogProps) => {
@@ -28,12 +29,16 @@ export const SignatureDialog = ({ open, onClose, onSave }: SignatureDialogProps)
   // Load fonts
   useEffect(() => {
     const loadFonts = async () => {
-      await Promise.all([
-        import('@fontsource/dancing-script'),
-        import('@fontsource/great-vibes'),
-        import('@fontsource/pacifico'),
-        import('@fontsource/alex-brush'),
-      ]);
+      try {
+        await Promise.all([
+          import('@fontsource/dancing-script'),
+          import('@fontsource/great-vibes'),
+          import('@fontsource/pacifico'),
+          import('@fontsource/alex-brush'),
+        ]);
+      } catch (error) {
+        console.error('Failed to load signature fonts:', error);
+      }
     };
     loadFonts();
   }, []);
@@ -126,14 +131,14 @@ export const SignatureDialog = ({ open, onClose, onSave }: SignatureDialogProps)
               <Input
                 placeholder="Type your name"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => { setName(e.target.value); }}
                 className="h-11"
               />
               <div className="grid grid-cols-2 gap-3">
                 {SIGNATURE_FONTS.map((font) => (
                   <div
                     key={font.name}
-                    onClick={() => setSelectedFont(font)}
+                    onClick={() => { setSelectedFont(font); }}
                     className={`p-4 border rounded-lg cursor-pointer transition-all hover:border-primary-500 ${
                       selectedFont.name === font.name ? 'border-primary-500 bg-primary-50' : ''
                     }`}
@@ -159,16 +164,17 @@ export const SignatureDialog = ({ open, onClose, onSave }: SignatureDialogProps)
                 className="hidden"
                 id="signature-upload"
                 onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
+                  const files = e.target.files;
+                  if (files && files[0]) {
                     const reader = new FileReader();
                     reader.onload = (event) => {
-                      if (event.target?.result) {
-                        onSave(event.target.result as string);
+                      const result = event.target?.result;
+                      if (result && typeof result === 'string') {
+                        onSave(result);
                         onClose();
                       }
                     };
-                    reader.readAsDataURL(file);
+                    reader.readAsDataURL(files[0]);
                   }
                 }}
               />

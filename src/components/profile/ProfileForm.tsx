@@ -1,24 +1,9 @@
-
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-
-interface ProfileFormData {
-  name: string;
-  address: string;
-  zip: string;
-  city: string;
-  country: string;
-  email: string;
-  phone: string;
-  bankName: string;
-  accountName: string;
-  accountNumber: string;
-  swiftCode: string;
-  iban: string;
-}
+import { ProfileData } from "@/components/invoice/types/invoice";
 
 interface ProfileFormProps {
-  formData: ProfileFormData;
+  formData: ProfileData;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
@@ -93,6 +78,56 @@ export const ProfileForm = ({ formData, onInputChange }: ProfileFormProps) => {
           id="phone" 
           placeholder="Your phone number" 
           value={formData.phone}
+          onChange={onInputChange}
+        />
+      </div>
+
+      <div className="grid gap-2">
+        <Label htmlFor="bankName">Bank Name:</Label>
+        <Input 
+          id="bankName" 
+          placeholder="Your bank name" 
+          value={formData.bankName || ''}
+          onChange={onInputChange}
+        />
+      </div>
+
+      <div className="grid gap-2">
+        <Label htmlFor="accountName">Account Name:</Label>
+        <Input 
+          id="accountName" 
+          placeholder="Your account name" 
+          value={formData.accountName || ''}
+          onChange={onInputChange}
+        />
+      </div>
+
+      <div className="grid gap-2">
+        <Label htmlFor="accountNumber">Account Number:</Label>
+        <Input 
+          id="accountNumber" 
+          placeholder="Your account number" 
+          value={formData.accountNumber || ''}
+          onChange={onInputChange}
+        />
+      </div>
+
+      <div className="grid gap-2">
+        <Label htmlFor="swiftCode">Swift Code:</Label>
+        <Input 
+          id="swiftCode" 
+          placeholder="Your SWIFT/BIC code" 
+          value={formData.swiftCode || ''}
+          onChange={onInputChange}
+        />
+      </div>
+
+      <div className="grid gap-2">
+        <Label htmlFor="iban">IBAN:</Label>
+        <Input 
+          id="iban" 
+          placeholder="Your IBAN" 
+          value={formData.iban || ''}
           onChange={onInputChange}
         />
       </div>

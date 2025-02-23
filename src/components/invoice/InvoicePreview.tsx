@@ -1,6 +1,6 @@
-
 import { Card } from "@/components/ui/card";
 import { format } from "date-fns";
+import { InvoiceFormItem } from "./types/invoice";
 
 interface InvoicePreviewProps {
   formData: {
@@ -16,12 +16,7 @@ interface InvoicePreviewProps {
       email: string;
       phone: string;
     };
-    items: Array<{
-      name: string;
-      quantity: number;
-      rate: number;
-      description: string;
-    }>;
+    items: InvoiceFormItem[];
     currency: string;
     paymentTerms: string;
     adjustments: {
@@ -33,9 +28,10 @@ interface InvoicePreviewProps {
   showDiscount?: boolean;
   showTax?: boolean;
   showShipping?: boolean;
+  profileData?: any;
 }
 
-export const InvoicePreview = ({ formData, showDiscount, showTax, showShipping }: InvoicePreviewProps) => {
+export const InvoicePreview = ({ formData, showDiscount, showTax, showShipping, profileData }: InvoicePreviewProps) => {
   const calculateSubtotal = () => {
     return formData.items.reduce((sum, item) => sum + (item.quantity * item.rate), 0);
   };
@@ -188,6 +184,7 @@ export const InvoicePreview = ({ formData, showDiscount, showTax, showShipping }
           <p className="text-sm">{formData.paymentTerms}</p>
         </div>
       )}
+
     </Card>
   );
 };

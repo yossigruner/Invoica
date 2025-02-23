@@ -21,7 +21,7 @@ export const LogoUpload = ({ logo, onLogoUpload, logoInputRef }: LogoUploadProps
       />
       <div 
         className="mt-2 border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:bg-gray-50 transition-colors"
-        onClick={() => logoInputRef.current?.click()}
+        onClick={() => { logoInputRef.current.click(); }}
       >
         {logo ? (
           <div className="flex flex-col items-center gap-2">

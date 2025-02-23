@@ -5,6 +5,8 @@ import html2pdf from "html2pdf.js";
 import { format } from "date-fns";
 import { useInvoices } from "@/hooks/useInvoices";
 import { InvoiceFormData } from "./types/invoice";
+import { useNavigate } from "react-router-dom";
+import { logger } from "@/utils/logger";
 
 interface InvoiceActionsProps {
   formData: InvoiceFormData;
@@ -12,6 +14,8 @@ interface InvoiceActionsProps {
   showTax: boolean;
   showShipping: boolean;
   paymentMethod: string;
+  isEditing?: boolean;
+  initialData?: { id: string } | null;
   calculateTotal: () => {
     subtotal: number;
     discount: number;
@@ -27,9 +31,12 @@ export const InvoiceActions = ({
   showTax,
   showShipping,
   paymentMethod,
+  isEditing,
+  initialData,
   calculateTotal
 }: InvoiceActionsProps) => {
-  const { createInvoice, loading } = useInvoices();
+  const { createInvoice, updateInvoice, loading } = useInvoices();
+  const navigate = useNavigate();
 
   const handleSendEmail = () => {
     toast.success("Invoice sent via email successfully!");
@@ -48,63 +55,58 @@ export const InvoiceActions = ({
       }
 
       const totals = calculateTotal();
-      await createInvoice(
-        formData,
-        showDiscount,
-        showTax,
-        showShipping,
-        paymentMethod,
-        totals
-      );
-      toast.success("Invoice saved successfully!");
+      
+      if (isEditing && initialData?.id) {
+        await updateInvoice(
+          initialData.id,
+          formData,
+          showDiscount,
+          showTax,
+          showShipping,
+          paymentMethod,
+          totals
+        );
+        toast.success("Invoice updated successfully!");
+      } else {
+        await createInvoice(
+          formData,
+          showDiscount,
+          showTax,
+          showShipping,
+          paymentMethod,
+          totals
+        );
+        toast.success("Invoice created successfully!");
+      }
+      
+      navigate("/");
     } catch (error) {
-      console.error('Failed to save invoice:', error);
-      toast.error("Failed to save invoice. Please try again.");
+      logger.error(isEditing ? 'Failed to update invoice' : 'Failed to create invoice', error);
+      toast.error(isEditing ? "Failed to update invoice" : "Failed to create invoice");
     }
   };
 
   const handleGeneratePDF = async () => {
-    const element = document.querySelector('.invoice-preview');
-    if (!element) {
-      toast.error("Could not find invoice content");
-      return;
-    }
-
-    // Get customer name and invoice number from the preview
-    const customerName = document.querySelector('.invoice-preview h2')?.textContent?.trim() || 'Customer';
-    const invoiceNumber = document.querySelector('.invoice-preview h1')?.textContent?.replace('Invoice #', '').trim() || 'INV';
-    const currentDate = format(new Date(), 'yyyyMMdd');
-    
-    // Create a clean filename: date_customer_invoicenumber.pdf
-    const cleanCustomerName = customerName.replace(/[^a-zA-Z0-9]/g, '');
-    const filename = `${currentDate}_${cleanCustomerName}_${invoiceNumber}.pdf`;
-
-    const opt = {
-      margin: [5, 5, 5, 5],
-      filename: filename,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { 
-        scale: 1.5,
-        useCORS: true,
-        logging: false
-      },
-      jsPDF: { 
-        unit: 'mm', 
-        format: 'a4', 
-        orientation: 'portrait',
-        compress: true,
-        hotfixes: ["px_scaling"],
-      },
-      pagebreak: { avoid: '.avoid-break' }
-    };
-
     try {
-      const loadingToast = toast.loading('Generating PDF...');
+      const element = document.getElementById('invoice-preview');
+      if (!element) {
+        toast.error("Invoice preview not found");
+        return;
+      }
+
+      const opt = {
+        margin: 1,
+        filename: `invoice-${formData.invoiceNumber}-${format(new Date(), 'yyyy-MM-dd')}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+      };
+
       await html2pdf().set(opt).from(element).save();
-      toast.dismiss(loadingToast);
-      toast.success('PDF generated successfully!');
+      toast.success("PDF generated successfully!");
     } catch (error) {
-      toast.error('Failed to generate PDF');
+      logger.error('Failed to generate PDF:', error);
+      toast.error("Failed to generate PDF");
     }
   };
 
@@ -121,7 +123,7 @@ export const InvoiceActions = ({
             disabled={loading}
           >
             <Save className="w-4 h-4 mr-2" />
-            {loading ? "Saving..." : "Save Draft"}
+            {loading ? "Saving..." : isEditing ? "Update Draft" : "Save Draft"}
           </Button>
           <Button 
             variant="outline" 

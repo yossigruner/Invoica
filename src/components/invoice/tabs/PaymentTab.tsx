@@ -1,6 +1,7 @@
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { InvoiceFormData } from "../types/invoice";
 
 interface PaymentTabProps {
   formData: {
@@ -8,7 +9,7 @@ interface PaymentTabProps {
   };
   paymentMethod: string;
   setPaymentMethod: (value: string) => void;
-  onInputChange: (section: string, field: string, value: string) => void;
+  onInputChange: (section: keyof InvoiceFormData | "", field: string, value: string | number) => void;
 }
 
 export const PaymentTab = ({
@@ -26,7 +27,10 @@ export const PaymentTab = ({
           <Label>Payment Method:</Label>
           <Select 
             value={paymentMethod}
-            onValueChange={setPaymentMethod}
+            onValueChange={(value) => {
+              setPaymentMethod(value);
+              onInputChange("", "paymentMethod", value);
+            }}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select payment method" />
@@ -44,7 +48,7 @@ export const PaymentTab = ({
             id="payment-terms" 
             placeholder="Payment terms and conditions"
             value={formData.paymentTerms}
-            onChange={(e) => onInputChange("", "paymentTerms", e.target.value)}
+            onChange={(e) => { onInputChange("", "paymentTerms", e.target.value); }}
           />
         </div>
       </div>

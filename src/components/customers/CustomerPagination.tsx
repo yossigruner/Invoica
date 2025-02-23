@@ -38,7 +38,7 @@ export const CustomerPagination = ({
         <span className="text-sm text-gray-600 whitespace-nowrap">Items per page:</span>
         <Select
           value={pageSize.toString()}
-          onValueChange={(value) => onPageSizeChange(Number(value))}
+          onValueChange={(value) => { onPageSizeChange(Number(value)); }}
           aria-label="Select number of items per page"
         >
           <SelectTrigger className="w-[100px] h-9 bg-white/50 hover:bg-white transition-colors border-gray-200 hover:border-primary focus:ring-primary">
@@ -66,7 +66,7 @@ export const CustomerPagination = ({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+            onClick={() => { onPageChange(Math.max(1, currentPage - 1)); }}
             disabled={currentPage === 1}
             className="h-9 px-3 hover:bg-primary hover:text-white transition-colors disabled:opacity-50"
             aria-label="Previous page"
@@ -82,7 +82,7 @@ export const CustomerPagination = ({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+            onClick={() => { onPageChange(Math.min(totalPages, currentPage + 1)); }}
             disabled={currentPage === totalPages}
             className="h-9 px-3 hover:bg-primary hover:text-white transition-colors disabled:opacity-50"
             aria-label="Next page"

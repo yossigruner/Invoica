@@ -1,9 +1,6 @@
-interface InvoiceItem {
-  name: string;
-  quantity: number;
-  rate: number;
-  description: string;
-}
+import { InvoiceBillingInfo } from "./InvoiceBillingInfo";
+import { InvoiceAdjustments } from "./InvoiceAdjustments";
+import { InvoiceFormItem } from "../types/invoice";
 
 interface BillingInfo {
   name: string;
@@ -16,7 +13,7 @@ interface BillingInfo {
 }
 
 interface InvoicePreviewContentProps {
-  items: InvoiceItem[];
+  items: InvoiceFormItem[];
   currency: string;
   totals: {
     subtotal: number;
@@ -27,17 +24,6 @@ interface InvoicePreviewContentProps {
   };
   to: BillingInfo;
 }
-
-const InvoiceBillingInfo = ({ billingInfo }: { billingInfo: BillingInfo }) => (
-  <div className="space-y-1 text-sm">
-    <h2 className="font-medium">{billingInfo.name || ''}</h2>
-    <p>{billingInfo.address || ''}</p>
-    <p>{billingInfo.city || ''}, {billingInfo.zip || ''}</p>
-    <p>{billingInfo.country || ''}</p>
-    <p>{billingInfo.email || ''}</p>
-    <p>{billingInfo.phone || ''}</p>
-  </div>
-);
 
 export const InvoicePreviewContent = ({
   items,
@@ -76,46 +62,13 @@ export const InvoicePreviewContent = ({
               </tr>
             ))}
           </tbody>
-          <tfoot className="avoid-break">
-            <tr className="border-t">
-              <td colSpan={3} className="pt-2 text-right">Subtotal:</td>
-              <td className="pt-2 text-right">
-                {totals.subtotal.toFixed(2)} {currency}
-              </td>
-            </tr>
-            {totals.discount > 0 && (
-              <tr>
-                <td colSpan={3} className="pt-1 text-right text-red-600">Discount:</td>
-                <td className="pt-1 text-right text-red-600">
-                  -{totals.discount.toFixed(2)} {currency}
-                </td>
-              </tr>
-            )}
-            {totals.tax > 0 && (
-              <tr>
-                <td colSpan={3} className="pt-1 text-right">Tax:</td>
-                <td className="pt-1 text-right">
-                  +{totals.tax.toFixed(2)} {currency}
-                </td>
-              </tr>
-            )}
-            {totals.shipping > 0 && (
-              <tr>
-                <td colSpan={3} className="pt-1 text-right">Shipping:</td>
-                <td className="pt-1 text-right">
-                  +{totals.shipping.toFixed(2)} {currency}
-                </td>
-              </tr>
-            )}
-            <tr className="border-t">
-              <td colSpan={3} className="pt-2 text-right font-semibold">Total:</td>
-              <td className="pt-2 text-right font-semibold">
-                {totals.total.toFixed(2)} {currency}
-              </td>
-            </tr>
-          </tfoot>
         </table>
       </div>
+
+      <InvoiceAdjustments
+        currency={currency}
+        totals={totals}
+      />
     </div>
   );
 }; 

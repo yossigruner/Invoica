@@ -65,13 +65,13 @@ export const InvoiceAdjustments = ({
               <Input
                 type="number"
                 value={adjustments.discount.value}
-                onChange={(e) => onAdjustmentChange('discount', 'value', Number(e.target.value))}
+                onChange={(e) => { onAdjustmentChange('discount', 'value', Number(e.target.value)); }}
                 className="w-full sm:w-32"
               />
               <Select
                 value={adjustments.discount.type}
                 onValueChange={(value: 'amount' | 'percentage') => 
-                  onAdjustmentChange('discount', 'type', value)
+                  { onAdjustmentChange('discount', 'type', value); }
                 }
               >
                 <SelectTrigger className="w-24 sm:w-32">
@@ -106,13 +106,13 @@ export const InvoiceAdjustments = ({
               <Input
                 type="number"
                 value={adjustments.tax.value}
-                onChange={(e) => onAdjustmentChange('tax', 'value', Number(e.target.value))}
+                onChange={(e) => { onAdjustmentChange('tax', 'value', Number(e.target.value)); }}
                 className="w-full sm:w-32"
               />
               <Select
                 value={adjustments.tax.type}
                 onValueChange={(value: 'amount' | 'percentage') => 
-                  onAdjustmentChange('tax', 'type', value)
+                  { onAdjustmentChange('tax', 'type', value); }
                 }
               >
                 <SelectTrigger className="w-24 sm:w-32">
@@ -147,13 +147,13 @@ export const InvoiceAdjustments = ({
               <Input
                 type="number"
                 value={adjustments.shipping.value}
-                onChange={(e) => onAdjustmentChange('shipping', 'value', Number(e.target.value))}
+                onChange={(e) => { onAdjustmentChange('shipping', 'value', Number(e.target.value)); }}
                 className="w-full sm:w-32"
               />
               <Select
                 value={adjustments.shipping.type}
                 onValueChange={(value: 'amount' | 'percentage') => 
-                  onAdjustmentChange('shipping', 'type', value)
+                  { onAdjustmentChange('shipping', 'type', value); }
                 }
               >
                 <SelectTrigger className="w-24 sm:w-32">

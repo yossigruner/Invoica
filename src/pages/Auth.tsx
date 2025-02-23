@@ -13,7 +13,7 @@ const Auth = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-100 to-primary-50 p-4">
         <Card className="w-full max-w-md p-8 shadow-xl">
-          <ForgotPasswordForm onBack={() => setShowForgotPassword(false)} />
+          <ForgotPasswordForm onBack={() => { setShowForgotPassword(false); }} />
         </Card>
       </div>
     );
@@ -33,7 +33,7 @@ const Auth = () => {
             <TabsTrigger value="register">Register</TabsTrigger>
           </TabsList>
           <TabsContent value="signin">
-            <SignInForm onForgotPassword={() => setShowForgotPassword(true)} />
+            <SignInForm onForgotPassword={() => { setShowForgotPassword(true); }} />
           </TabsContent>
           <TabsContent value="register">
             <RegisterForm />

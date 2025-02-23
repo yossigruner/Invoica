@@ -58,7 +58,7 @@ export const SummaryTab = ({
           <Textarea
             id="additionalNotes"
             value={formData.additionalNotes}
-            onChange={(e) => onInputChange("", "additionalNotes", e.target.value)}
+            onChange={(e) => { onInputChange("", "additionalNotes", e.target.value); }}
             placeholder="Add any additional notes or terms..."
             className="min-h-[100px]"
           />

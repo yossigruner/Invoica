@@ -16,7 +16,7 @@ import { logger } from "@/utils/logger";
 export const UserAvatar = () => {
   const navigate = useNavigate();
   const { signOut, isLoading } = useAuth();
-  const { profile } = useProfile();
+  const { profile, loading } = useProfile();
 
   const getInitials = (firstName?: string | null, lastName?: string | null) => {
     if (!firstName && !lastName) return '?';
@@ -34,6 +34,16 @@ export const UserAvatar = () => {
       logger.error('Logout failed', error);
     }
   };
+
+  if (loading) {
+    return (
+      <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+        <Avatar className="h-10 w-10 border-2 border-primary/10">
+          <AvatarFallback className="bg-primary/5">...</AvatarFallback>
+        </Avatar>
+      </Button>
+    );
+  }
 
   return (
     <DropdownMenu>
@@ -68,7 +78,7 @@ export const UserAvatar = () => {
         <DropdownMenuSeparator />
         
         <DropdownMenuItem 
-          onClick={() => navigate("/profile")}
+          onClick={() => { navigate("/profile"); }}
           className="py-2.5 cursor-pointer hover:bg-primary/5 focus:bg-primary/5 transition-colors group"
         >
           <User className="mr-3 h-4 w-4 text-primary group-hover:text-primary" />
@@ -76,7 +86,7 @@ export const UserAvatar = () => {
         </DropdownMenuItem>
         
         <DropdownMenuItem 
-          onClick={() => navigate("/billing")}
+          onClick={() => { navigate("/billing"); }}
           className="py-2.5 cursor-pointer hover:bg-primary/5 focus:bg-primary/5 transition-colors group"
         >
           <CreditCard className="mr-3 h-4 w-4 text-primary group-hover:text-primary" />

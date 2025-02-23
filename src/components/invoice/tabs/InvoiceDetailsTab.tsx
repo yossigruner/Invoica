@@ -41,7 +41,7 @@ export const InvoiceDetailsTab = ({ formData, handleInputChange, handleDateChang
               id="invoice-number" 
               placeholder="Invoice number"
               value={formData.invoiceNumber}
-              onChange={(e) => handleInputChange("invoiceNumber", "", e.target.value)}
+              onChange={(e) => { handleInputChange("invoiceNumber", "", e.target.value); }}
               className="flex-1"
             />
             <Button 
@@ -75,7 +75,7 @@ export const InvoiceDetailsTab = ({ formData, handleInputChange, handleDateChang
               <Calendar
                 mode="single"
                 selected={formData.issueDate ? new Date(formData.issueDate) : undefined}
-                onSelect={(date) => handleDateChange("issueDate", date)}
+                onSelect={(date) => { handleDateChange("issueDate", date); }}
                 initialFocus
               />
             </PopoverContent>
@@ -101,7 +101,7 @@ export const InvoiceDetailsTab = ({ formData, handleInputChange, handleDateChang
               <Calendar
                 mode="single"
                 selected={formData.dueDate ? new Date(formData.dueDate) : undefined}
-                onSelect={(date) => handleDateChange("dueDate", date)}
+                onSelect={(date) => { handleDateChange("dueDate", date); }}
                 initialFocus
               />
             </PopoverContent>
@@ -112,7 +112,7 @@ export const InvoiceDetailsTab = ({ formData, handleInputChange, handleDateChang
           <Label htmlFor="currency">Currency:</Label>
           <Select
             value={formData.currency}
-            onValueChange={(value) => handleInputChange("currency", "", value)}
+            onValueChange={(value) => { handleInputChange("currency", "", value); }}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select currency" />

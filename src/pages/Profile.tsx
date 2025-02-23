@@ -80,11 +80,11 @@ const Profile = () => {
   };
 
   const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+    const file = event.target.files[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
-        const result = e.target?.result as string;
+        const result = e.target.result as string;
         setFormData(prev => ({
           ...prev,
           company_logo: result
@@ -129,7 +129,7 @@ const Profile = () => {
         <Card className="max-w-2xl mx-auto p-6">
             <div className="flex flex-col items-center justify-center h-64 gap-4">
               <div className="text-lg text-red-500">Failed to load profile</div>
-              <Button onClick={() => navigate(0)}>Retry</Button>
+              <Button onClick={() => { navigate(0); }}>Retry</Button>
             </div>
           </Card>
         </div>
@@ -294,7 +294,7 @@ const Profile = () => {
                   <Label className="text-gray-700">Company Logo</Label>
                   <input type="file" id="logo" className="hidden" accept="image/*" onChange={handleLogoUpload} />
                   <div
-                    onClick={() => document.getElementById("logo")?.click()}
+                    onClick={() => { document.getElementById("logo").click(); }}
                     className="mt-2 border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all hover:border-primary-400 hover:bg-primary-50/50 group"
                   >
                     {formData.company_logo ? (
@@ -319,7 +319,7 @@ const Profile = () => {
                 <div className="space-y-2 md:col-span-2 group">
                   <Label className="text-gray-700">Signature</Label>
                   <div
-                    onClick={() => setSignatureOpen(true)}
+                    onClick={() => { setSignatureOpen(true); }}
                     className="mt-2 border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all hover:border-primary-400 hover:bg-primary-50/50 group"
                   >
                     {formData.signature ? (
@@ -460,7 +460,7 @@ const Profile = () => {
       
       <SignatureDialog 
         open={signatureOpen}
-        onClose={() => setSignatureOpen(false)}
+        onClose={() => { setSignatureOpen(false); }}
         onSave={handleSignatureSave}
       />
     </div>

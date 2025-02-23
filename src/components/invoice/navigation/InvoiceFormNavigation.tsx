@@ -15,6 +15,8 @@ interface InvoiceFormNavigationProps {
   showTax: boolean;
   showShipping: boolean;
   paymentMethod: string;
+  isEditing?: boolean;
+  initialData?: { id: string } | null;
   calculateTotal: () => {
     subtotal: number;
     discount: number;
@@ -33,28 +35,45 @@ export const InvoiceFormNavigation = ({
   showTax,
   showShipping,
   paymentMethod,
+  isEditing,
+  initialData,
   calculateTotal,
 }: InvoiceFormNavigationProps) => {
   const isFirstTab = currentTab === "from";
   const isLastTab = currentTab === "summary";
-  const { createInvoice, loading } = useInvoices();
+  const { createInvoice, updateInvoice, loading } = useInvoices();
   const navigate = useNavigate();
 
   const handleSaveInvoice = async () => {
     try {
       const totals = calculateTotal();
-      await createInvoice(
-        formData,
-        showDiscount,
-        showTax,
-        showShipping,
-        paymentMethod,
-        totals
-      );
-      toast.success("Invoice saved successfully!");
-      navigate("/invoices");
+      
+      if (isEditing && initialData?.id) {
+        await updateInvoice(
+          initialData.id,
+          formData,
+          showDiscount,
+          showTax,
+          showShipping,
+          paymentMethod,
+          totals
+        );
+        toast.success("Invoice updated successfully!");
+      } else {
+        await createInvoice(
+          formData,
+          showDiscount,
+          showTax,
+          showShipping,
+          paymentMethod,
+          totals
+        );
+        toast.success("Invoice created successfully!");
+      }
+      
+      navigate("/");
     } catch (error) {
-      toast.error("Failed to save invoice. Please try again.");
+      toast.error(isEditing ? "Failed to update invoice" : "Failed to create invoice");
     }
   };
 
@@ -75,7 +94,7 @@ export const InvoiceFormNavigation = ({
           onClick={handleSaveInvoice}
           disabled={loading}
         >
-          {loading ? "Saving..." : "Save Invoice"}
+          {loading ? "Saving..." : isEditing ? "Update Invoice" : "Save Invoice"}
           <Save className="h-4 w-4" />
         </Button>
       ) : (

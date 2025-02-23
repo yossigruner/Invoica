@@ -60,7 +60,7 @@ export const ForgotPasswordForm = ({ onBack }: ForgotPasswordFormProps) => {
               id="email"
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => { setEmail(e.target.value); }}
               placeholder="Enter your email"
               className="h-12"
               required

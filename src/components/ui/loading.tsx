@@ -19,7 +19,7 @@ export const Loading = ({ message = "Loading..." }: LoadingProps) => {
       });
     }, 500);
 
-    return () => clearInterval(timer);
+    return () => { clearInterval(timer); };
   }, []);
 
   return (

@@ -1,14 +1,6 @@
 import { format } from "date-fns";
-
-interface ProfileData {
-  name: string;
-  address: string;
-  city: string;
-  zip: string;
-  country: string;
-  email: string;
-  phone: string;
-}
+import { ProfileData } from "../types/invoice";
+import { logger } from "@/utils/logger";
 
 interface InvoicePreviewHeaderProps {
   logo: string | null;
@@ -27,6 +19,11 @@ export const InvoicePreviewHeader = ({
   dueDate,
   currency
 }: InvoicePreviewHeaderProps) => {
+  logger.info('Rendering invoice preview header', {
+    hasLogo: !!logo,
+    logoValue: logo
+  });
+
   return (
     <div className="flex justify-between items-start mb-8">
       <div>

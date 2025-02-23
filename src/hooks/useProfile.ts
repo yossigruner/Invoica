@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/db/config';
-import { Profile } from '@/db/types';
+import { supabase } from '@/lib/supabase';
+import { Profile } from '@/types';
 import { logger } from '@/utils/logger';
 
 export const useProfile = () => {
@@ -32,7 +32,6 @@ export const useProfile = () => {
       if (profileError) throw profileError;
 
       setProfile(data);
-      logger.info('Profile fetched successfully', { profileId: data?.id });
     } catch (err) {
       const error = err as Error;
       setError(error);

@@ -3,16 +3,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { ChevronUp, ChevronDown, Trash2 } from "lucide-react";
-
-interface InvoiceItem {
-  name: string;
-  quantity: number;
-  rate: number;
-  description: string;
-}
+import { InvoiceFormItem } from "./types/invoice";
+import { logger } from "@/utils/logger";
+import { useEffect } from "react";
 
 interface InvoiceItemFormProps {
-  item: InvoiceItem;
+  item: InvoiceFormItem;
   index: number;
   currency: string;
   onItemChange: (index: number, field: string, value: string | number) => void;
@@ -32,6 +28,16 @@ export const InvoiceItemForm = ({
   isFirst,
   isLast
 }: InvoiceItemFormProps) => {
+  // Log item data when it changes
+  useEffect(() => {
+    logger.info('InvoiceItemForm rendering item:', {
+      index,
+      item,
+      isFirst,
+      isLast
+    });
+  }, [item, index, isFirst, isLast]);
+
   const handleMoveUp = () => {
     if (onMoveItem && !isFirst) {
       onMoveItem(index, index - 1);
@@ -42,6 +48,11 @@ export const InvoiceItemForm = ({
     if (onMoveItem && !isLast) {
       onMoveItem(index, index + 1);
     }
+  };
+
+  const handleChange = (field: string, value: string | number) => {
+    logger.info('Item field change:', { index, field, value });
+    onItemChange(index, field, value);
   };
 
   return (
@@ -70,7 +81,7 @@ export const InvoiceItemForm = ({
           <Button 
             variant="destructive" 
             size="icon"
-            onClick={() => onRemoveItem(index)}
+            onClick={() => { onRemoveItem(index); }}
           >
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -85,8 +96,8 @@ export const InvoiceItemForm = ({
               id={`item-name-${index}`} 
               placeholder="Item name" 
               className="mt-1 bg-white/50 focus:bg-white transition-colors"
-              value={item.name || ''}
-              onChange={(e) => onItemChange(index, "name", e.target.value)}
+              value={item.name}
+              onChange={(e) => handleChange("name", e.target.value)}
             />
           </div>
           <div>
@@ -97,8 +108,8 @@ export const InvoiceItemForm = ({
               min="0"
               placeholder="0" 
               className="mt-1 bg-white/50 focus:bg-white transition-colors"
-              value={item.quantity || ''}
-              onChange={(e) => onItemChange(index, "quantity", Number(e.target.value))}
+              value={item.quantity}
+              onChange={(e) => handleChange("quantity", Number(e.target.value))}
             />
           </div>
         </div>
@@ -112,8 +123,8 @@ export const InvoiceItemForm = ({
               step="0.01"
               placeholder="0" 
               className="mt-1 bg-white/50 focus:bg-white transition-colors"
-              value={item.rate || ''}
-              onChange={(e) => onItemChange(index, "rate", Number(e.target.value))}
+              value={item.rate}
+              onChange={(e) => handleChange("rate", Number(e.target.value))}
             />
           </div>
           <div>
@@ -130,7 +141,7 @@ export const InvoiceItemForm = ({
             placeholder="Item description" 
             className="mt-1 bg-white/50 focus:bg-white transition-colors"
             value={item.description || ''}
-            onChange={(e) => onItemChange(index, "description", e.target.value)}
+            onChange={(e) => handleChange("description", e.target.value)}
           />
         </div>
       </div>

@@ -97,11 +97,11 @@ const ProfileWizard = () => {
   };
 
   const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+    const file = event.target.files[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
-        const result = e.target?.result as string;
+        const result = e.target.result as string;
         setFormData(prev => ({
           ...prev,
           company_logo: result
@@ -162,7 +162,7 @@ const ProfileWizard = () => {
         <Card className="w-full max-w-4xl p-8">
           <div className="flex flex-col items-center justify-center h-64 gap-4">
             <div className="text-lg text-red-500">Failed to load profile data</div>
-            <Button onClick={() => navigate(0)}>Retry</Button>
+            <Button onClick={() => { navigate(0); }}>Retry</Button>
           </div>
         </Card>
       </div>
@@ -281,7 +281,7 @@ const ProfileWizard = () => {
                   onChange={handleLogoUpload}
                 />
                 <div
-                  onClick={() => document.getElementById("logo")?.click()}
+                  onClick={() => { document.getElementById("logo").click(); }}
                   className="mt-2 border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:bg-gray-50 transition-colors"
                 >
                   {formData.company_logo ? (
@@ -309,7 +309,7 @@ const ProfileWizard = () => {
               <div className="space-y-4">
                 <Label>Signature</Label>
                 <div
-                  onClick={() => setSignatureOpen(true)}
+                  onClick={() => { setSignatureOpen(true); }}
                   className="mt-2 border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:bg-gray-50 transition-colors"
                 >
                   {formData.signature ? (
@@ -390,10 +390,10 @@ const ProfileWizard = () => {
                 <Label htmlFor="preferred_currency">Preferred Currency</Label>
                 <Select
                   value={formData.preferred_currency}
-                  onValueChange={(value) => setFormData(prev => ({
+                  onValueChange={(value) => { setFormData(prev => ({
                     ...prev,
                     preferred_currency: value as CurrencyCode
-                  }))}
+                  })); }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select preferred currency" />
@@ -446,7 +446,7 @@ const ProfileWizard = () => {
 
       <SignatureDialog
         open={signatureOpen}
-        onClose={() => setSignatureOpen(false)}
+        onClose={() => { setSignatureOpen(false); }}
         onSave={handleSignatureSave}
       />
     </div>

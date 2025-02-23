@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { generateInvoiceNumber } from "../utils/invoiceUtils";
 import { logger } from "@/utils/logger";
+import { InvoiceFormData } from "../types/invoice";
 
 interface DetailsTabProps {
   formData: {
@@ -18,7 +19,7 @@ interface DetailsTabProps {
     dueDate: string;
     currency: string;
   };
-  onInputChange: (section: string, field: string, value: string) => void;
+  onInputChange: (section: keyof InvoiceFormData | "", field: string, value: string | number) => void;
   onDateChange: (field: string, date: Date | undefined) => void;
 }
 
@@ -52,7 +53,7 @@ export const DetailsTab = ({ formData, onInputChange, onDateChange }: DetailsTab
               id="invoice-number" 
               placeholder="Enter or generate invoice number"
               value={formData.invoiceNumber}
-              onChange={(e) => onInputChange("", "invoiceNumber", e.target.value)}
+              onChange={(e) => { onInputChange("", "invoiceNumber", e.target.value); }}
               className="flex-1"
             />
             <Button 
@@ -133,7 +134,7 @@ export const DetailsTab = ({ formData, onInputChange, onDateChange }: DetailsTab
           <Label htmlFor="currency">Currency:</Label>
           <Select
             value={formData.currency}
-            onValueChange={(value) => onInputChange("", "currency", value)}
+            onValueChange={(value) => { onInputChange("", "currency", value); }}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select currency" />

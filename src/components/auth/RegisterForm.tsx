@@ -20,7 +20,7 @@ export const RegisterForm = () => {
   // Component lifecycle logging
   useEffect(() => {
     logger.debug('RegisterForm Component Mounted');
-    return () => logger.debug('RegisterForm Component Unmounted');
+    return () => { logger.debug('RegisterForm Component Unmounted'); };
   }, []);
 
   // Log loading state changes

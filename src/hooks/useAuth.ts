@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { logger } from '@/utils/logger';
-import { supabase } from '@/db/config';
-import type { Profile } from '@/db/types';
+import { supabase } from '@/lib/supabase';
+import type { Profile } from '@/types';
+import { User } from '@supabase/supabase-js';
 
 // Add immediate console logs to debug
 console.log('=== Starting useAuth.ts ===');
@@ -31,30 +32,22 @@ try {
 export const useAuth = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
 
   // Add immediate effect for testing
   useEffect(() => {
-    console.log('useAuth hook mounted');
-    return () => console.log('useAuth hook unmounted');
+    return () => {  };
   }, []);
 
   // Check Supabase connection when the hook is first used
   useEffect(() => {
     const checkSupabase = async () => {
-      logger.info('🔍 Checking Supabase Setup', {
-        url: import.meta.env.VITE_SUPABASE_URL?.substring(0, 20) + '...',
-        hasKey: !!import.meta.env.VITE_SUPABASE_ANON_KEY
-      });
 
       try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        const { error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
           logger.error('❌ Supabase Session Check Failed', sessionError);
-        } else {
-          logger.info('✅ Supabase Session Check', {
-            hasSession: !!session
-          });
         }
 
         // Try a simple query
@@ -68,9 +61,7 @@ export const useAuth = () => {
             error: queryError.message,
             code: queryError.code
           });
-        } else {
-          logger.success('✅ Supabase Connected Successfully');
-        }
+        } 
       } catch (error) {
         logger.error('❌ Supabase Connection Failed', error);
       }
@@ -82,68 +73,39 @@ export const useAuth = () => {
   // Log when hook is initialized
   useEffect(() => {
     logger.debug('Auth Hook Initialized');
-    return () => logger.debug('Auth Hook Cleanup');
+    return () => { logger.debug('Auth Hook Cleanup'); };
+  }, []);
+
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Function to save user profile data
-  const saveUserProfile = async (profileData: Partial<Omit<Profile, 'id' | 'created_at' | 'updated_at'>>) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) throw new Error('No user found');
+  const saveUserProfile = async (profileData: Partial<Profile>) => {
+    if (!user) throw new Error('No user logged in');
 
-      logger.info('Saving user profile', { userId: user.id });
+    const { error } = await supabase
+      .from('profiles')
+      .upsert({
+        id: user.id,
+        ...profileData,
+        updated_at: new Date().toISOString(),
+      });
 
-      // First check if profile exists
-      const { data: existingProfile, error: fetchError } = await supabase
-        .from('profiles')
-        .select()
-        .eq('user_id', user.id)
-        .single();
-
-      if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 means no rows returned
-        throw fetchError;
-      }
-
-      let result;
-      if (existingProfile) {
-        // Update existing profile
-        const { data, error } = await supabase
-          .from('profiles')
-          .update({
-            ...profileData,
-            updated_at: new Date().toISOString()
-          })
-          .eq('user_id', user.id)
-          .select()
-          .single();
-        
-        if (error) throw error;
-        result = data;
-      } else {
-        // Insert new profile
-        const { data, error } = await supabase
-          .from('profiles')
-          .insert([{
-            user_id: user.id,
-            ...profileData,
-          }])
-          .select()
-          .single();
-        
-        if (error) throw error;
-        result = data;
-      }
-
-      // If this is a profile completion (wizard data), mark it as completed
-      if (profileData.company_name) {
-        localStorage.setItem('profileCompleted', 'true');
-      }
-
-      logger.success('User profile saved', { profileId: result.id });
-      return result;
-    } catch (error) {
-      logger.error('Failed to save user profile', error);
+    if (error) {
+      logger.error('Failed to save profile', error);
       throw error;
     }
   };
@@ -160,8 +122,8 @@ export const useAuth = () => {
 
       if (error) throw error;
 
-      localStorage.setItem('token', data.session?.access_token || '');
-      logger.success('Sign In Successful', { userId: data.user?.id });
+      localStorage.setItem('token', data.session.access_token || '');
+      logger.success('Sign In Successful', { userId: data.user.id });
       toast.success('Successfully signed in!');
       navigate('/');
     } catch (error: any) {
@@ -197,7 +159,7 @@ export const useAuth = () => {
 
       if (error) throw error;
 
-      if (!data.user?.id) {
+      if (!data.user.id) {
         throw new Error('Failed to create user account');
       }
 
@@ -279,13 +241,8 @@ export const useAuth = () => {
     }
   };
 
-  // Log initial configuration
-  logger.info('Auth Configuration', {
-    hasSupabaseUrl: !!import.meta.env.VITE_SUPABASE_URL,
-    hasSupabaseKey: !!import.meta.env.VITE_SUPABASE_ANON_KEY,
-  });
-
   return {
+    user,
     signIn,
     signUp,
     signOut,

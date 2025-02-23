@@ -4,20 +4,15 @@ import { InvoiceFooter } from "./InvoiceFooter";
 import { InvoiceActions } from "../InvoiceActions";
 import { Card } from "@/components/ui/card";
 import { InvoicePreviewContent } from "./InvoicePreviewContent";
-
-interface InvoiceItem {
-  name: string;
-  quantity: number;
-  rate: number;
-  description: string;
-}
+import { InvoiceFormItem, ProfileData } from "../types/invoice";
+import { logger } from "@/utils/logger";
 
 interface InvoiceData {
   invoiceNumber: string;
   issueDate: string;
   dueDate: string;
   currency: string;
-  paymentMethod?: string;
+  paymentMethod: string;
   to: {
     name: string;
     address: string;
@@ -27,7 +22,7 @@ interface InvoiceData {
     email: string;
     phone: string;
   };
-  items: InvoiceItem[];
+  items: InvoiceFormItem[];
   additionalNotes: string;
   paymentTerms: string;
   adjustments: {
@@ -39,9 +34,9 @@ interface InvoiceData {
 
 interface InvoicePreviewContainerProps {
   formData: InvoiceData;
-  profileData: any;
+  profileData: ProfileData;
   logo: string | null;
-  signature?: string | null;
+  signature: string | null;
   calculateTotal: () => {
     subtotal: number;
     discount: number;
@@ -49,6 +44,8 @@ interface InvoicePreviewContainerProps {
     shipping: number;
     total: number;
   };
+  isEditing?: boolean;
+  initialData?: { id: string } | null;
 }
 
 export const InvoicePreviewContainer = ({
@@ -56,8 +53,19 @@ export const InvoicePreviewContainer = ({
   profileData,
   logo,
   signature,
-  calculateTotal
+  calculateTotal,
+  isEditing,
+  initialData
 }: InvoicePreviewContainerProps) => {
+  logger.info('Rendering invoice preview container', {
+    hasLogo: !!logo,
+    logoValue: logo,
+    hasSignature: !!signature,
+    signatureValue: signature,
+    hasProfileData: !!profileData,
+    profileData
+  });
+
   const formatTotalInWords = (amount: number) => {
     return `${amount.toFixed(2)} ${formData.currency}`;
   };
@@ -75,6 +83,8 @@ export const InvoicePreviewContainer = ({
           showShipping={formData.adjustments.shipping.value > 0}
           paymentMethod={formData.paymentMethod || ''}
           calculateTotal={calculateTotal}
+          isEditing={isEditing}
+          initialData={initialData}
         />
       </Card>
 
@@ -85,7 +95,7 @@ export const InvoicePreviewContainer = ({
         </span>
       </div>
 
-      <Card className="p-8 shadow-lg bg-white/80 backdrop-blur-sm border-0">
+      <Card className="p-8 shadow-lg bg-white/80 backdrop-blur-sm border-0" id="invoice-preview">
         <div className="invoice-preview space-y-8">
           <InvoicePreviewHeader
             logo={logo}
@@ -107,10 +117,10 @@ export const InvoicePreviewContainer = ({
             profileData={profileData}
             additionalNotes={formData.additionalNotes}
             paymentTerms={formData.paymentTerms}
-            totalInWords={totalInWords}
             signature={signature}
             paymentMethod={formData.paymentMethod}
           />
+
         </div>
       </Card>
     </div>

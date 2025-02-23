@@ -14,7 +14,7 @@ export const CustomerSearch = ({ value, onChange }: CustomerSearchProps) => {
       <Input
         placeholder="Search customers..."
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => { onChange(e.target.value); }}
         className="pl-10 bg-white/50 focus:bg-white transition-colors"
       />
     </div>

@@ -23,7 +23,7 @@ export const CustomerForm = ({
         <Input 
           id="name" 
           value={formData.name || ''}
-          onChange={(e) => onInputChange("name", e.target.value)}
+          onChange={(e) => { onInputChange("name", e.target.value); }}
           placeholder="Customer name" 
           className="bg-white/50 focus:bg-white transition-colors"
         />
@@ -34,7 +34,7 @@ export const CustomerForm = ({
           id="email" 
           type="email"
           value={formData.email || ''}
-          onChange={(e) => onInputChange("email", e.target.value)}
+          onChange={(e) => { onInputChange("email", e.target.value); }}
           placeholder="customer@example.com" 
           className="bg-white/50 focus:bg-white transition-colors"
         />
@@ -44,7 +44,7 @@ export const CustomerForm = ({
         <Input 
           id="phone"
           value={formData.phone || ''}
-          onChange={(e) => onInputChange("phone", e.target.value)}
+          onChange={(e) => { onInputChange("phone", e.target.value); }}
           placeholder="Phone number" 
           className="bg-white/50 focus:bg-white transition-colors"
         />
@@ -54,7 +54,7 @@ export const CustomerForm = ({
         <Input 
           id="address"
           value={formData.address || ''}
-          onChange={(e) => onInputChange("address", e.target.value)}
+          onChange={(e) => { onInputChange("address", e.target.value); }}
           placeholder="Street address" 
           className="bg-white/50 focus:bg-white transition-colors"
         />
@@ -65,7 +65,7 @@ export const CustomerForm = ({
           <Input 
             id="city"
             value={formData.city || ''}
-            onChange={(e) => onInputChange("city", e.target.value)}
+            onChange={(e) => { onInputChange("city", e.target.value); }}
             placeholder="City" 
             className="bg-white/50 focus:bg-white transition-colors"
           />
@@ -75,7 +75,7 @@ export const CustomerForm = ({
           <Input 
             id="province"
             value={formData.province || ''}
-            onChange={(e) => onInputChange("province", e.target.value)}
+            onChange={(e) => { onInputChange("province", e.target.value); }}
             placeholder="Province/State" 
             className="bg-white/50 focus:bg-white transition-colors"
           />
@@ -87,7 +87,7 @@ export const CustomerForm = ({
           <Input 
             id="zip"
             value={formData.zip || ''}
-            onChange={(e) => onInputChange("zip", e.target.value)}
+            onChange={(e) => { onInputChange("zip", e.target.value); }}
             placeholder="ZIP code" 
             className="bg-white/50 focus:bg-white transition-colors"
           />
@@ -97,7 +97,7 @@ export const CustomerForm = ({
           <Input 
             id="country"
             value={formData.country || ''}
-            onChange={(e) => onInputChange("country", e.target.value)}
+            onChange={(e) => { onInputChange("country", e.target.value); }}
             placeholder="Country" 
             className="bg-white/50 focus:bg-white transition-colors"
           />

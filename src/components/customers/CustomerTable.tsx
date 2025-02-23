@@ -1,7 +1,7 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Pen, Trash2, FileText } from "lucide-react";
-import { Customer } from "@/types/customer";
+import { Customer } from "@/types";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { logger } from "@/utils/logger";
@@ -33,7 +33,7 @@ export const CustomerTable = ({ customers = [], onEdit, onDelete }: CustomerTabl
           address: customer.address || '',
           zip: customer.zip || '',
           city: customer.city || '',
-          province: customer.province || '',
+          state: customer.state || '',
           country: customer.country || '',
           email: customer.email || '',
           phone: customer.phone || ''
@@ -54,7 +54,7 @@ export const CustomerTable = ({ customers = [], onEdit, onDelete }: CustomerTabl
           <Button 
             variant="outline" 
             size="icon"
-            onClick={() => handleCreateInvoice(customer)}
+            onClick={() => { handleCreateInvoice(customer); }}
             title="Create Invoice"
             className="h-8 w-8"
           >
@@ -63,7 +63,7 @@ export const CustomerTable = ({ customers = [], onEdit, onDelete }: CustomerTabl
           <Button 
             variant="outline" 
             size="icon"
-            onClick={() => onEdit(customer)}
+            onClick={() => { onEdit(customer); }}
             title="Edit Customer"
             className="h-8 w-8"
           >
@@ -72,7 +72,7 @@ export const CustomerTable = ({ customers = [], onEdit, onDelete }: CustomerTabl
           <Button 
             variant="outline" 
             size="icon"
-            onClick={() => onDelete(customer)}
+            onClick={() => { onDelete(customer); }}
             title="Delete Customer"
             className="h-8 w-8"
           >
@@ -129,7 +129,7 @@ export const CustomerTable = ({ customers = [], onEdit, onDelete }: CustomerTabl
               <TableHead className="font-semibold">Phone</TableHead>
               <TableHead className="font-semibold">Address</TableHead>
               <TableHead className="font-semibold">City</TableHead>
-              <TableHead className="font-semibold">Province</TableHead>
+              <TableHead className="font-semibold">State</TableHead>
               <TableHead className="font-semibold">ZIP</TableHead>
               <TableHead className="font-semibold">Country</TableHead>
               <TableHead className="text-right font-semibold">Actions</TableHead>
@@ -150,7 +150,7 @@ export const CustomerTable = ({ customers = [], onEdit, onDelete }: CustomerTabl
                   <TableCell>{customer.phone || 'N/A'}</TableCell>
                   <TableCell>{customer.address || 'N/A'}</TableCell>
                   <TableCell>{customer.city || 'N/A'}</TableCell>
-                  <TableCell>{customer.province || 'N/A'}</TableCell>
+                  <TableCell>{customer.state || 'N/A'}</TableCell>
                   <TableCell>{customer.zip || 'N/A'}</TableCell>
                   <TableCell>{customer.country || 'N/A'}</TableCell>
                   <TableCell className="text-right">
@@ -158,7 +158,7 @@ export const CustomerTable = ({ customers = [], onEdit, onDelete }: CustomerTabl
                       <Button 
                         variant="outline" 
                         size="icon"
-                        onClick={() => handleCreateInvoice(customer)}
+                        onClick={() => { handleCreateInvoice(customer); }}
                         title="Create Invoice"
                         className="hover:border-primary hover:text-primary"
                       >
@@ -167,7 +167,7 @@ export const CustomerTable = ({ customers = [], onEdit, onDelete }: CustomerTabl
                       <Button 
                         variant="outline" 
                         size="icon"
-                        onClick={() => onEdit(customer)}
+                        onClick={() => { onEdit(customer); }}
                         title="Edit Customer"
                         className="hover:border-primary hover:text-primary"
                       >
@@ -176,7 +176,7 @@ export const CustomerTable = ({ customers = [], onEdit, onDelete }: CustomerTabl
                       <Button 
                         variant="outline" 
                         size="icon"
-                        onClick={() => onDelete(customer)}
+                        onClick={() => { onDelete(customer); }}
                         title="Delete Customer"
                         className="hover:border-primary hover:text-primary"
                       >
