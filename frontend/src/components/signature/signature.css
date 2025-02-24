@@ -1,0 +1,21 @@
+/* Signature Fonts */
+.signature-font-dancing-script {
+  font-family: "Dancing Script", cursive !important;
+}
+
+.signature-font-great-vibes {
+  font-family: "Great Vibes", cursive !important;
+}
+
+.signature-font-pacifico {
+  font-family: "Pacifico", cursive !important;
+}
+
+.signature-font-alex-brush {
+  font-family: "Alex Brush", cursive !important;
+}
+
+/* Ensure fonts only apply to signature components */
+.signature-preview {
+  font-family: inherit;
+} 

@@ -1,0 +1,20 @@
+{
+  "name": "invoica-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "server"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:server\"",
+    "dev:frontend": "npm run dev -w frontend",
+    "dev:server": "npm run start:dev -w server",
+    "build": "npm run build -w frontend && npm run build -w server",
+    "lint": "npm run lint -w frontend && npm run lint -w server",
+    "type-check": "npm run type-check -w frontend && tsc -p server/tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+} 

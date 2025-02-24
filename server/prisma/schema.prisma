@@ -1,0 +1,139 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String     @id @default(uuid())
+  email     String     @unique
+  password  String
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+  customers Customer[]
+  invoices  Invoice[]
+  profile   Profile?
+
+  @@map("users")
+}
+
+model Profile {
+  id                  String   @id @default(uuid())
+  userId              String   @unique @map("user_id")
+  firstName           String   @map("first_name")
+  lastName            String   @map("last_name")
+  email               String
+  phone               String?
+  address             String?
+  city                String?
+  zip                 String?
+  country             String?
+  companyName         String?  @map("company_name")
+  companyLogo         String?  @map("company_logo")
+  companyAddress      String?  @map("company_address")
+  companyCity         String?  @map("company_city")
+  companyZip          String?  @map("company_zip")
+  companyCountry      String?  @map("company_country")
+  companyPhone        String?  @map("company_phone")
+  companyEmail        String?  @map("company_email")
+  companyWebsite      String?  @map("company_website")
+  companyRegistration String?  @map("company_registration")
+  companyVat          String?  @map("company_vat")
+  signature           String?
+  bankName            String?  @map("bank_name")
+  accountName         String?  @map("account_name")
+  accountNumber       String?  @map("account_number")
+  swiftCode           String?  @map("swift_code")
+  iban                String?
+  preferredCurrency   String   @default("USD") @map("preferred_currency")
+  isProfileCompleted  Boolean  @default(false) @map("is_profile_completed")
+  cloverApiKey        String?  @map("clover_api_key")
+  cloverMerchantId    String?  @map("clover_merchant_id")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("profiles")
+}
+
+model Invoice {
+  id              String        @id @default(uuid())
+  userId          String        @map("user_id")
+  customerId      String?       @map("customer_id")
+  invoiceNumber   String        @unique @map("invoice_number")
+  issueDate       DateTime      @map("issue_date")
+  dueDate         DateTime?     @map("due_date")
+  currency        String
+  paymentMethod   String        @map("payment_method")
+  paymentTerms    String?       @map("payment_terms")
+  additionalNotes String?       @map("additional_notes")
+  status          InvoiceStatus @default(DRAFT)
+  billingName     String        @map("billing_name")
+  billingEmail    String        @map("billing_email")
+  billingPhone    String?       @map("billing_phone")
+  billingAddress  String?       @map("billing_address")
+  billingCity     String?       @map("billing_city")
+  billingZip      String?       @map("billing_zip")
+  billingCountry  String?       @map("billing_country")
+  discountValue   Float         @default(0) @map("discount_value")
+  discountType    String        @default("percentage") @map("discount_type")
+  taxValue        Float         @default(0) @map("tax_value")
+  taxType         String        @default("percentage") @map("tax_type")
+  shippingValue   Float         @default(0) @map("shipping_value")
+  shippingType    String        @default("amount") @map("shipping_type")
+  subtotal        Float
+  total           Float
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+  items           InvoiceItem[]
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  customer        Customer?     @relation(fields: [customerId], references: [id])
+
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id          String   @id @default(uuid())
+  invoiceId   String   @map("invoice_id")
+  name        String
+  description String?
+  quantity    Float
+  rate        Float
+  amount      Float
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@map("invoice_items")
+}
+
+model Customer {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  name      String
+  email     String
+  phone     String?
+  address   String?
+  city      String?
+  state     String?
+  zip       String?
+  country   String?
+  notes     String?
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invoices  Invoice[]
+
+  @@map("customers")
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+  CANCELLED
+}
