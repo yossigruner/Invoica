@@ -1,107 +1,125 @@
-# Invoica
+# Invoica - Professional Invoicing Platform
 
-A professional invoicing platform designed to help businesses create, manage, and track invoices efficiently.
+A modern, full-stack invoicing application built with React, NestJS, and PostgreSQL.
 
-## Features
+## Project Structure
 
-- Create and manage professional invoices
-- Track customers and their information
-- Customize invoice templates with your branding
-- Support for multiple payment methods
-- Secure data storage and backup
-- Comprehensive customer support
+```
+.
+├── frontend/           # React frontend application
+│   ├── src/           # Source files
+│   ├── public/        # Static files
+│   └── ...           # Frontend configuration files
+├── server/            # NestJS backend application
+│   ├── src/          # Source files
+│   ├── prisma/       # Database schema and migrations
+│   └── ...          # Backend configuration files
+├── docker/           # Docker configuration files
+├── supabase/         # Supabase migrations and configuration
+└── ...              # Root configuration files
+```
+
+## Prerequisites
+
+- Node.js 18+ or 20+
+- Docker and Docker Compose
+- PostgreSQL (via Docker)
 
 ## Getting Started
 
-### Local Development
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/invoica.git
+cd invoica
+```
 
-1. Clone the repository
 2. Install dependencies:
 ```bash
+# Install root dependencies
 npm install
+
+# Install frontend dependencies
+npm install -w frontend
+
+# Install backend dependencies
+npm install -w server
 ```
+
 3. Set up environment variables:
-   - Copy `.env.exmaple` to `.env`
-   - Update the following variables in `.env`:
-     ```
-     VITE_SUPABASE_URL=your_supabase_project_url
-     VITE_SUPABASE_ANON_KEY=your_supabase_anon_key 
-     ```
-4. Start the development server:
+   - Copy `.env.example` to `.env` in both frontend and server directories
+   - Update the environment variables as needed
+
+4. Start the PostgreSQL database:
 ```bash
+# Start PostgreSQL and pgAdmin
+docker-compose up -d
+
+# The following services will be available:
+# - PostgreSQL: localhost:5432
+# - pgAdmin: http://localhost:5050
+```
+
+5. Run database migrations:
+```bash
+cd server
+npx prisma migrate deploy
+npx prisma generate
+cd ..
+```
+
+6. Start the development servers:
+```bash
+# Start both frontend and backend
 npm run dev
+
+# Or start them separately:
+npm run dev:frontend  # Frontend only
+npm run dev:server    # Backend only
 ```
 
-### Docker Deployment
+The application will be available at:
+- Frontend: http://localhost:8080
+- Backend: http://localhost:3000
+- API Documentation: http://localhost:3000/api
 
-You can also run Invoica using Docker:
+## Features
 
-1. Build the Docker image:
-```bash
-docker build -t invoica \
-  --build-arg VITE_SUPABASE_URL=your_supabase_url \
-  --build-arg VITE_SUPABASE_ANON_KEY=your_supabase_anon_key \
-  -f docker/Dockerfile .
-```
-
-2. Run the container:
-```bash
-docker run -p 8080:80 invoica
-```
-
-The application will be available at `http://localhost:8080`
-
-#### Docker Environment Variables
-
-- `VITE_SUPABASE_URL`: Your Supabase project URL
-- `VITE_SUPABASE_ANON_KEY`: Your Supabase anonymous key
-
-### Why Nginx?
-
-We chose Nginx as our web server for several reasons:
-
-1. **Performance**: 
-   - Highly efficient at serving static content
-   - Excellent caching capabilities
-   - Low memory footprint
-   - Event-driven architecture for handling concurrent connections
-
-2. **Security**:
-   - Built-in security features
-   - Easy configuration of security headers
-   - Protection against common web vulnerabilities
-   - Rate limiting capabilities
-
-3. **Features**:
-   - Gzip compression for faster content delivery
-   - Client-side routing support for SPA
-   - Efficient SSL/TLS termination
-   - Load balancing capabilities for scaling
-
-4. **Production-Ready**:
-   - Industry standard for serving web applications
-   - Proven reliability at scale
-   - Extensive documentation and community support
-   - Small container size when using alpine-based images
-
-## Development Commands
-
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run lint` - Run linter
+- User authentication and authorization
+- Customer management
+- Invoice creation and management
+- PDF invoice generation
+- Payment processing integration
+- Profile and company settings
+- Multi-currency support
+- Email notifications
 
 ## Tech Stack
 
-- React
-- TypeScript
-- Vite
-- Tailwind CSS
-- Supabase
-- shadcn/ui
-- Docker
-- Nginx
+### Frontend
+- React with TypeScript
+- Vite for build tooling
+- TailwindCSS for styling
+- React Query for data fetching
+- React Hook Form for forms
+- Zod for validation
+- Radix UI for components
+
+### Backend
+- NestJS with TypeScript
+- Prisma as ORM
+- PostgreSQL for database
+- JWT for authentication
+- Swagger for API documentation
+- Class Validator for validation
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ## License
 
-All rights reserved. © Invoica
+This project is licensed under the MIT License - see the LICENSE file for details.

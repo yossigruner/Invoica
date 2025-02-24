@@ -6,9 +6,11 @@ WORKDIR /app
 
 # Copy package files first to leverage Docker cache for dependencies
 COPY package*.json ./
+COPY frontend/package*.json ./frontend/
+COPY server/package*.json ./server/
 
 # Use clean install for reproducible builds
-RUN npm ci
+RUN npm ci && npm ci -w frontend && npm ci -w server
 
 # Copy the rest of the source code
 COPY . .
@@ -20,17 +22,17 @@ ARG VITE_SUPABASE_ANON_KEY
 ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
 ENV VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
 
+# Build both frontend and backend
 RUN npm run build
 
 # Stage 2: Production Stage
 FROM nginx:alpine
 
-# Copy the built files to nginx's serve directory
-# This contains only the necessary production files, reducing image size
-COPY --from=builder /app/dist /usr/share/nginx/html
+# Copy the built frontend files to nginx's serve directory
+COPY --from=builder /app/frontend/dist /usr/share/nginx/html
 
 # Copy custom favicon
-COPY public/favicon.ico /usr/share/nginx/html/favicon.ico
+COPY frontend/public/favicon.ico /usr/share/nginx/html/favicon.ico
 
 # Copy our custom nginx configuration
 # This config includes:
