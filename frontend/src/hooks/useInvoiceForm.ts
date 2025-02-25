@@ -77,50 +77,93 @@ export const useInvoiceForm = (customerData: CustomerData | null, initialData?: 
       logger.info('Loading profile data for invoice', { 
         profileId: profile.id,
         hasLogo: !!profile.companyLogo,
-        logoValue: profile.companyLogo,
+        logoValue: profile.companyLogo?.substring(0, 100),
+        hasSignature: !!profile.signature,
+        signatureValue: profile.signature?.substring(0, 100),
         preferredCurrency: profile.preferredCurrency,
         isLoading,
-        isNewInvoice: !initialData
+        isNewInvoice: !initialData,
+        rawProfile: {
+          ...profile,
+          companyLogo: profile.companyLogo?.substring(0, 100),
+          signature: profile.signature?.substring(0, 100)
+        }
       });
       
-      setProfileData({
-        name: profile.companyName || `${profile.firstName} ${profile.lastName}`.trim(),
-        address: profile.address || '',
-        city: profile.city || '',
-        zip: profile.zip || '',
-        country: profile.country || '',
-        email: profile.email || '',
-        phone: profile.phone || '',
+      // First, determine the company name and logo
+      const companyName = profile.companyName || `${profile.firstName} ${profile.lastName}`.trim();
+      const companyLogo = profile.companyLogo || null;
+      
+      // Then, set up the profile data with company information taking precedence
+      const profileDataToSet: ProfileData = {
+        name: companyName,
+        // Use company address if available, fall back to personal address
+        address: profile.companyAddress || profile.address || '',
+        city: profile.companyCity || profile.city || '',
+        zip: profile.companyZip || profile.zip || '',
+        country: profile.companyCountry || profile.country || '',
+        email: profile.companyEmail || profile.email || '',
+        phone: profile.companyPhone || profile.phone || '',
+        // Banking information
         bankName: profile.bankName || '',
         accountName: profile.accountName || '',
         accountNumber: profile.accountNumber || '',
         swiftCode: profile.swiftCode || '',
-        iban: profile.iban || ''
+        iban: profile.iban || '',
+        // Company specific fields
+        companyLogo: companyLogo,
+        signature: profile.signature || null,
+        preferredCurrency: profile.preferredCurrency || '',
+        // Optional fields
+        cloverApiKey: profile.cloverApiKey,
+        cloverMerchantId: profile.cloverMerchantId
+      };
+
+      logger.info('Setting profile data:', { 
+        hasLogo: !!profileDataToSet.companyLogo,
+        hasSignature: !!profileDataToSet.signature,
+        logoValue: profileDataToSet.companyLogo?.substring(0, 100),
+        signatureValue: profileDataToSet.signature?.substring(0, 100),
+        profileKeys: Object.keys(profileDataToSet),
+        fullProfileData: {
+          ...profileDataToSet,
+          companyLogo: profileDataToSet.companyLogo?.substring(0, 100),
+          signature: profileDataToSet.signature?.substring(0, 100)
+        }
       });
+      
+      setProfileData(profileDataToSet);
+      
+      // Set logo and signature separately
+      if (companyLogo) {
+        logger.info('Setting logo:', {
+          logoValue: companyLogo.substring(0, 100),
+          logoLength: companyLogo.length,
+          isDataUrl: companyLogo.startsWith('data:'),
+          isBase64: companyLogo.includes('base64,')
+        });
+        setLogo(companyLogo);
+      }
+      
+      if (profile.signature) {
+        logger.info('Setting signature:', {
+          signatureValue: profile.signature.substring(0, 100),
+          signatureLength: profile.signature.length,
+          isDataUrl: profile.signature.startsWith('data:'),
+          isBase64: profile.signature.includes('base64,')
+        });
+        setSignature(profile.signature);
+      }
 
       // Set currency from profile only for new invoices
       if (!initialData && profile.preferredCurrency) {
-        logger.info('Setting currency from profile for new invoice:', { 
-          currency: profile.preferredCurrency 
-        });
         setFormData(prev => ({
           ...prev,
-          currency: profile.preferredCurrency || prev.currency // Keep existing currency as fallback
+          currency: profile.preferredCurrency || prev.currency
         }));
       }
-
-      if (profile.companyLogo) {
-        logger.info('Setting logo from profile', { logo: profile.companyLogo });
-        setLogo(profile.companyLogo);
-      } else {
-        logger.info('No logo found in profile');
-      }
-
-      if (profile.signature) {
-        setSignature(profile.signature);
-      }
     }
-  }, [profile, setProfileData, setLogo, setSignature, setFormData, initialData]);
+  }, [profile, setProfileData, setLogo, setSignature, setFormData, initialData, isLoading]);
 
   const handleInputChange = useCallback((section: string, field: string, value: string | number) => {
     logger.debug('Handling input change', { section, field, value });

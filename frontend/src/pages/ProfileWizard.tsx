@@ -40,29 +40,29 @@ const tabs = [
 
 const ProfileWizard = () => {
   const navigate = useNavigate();
-  const { profile, loading: profileLoading, error: profileError, createProfile } = useProfile();
+  const { profile, isLoading: profileLoading, error: profileError, updateProfile } = useProfile();
   const [currentTab, setCurrentTab] = useState("personal");
   const [signatureOpen, setSignatureOpen] = useState(false);
   const [formData, setFormData] = useState({
-    first_name: '',
-    last_name: '',
+    firstName: '',
+    lastName: '',
     email: '',
     phone: '',
     address: '',
     city: '',
     zip: '',
     country: '',
-    company_name: '',
-    company_logo: null as string | null,
+    companyName: '',
+    companyLogo: null as string | null,
     signature: null as string | null,
-    business_type: '',
-    tax_number: '',
-    bank_name: '',
-    account_name: '',
-    account_number: '',
-    swift_code: '',
+    businessType: '',
+    taxNumber: '',
+    bankName: '',
+    accountName: '',
+    accountNumber: '',
+    swiftCode: '',
     iban: '',
-    preferred_currency: 'USD' as CurrencyCode
+    preferredCurrency: 'USD' as CurrencyCode
   });
 
   // Load existing profile data when component mounts
@@ -72,12 +72,12 @@ const ProfileWizard = () => {
       setFormData(prev => ({
         ...prev,
         ...profile,
-        first_name: profile.first_name || '',
-        last_name: profile.last_name || '',
+        firstName: profile.firstName || '',
+        lastName: profile.lastName || '',
         email: profile.email || '',
-        company_logo: profile.company_logo || null,
+        companyLogo: profile.companyLogo || null,
         signature: profile.signature || null,
-        preferred_currency: (profile.preferred_currency as CurrencyCode) || 'USD'
+        preferredCurrency: (profile.preferredCurrency as CurrencyCode) || 'USD'
       }));
     }
   }, [profile]);
@@ -97,17 +97,19 @@ const ProfileWizard = () => {
   };
 
   const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files[0];
-    if (file) {
+    const files = event.target.files;
+    if (files && files[0]) {
       const reader = new FileReader();
       reader.onload = (e) => {
-        const result = e.target.result as string;
-        setFormData(prev => ({
-          ...prev,
-          company_logo: result
-        }));
+        const result = e.target?.result;
+        if (typeof result === 'string') {
+          setFormData(prev => ({
+            ...prev,
+            companyLogo: result
+          }));
+        }
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(files[0]);
     }
   };
 
@@ -118,10 +120,12 @@ const ProfileWizard = () => {
     try {
       const profileData = {
         ...formData,
-        is_profile_completed: true
+        companyLogo: formData.companyLogo || undefined,
+        signature: formData.signature || undefined,
+        isProfileCompleted: true
       };
 
-      await createProfile(profileData);
+      await updateProfile(profileData);
       toast.success('Profile setup completed!');
       navigate('/');
     } catch (error) {
@@ -179,9 +183,13 @@ const ProfileWizard = () => {
 
         <form onSubmit={handleSubmit}>
           <Tabs value={currentTab} onValueChange={setCurrentTab}>
-            <TabsList className="grid grid-cols-3 w-full">
+            <TabsList className="grid grid-cols-3 gap-4 mb-8">
               {tabs.map((tab) => (
-                <TabsTrigger key={tab.id} value={tab.id}>
+                <TabsTrigger
+                  key={tab.id}
+                  value={tab.id}
+                  className="w-full"
+                >
                   {tab.label}
                 </TabsTrigger>
               ))}
@@ -242,31 +250,31 @@ const ProfileWizard = () => {
 
             <TabsContent value="company" className="space-y-6 mt-6">
               <div className="space-y-4">
-                <Label htmlFor="company_name">Company Name</Label>
+                <Label htmlFor="companyName">Company Name</Label>
                 <Input
-                  id="company_name"
-                  value={formData.company_name}
-                  onChange={handleInputChange('company_name')}
+                  id="companyName"
+                  value={formData.companyName}
+                  onChange={handleInputChange('companyName')}
                   placeholder="Company Name"
                 />
               </div>
 
               <div className="space-y-4">
-                <Label htmlFor="business_type">Business Type</Label>
+                <Label htmlFor="businessType">Business Type</Label>
                 <Input
-                  id="business_type"
-                  value={formData.business_type}
-                  onChange={handleInputChange('business_type')}
+                  id="businessType"
+                  value={formData.businessType}
+                  onChange={handleInputChange('businessType')}
                   placeholder="Business Type"
                 />
               </div>
 
               <div className="space-y-4">
-                <Label htmlFor="tax_number">Tax Number</Label>
+                <Label htmlFor="taxNumber">Tax Number</Label>
                 <Input
-                  id="tax_number"
-                  value={formData.tax_number}
-                  onChange={handleInputChange('tax_number')}
+                  id="taxNumber"
+                  value={formData.taxNumber}
+                  onChange={handleInputChange('taxNumber')}
                   placeholder="Tax Number"
                 />
               </div>
@@ -284,10 +292,10 @@ const ProfileWizard = () => {
                   onClick={() => { document.getElementById("logo").click(); }}
                   className="mt-2 border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:bg-gray-50 transition-colors"
                 >
-                  {formData.company_logo ? (
+                  {formData.companyLogo ? (
                     <div className="flex flex-col items-center gap-2">
                       <img
-                        src={formData.company_logo}
+                        src={formData.companyLogo}
                         alt="Company Logo"
                         className="max-h-32 object-contain"
                       />
@@ -337,41 +345,41 @@ const ProfileWizard = () => {
 
             <TabsContent value="banking" className="space-y-6 mt-6">
               <div className="space-y-4">
-                <Label htmlFor="bank_name">Bank Name</Label>
+                <Label htmlFor="bankName">Bank Name</Label>
                 <Input
-                  id="bank_name"
-                  value={formData.bank_name}
-                  onChange={handleInputChange('bank_name')}
+                  id="bankName"
+                  value={formData.bankName}
+                  onChange={handleInputChange('bankName')}
                   placeholder="Bank Name"
                 />
               </div>
 
               <div className="space-y-4">
-                <Label htmlFor="account_name">Account Name</Label>
+                <Label htmlFor="accountName">Account Name</Label>
                 <Input
-                  id="account_name"
-                  value={formData.account_name}
-                  onChange={handleInputChange('account_name')}
+                  id="accountName"
+                  value={formData.accountName}
+                  onChange={handleInputChange('accountName')}
                   placeholder="Account Name"
                 />
               </div>
 
               <div className="space-y-4">
-                <Label htmlFor="account_number">Account Number</Label>
+                <Label htmlFor="accountNumber">Account Number</Label>
                 <Input
-                  id="account_number"
-                  value={formData.account_number}
-                  onChange={handleInputChange('account_number')}
+                  id="accountNumber"
+                  value={formData.accountNumber}
+                  onChange={handleInputChange('accountNumber')}
                   placeholder="Account Number"
                 />
               </div>
 
               <div className="space-y-4">
-                <Label htmlFor="swift_code">SWIFT/BIC Code</Label>
+                <Label htmlFor="swiftCode">SWIFT/BIC Code</Label>
                 <Input
-                  id="swift_code"
-                  value={formData.swift_code}
-                  onChange={handleInputChange('swift_code')}
+                  id="swiftCode"
+                  value={formData.swiftCode}
+                  onChange={handleInputChange('swiftCode')}
                   placeholder="SWIFT/BIC Code"
                 />
               </div>
@@ -387,12 +395,12 @@ const ProfileWizard = () => {
               </div>
 
               <div className="space-y-4">
-                <Label htmlFor="preferred_currency">Preferred Currency</Label>
+                <Label htmlFor="preferredCurrency">Preferred Currency</Label>
                 <Select
-                  value={formData.preferred_currency}
+                  value={formData.preferredCurrency}
                   onValueChange={(value) => { setFormData(prev => ({
                     ...prev,
-                    preferred_currency: value as CurrencyCode
+                    preferredCurrency: value as CurrencyCode
                   })); }}
                 >
                   <SelectTrigger>

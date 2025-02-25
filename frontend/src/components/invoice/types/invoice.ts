@@ -61,8 +61,11 @@ export interface ProfileData {
   accountNumber: string;
   swiftCode: string;
   iban: string;
-  clover_api_key?: string;
-  clover_merchant_id?: string;
+  cloverApiKey?: string;
+  cloverMerchantId?: string;
+  signature?: string | null;
+  companyLogo?: string | null;
+  preferredCurrency?: string;
 }
 
 export interface InvoiceItem {

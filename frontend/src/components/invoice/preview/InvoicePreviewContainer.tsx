@@ -58,7 +58,7 @@ export const InvoicePreviewContainer = ({
 }: InvoicePreviewContainerProps) => {
   if (!profileData) {
     return (
-      <div className="bg-white rounded-lg shadow-lg p-8">
+      <div className="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg">
         <div className="flex items-center justify-center h-40">
           <p className="text-gray-500">Loading profile data...</p>
         </div>
@@ -67,15 +67,17 @@ export const InvoicePreviewContainer = ({
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-8">
-      <InvoicePreview
-        formData={formData}
-        showDiscount={showDiscount}
-        showTax={showTax}
-        showShipping={showShipping}
-        profileData={profileData}
-        calculateTotal={calculateTotal}
-      />
+    <div className="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg">
+      <div id="invoice-preview" className="bg-white">
+        <InvoicePreview
+          formData={formData}
+          showDiscount={showDiscount}
+          showTax={showTax}
+          showShipping={showShipping}
+          profileData={profileData}
+          calculateTotal={calculateTotal}
+        />
+      </div>
     </div>
   );
 };

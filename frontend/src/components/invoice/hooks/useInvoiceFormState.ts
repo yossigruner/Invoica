@@ -91,6 +91,20 @@ export const useInvoiceFormState = (customerData: CustomerData | null, initialDa
   const initialPaymentMethod = initialData?.paymentMethod || initialData?.payment_method || "bank";
   logger.info('Initial payment method:', { initialPaymentMethod });
 
+  // Check if we have any adjustment values in the initial data
+  const hasInitialDiscount = !!(initialData?.discountValue || initialData?.discount_value);
+  const hasInitialTax = !!(initialData?.taxValue || initialData?.tax_value);
+  const hasInitialShipping = !!(initialData?.shippingValue || initialData?.shipping_value);
+
+  logger.info('Initial adjustments:', {
+    hasDiscount: hasInitialDiscount,
+    hasTax: hasInitialTax,
+    hasShipping: hasInitialShipping,
+    discountValue: initialData?.discountValue || initialData?.discount_value,
+    taxValue: initialData?.taxValue || initialData?.tax_value,
+    shippingValue: initialData?.shippingValue || initialData?.shipping_value
+  });
+
   const [formData, setFormData] = useState<InvoiceFormData>({
     to: {
       id: initialData?.customerId || customerData?.id || "",
@@ -109,15 +123,15 @@ export const useInvoiceFormState = (customerData: CustomerData | null, initialDa
     items: initialItems,
     adjustments: {
       discount: {
-        type: initialData?.discountType || "percentage",
+        type: initialData?.discountType === 'fixed' ? 'amount' : 'percentage',
         value: initialData?.discountValue || 0
       },
       tax: {
-        type: initialData?.taxType || "percentage",
+        type: initialData?.taxType === 'fixed' ? 'amount' : 'percentage',
         value: initialData?.taxValue || 0
       },
       shipping: {
-        type: initialData?.shippingType || "amount",
+        type: initialData?.shippingType === 'fixed' ? 'amount' : 'percentage',
         value: initialData?.shippingValue || 0
       }
     },
@@ -149,10 +163,10 @@ export const useInvoiceFormState = (customerData: CustomerData | null, initialDa
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [logo, setLogo] = useState<string>("");
   const [signature, setSignature] = useState<string>("");
-  const [showDiscount, setShowDiscount] = useState(false);
-  const [showTax, setShowTax] = useState(false);
-  const [showShipping, setShowShipping] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<"bank" | "other">(initialPaymentMethod as "bank" | "other");
+  const [showDiscount, setShowDiscount] = useState(hasInitialDiscount);
+  const [showTax, setShowTax] = useState(hasInitialTax);
+  const [showShipping, setShowShipping] = useState(hasInitialShipping);
+  const [paymentMethod, setPaymentMethod] = useState<"bank" | "cash" | "card">(initialPaymentMethod as "bank" | "cash" | "card");
 
   return {
     formData,
