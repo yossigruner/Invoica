@@ -56,7 +56,7 @@ export class ProfileController {
   }))
   async uploadLogo(@Request() req: any, @UploadedFile() file: Express.Multer.File) {
     const imageUrl = `/profile/images/${file.filename}`;
-    await this.profileService.update(req.user.id, { company_logo: imageUrl });
+    await this.profileService.update(req.user.id, { companyLogo: imageUrl });
     return { imageUrl };
   }
 

@@ -25,27 +25,52 @@ export class UpdateProfileDto {
   @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
-  address?: string;
-
-  @ApiProperty({ required: false })
-  @IsString()
-  @IsOptional()
-  city?: string;
-
-  @ApiProperty({ required: false })
-  @IsString()
-  @IsOptional()
-  zip?: string;
-
-  @ApiProperty({ required: false })
-  @IsString()
-  @IsOptional()
-  country?: string;
-
-  @ApiProperty({ required: false })
-  @IsString()
-  @IsOptional()
   companyName?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  companyAddress?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  companyCity?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  companyZip?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  companyCountry?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  companyPhone?: string;
+
+  @ApiProperty({ required: false })
+  @IsEmail()
+  @IsOptional()
+  companyEmail?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  companyWebsite?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  companyRegistration?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  companyVat?: string;
 
   @ApiProperty({ required: false })
   @IsString()
@@ -88,11 +113,6 @@ export class UpdateProfileDto {
   preferredCurrency?: string;
 
   @ApiProperty({ required: false })
-  @IsBoolean()
-  @IsOptional()
-  isProfileCompleted?: boolean;
-
-  @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
   cloverApiKey?: string;
@@ -101,4 +121,9 @@ export class UpdateProfileDto {
   @IsString()
   @IsOptional()
   cloverMerchantId?: string;
+
+  @ApiProperty({ required: false })
+  @IsBoolean()
+  @IsOptional()
+  isProfileCompleted?: boolean;
 } 
