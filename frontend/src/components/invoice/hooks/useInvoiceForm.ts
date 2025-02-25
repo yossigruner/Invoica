@@ -49,7 +49,6 @@ export const useInvoiceForm = (customerData: CustomerData | null, initialData?: 
   }, [paymentMethod, setFormData]);
 
   const handleInputChange = useCallback((section: keyof InvoiceFormData | "", field: string, value: string | number) => {
-    logger.info('Input changed:', { section, field, value });
     setFormData(prev => {
       if (section === "") {
         // Log payment-related changes

@@ -11,7 +11,7 @@ interface PaymentTabProps {
   };
   paymentMethod: string;
   setPaymentMethod: (value: string) => void;
-  onInputChange: (section: keyof InvoiceFormData | "", field: string, value: string | number) => void;
+  onInputChange: (section: "" | keyof InvoiceFormData, field: string, value: string | number) => void;
 }
 
 export const PaymentTab = ({

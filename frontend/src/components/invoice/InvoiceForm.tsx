@@ -22,6 +22,8 @@ import { Invoice } from '@/api/invoices';
 import { Save, Mail, MessageSquare, FileDown } from "lucide-react";
 import html2pdf from "html2pdf.js";
 import { format } from "date-fns";
+import { Button } from "@/components/ui/button";
+import { InvoicePreview } from "./InvoicePreview";
 
 const TABS = ["from", "details", "items", "payment", "summary"] as const;
 
@@ -191,23 +193,26 @@ export const InvoiceForm = ({ initialData, isEditing }: InvoiceFormProps) => {
     paymentMethod: string,
     totals: ReturnType<typeof calculateTotal>
   ) => {
-    // Log payment information
-    console.log('Payment information:', {
-      paymentMethod,
-      paymentTerms: formData.paymentTerms,
-      formDataPaymentMethod: formData.paymentMethod
+    logger.info('Transforming form data:', {
+      formData,
+      showDiscount,
+      showTax,
+      showShipping,
+      paymentMethod
     });
 
-    return {
+    // Transform the data to match the server's expected structure
+    const transformedData = {
       invoiceNumber: formData.invoiceNumber,
       issueDate: formData.issueDate,
       dueDate: formData.dueDate,
       currency: formData.currency,
       paymentMethod: paymentMethod,
-      paymentTerms: formData.paymentTerms,
+      paymentTerms: formData.paymentTerms || '',
+      additionalNotes: formData.additionalNotes || '',
       billingName: formData.to.name,
       billingEmail: formData.to.email,
-      billingPhone: formData.to.phone,
+      billingPhone: formData.to.phone || '',
       billingAddress: formData.to.address,
       billingCity: formData.to.city,
       billingZip: formData.to.zip,
@@ -215,18 +220,22 @@ export const InvoiceForm = ({ initialData, isEditing }: InvoiceFormProps) => {
       status: 'DRAFT' as const,
       items: formData.items.map((item: InvoiceFormItem) => ({
         name: item.name,
-        description: item.description,
-        quantity: item.quantity,
-        rate: item.rate,
+        description: item.description || '',
+        quantity: Number(item.quantity),
+        rate: Number(item.rate),
       })),
-      discountValue: showDiscount ? formData.adjustments.discount.value : undefined,
-      discountType: showDiscount ? formData.adjustments.discount.type : undefined,
-      taxValue: showTax ? formData.adjustments.tax.value : undefined,
-      taxType: showTax ? formData.adjustments.tax.type : undefined,
-      shippingValue: showShipping ? formData.adjustments.shipping.value : undefined,
-      shippingType: showShipping ? formData.adjustments.shipping.type : undefined,
+      discountType: showDiscount ? (formData.adjustments.discount.type === 'amount' ? 'fixed' : 'percentage') : undefined,
+      discountValue: showDiscount ? Number(formData.adjustments.discount.value) : undefined,
+      taxType: showTax ? (formData.adjustments.tax.type === 'amount' ? 'fixed' : 'percentage') : undefined,
+      taxValue: showTax ? Number(formData.adjustments.tax.value) : undefined,
+      shippingType: showShipping ? (formData.adjustments.shipping.type === 'amount' ? 'fixed' : 'percentage') : undefined,
+      shippingValue: showShipping ? Number(formData.adjustments.shipping.value) : undefined,
       customerId: formData.to.id || undefined
     };
+
+    logger.info('Transformed data:', transformedData);
+
+    return transformedData;
   };
 
   const handleSaveInvoice = async () => {
@@ -249,18 +258,22 @@ export const InvoiceForm = ({ initialData, isEditing }: InvoiceFormProps) => {
         formData,
         transformedData,
         isEditing,
-        initialData
+        initialData,
+        invoiceId: initialData?.id
       });
       
       if (isEditing && initialData?.id) {
-        await updateInvoice({
+        logger.info('Updating invoice:', { id: initialData.id });
+        const response = await updateInvoice({
           id: initialData.id,
           data: transformedData
         });
+        logger.info('Update response:', response);
         toast.success("Invoice updated successfully!");
         navigate("/");
       } else {
-        await createInvoice(transformedData);
+        const response = await createInvoice(transformedData);
+        logger.info('Create response:', response);
         toast.success("Invoice created successfully!");
         navigate("/");
       }
@@ -277,7 +290,13 @@ export const InvoiceForm = ({ initialData, isEditing }: InvoiceFormProps) => {
       } else {
         toast.error(isEditing ? "Failed to update invoice" : "Failed to create invoice");
       }
-      logger.error(isEditing ? 'Failed to update invoice' : 'Failed to create invoice', { error, formData });
+      logger.error(isEditing ? 'Failed to update invoice' : 'Failed to create invoice', { 
+        error, 
+        formData,
+        isEditing,
+        invoiceId: initialData?.id,
+        errorDetails: error.response?.data
+      });
     }
   };
 
@@ -326,137 +345,139 @@ export const InvoiceForm = ({ initialData, isEditing }: InvoiceFormProps) => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid lg:grid-cols-2 gap-6">
-        {/* Left column - Form */}
-        <div className="space-y-6">
-          <Card className="p-6 shadow-lg bg-white/80 backdrop-blur-sm">
-            <Tabs value={currentTab} onValueChange={handleTabChange} className="w-full">
-              <InvoiceFormTabs currentTab={currentTab} completedTabs={completedTabs} />
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto p-4 lg:p-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Form Section */}
+          <div>
+            <Card className="p-6 shadow-lg bg-white/80 backdrop-blur-sm">
+              <div className="space-y-8">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h1 className="text-2xl font-bold text-gray-900">
+                      {isEditing ? 'Edit Invoice' : 'Create New Invoice'}
+                    </h1>
+                    <p className="text-sm text-gray-500">
+                      {isEditing ? 'Update your invoice details' : 'Fill in the details to create a new invoice'}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleSaveInvoice}
+                      disabled={invoicesLoading}
+                      className="flex items-center gap-2"
+                    >
+                      <Save className="h-4 w-4" />
+                      {invoicesLoading ? "Saving..." : isEditing ? "Update" : "Save"}
+                    </Button>
+                    <Button
+                      onClick={handleGeneratePDF}
+                      variant="outline"
+                      className="flex items-center gap-2"
+                    >
+                      <FileDown className="h-4 w-4" />
+                      PDF
+                    </Button>
+                  </div>
+                </div>
 
-              <div className="mt-6">
-                <TabsContent value="from">
-                  <CustomerInfoTab
-                    formData={formData}
-                    onInputChange={handleInputChange as InputChangeHandler}
-                  />
-                </TabsContent>
+                <div className="space-y-6">
+                  <InvoiceFormTabs
+                    currentTab={currentTab}
+                    completedTabs={completedTabs}
+                    onTabChange={handleTabChange}
+                  >
+                    <div className="mt-6 max-w-2xl mx-auto">
+                      <TabsContent value="from" className="px-1">
+                        <CustomerInfoTab
+                          formData={formData}
+                          onInputChange={handleInputChange}
+                        />
+                      </TabsContent>
 
-                <TabsContent value="details">
-                  <DetailsTab
-                    formData={formData}
-                    onInputChange={handleInputChange as InputChangeHandler}
-                    onDateChange={handleDateChange}
-                    isEditing={isEditing}
-                  />
-                </TabsContent>
+                      <TabsContent value="details" className="px-1">
+                        <DetailsTab
+                          formData={formData}
+                          onInputChange={handleInputChange}
+                          onDateChange={handleDateChange}
+                          isEditing={isEditing}
+                        />
+                      </TabsContent>
 
-                <TabsContent value="items">
-                  <ItemsTab
-                    formData={formData}
-                    onItemChange={handleItemChange}
-                    onRemoveItem={removeItem}
-                    onMoveItem={handleMoveItem}
-                    onAddItem={addNewItem}
-                  />
-                </TabsContent>
+                      <TabsContent value="items" className="px-1">
+                        <ItemsTab
+                          formData={formData}
+                          onItemChange={handleItemChange}
+                          onAddItem={addNewItem}
+                          onRemoveItem={removeItem}
+                          onMoveItem={handleMoveItem}
+                        />
+                      </TabsContent>
 
-                <TabsContent value="payment">
-                  <PaymentTab
-                    formData={formData}
-                    paymentMethod={paymentMethod}
-                    setPaymentMethod={(value: string) => setPaymentMethod(value as "bank" | "other")}
-                    onInputChange={handleInputChange as InputChangeHandler}
-                  />
-                </TabsContent>
+                      <TabsContent value="payment" className="px-1">
+                        <PaymentTab
+                          formData={formData}
+                          paymentMethod={paymentMethod}
+                          setPaymentMethod={(value: string) => setPaymentMethod(value as "bank" | "cash" | "card")}
+                          onInputChange={handleInputChange}
+                        />
+                      </TabsContent>
 
-                <TabsContent value="summary">
-                  <SummaryTab
-                    formData={formData}
-                    showDiscount={showDiscount}
-                    showTax={showTax}
-                    showShipping={showShipping}
-                    onInputChange={(section, field, value) => handleInputChange(section as keyof InvoiceFormData | "", field, value)}
-                    onShowDiscountChange={setShowDiscount}
-                    onShowTaxChange={setShowTax}
-                    onShowShippingChange={setShowShipping}
-                    onAdjustmentChange={handleAdjustmentChange}
-                    calculateTotal={calculateTotal}
-                  />
-                </TabsContent>
-              </div>
+                      <TabsContent value="summary" className="px-1">
+                        <SummaryTab
+                          formData={formData}
+                          onInputChange={(section: string, field: string, value: string) => handleInputChange(section as keyof InvoiceFormData | "", field, value)}
+                          showDiscount={showDiscount}
+                          showTax={showTax}
+                          showShipping={showShipping}
+                          onShowDiscountChange={setShowDiscount}
+                          onShowTaxChange={setShowTax}
+                          onShowShippingChange={setShowShipping}
+                          onAdjustmentChange={handleAdjustmentChange}
+                          calculateTotal={calculateTotal}
+                        />
+                      </TabsContent>
+                    </div>
+                  </InvoiceFormTabs>
+                </div>
 
-              <InvoiceFormNavigation
-                currentTab={currentTab}
-                onNext={handleNext}
-                onBack={handleBack}
-                formData={formData}
-                showDiscount={showDiscount}
-                showTax={showTax}
-                showShipping={showShipping}
-                paymentMethod={paymentMethod}
-                calculateTotal={calculateTotal}
-                isEditing={isEditing}
-                initialData={initialData}
-              />
-            </Tabs>
-          </Card>
-        </div>
-
-        {/* Right column - Actions and Preview */}
-        <div className="space-y-6">
-          <Card className="p-6 shadow-lg bg-white/80 backdrop-blur-sm">
-            <h2 className="text-lg font-semibold mb-4">Actions</h2>
-            <p className="text-sm text-gray-500 mb-4">Operations and preview</p>
-            <div className="grid grid-cols-1 gap-4">
-              <div className="grid grid-cols-2 gap-4">
-                <button 
-                  onClick={handleSaveInvoice}
-                  disabled={invoicesLoading}
-                  className="p-4 rounded-lg border border-gray-200 hover:border-primary/20 hover:bg-primary/5 transition-colors text-center font-medium flex items-center justify-center gap-2"
-                >
-                  <Save className="h-4 w-4" />
-                  {invoicesLoading ? "Saving..." : isEditing ? "Update Draft" : "Save Draft"}
-                </button>
-                <button className="p-4 rounded-lg border border-gray-200 hover:border-primary/20 hover:bg-primary/5 transition-colors text-center flex items-center justify-center gap-2">
-                  <Mail className="h-4 w-4" />
-                  Send via Email
-                </button>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <button className="p-4 rounded-lg border border-gray-200 hover:border-primary/20 hover:bg-primary/5 transition-colors text-center flex items-center justify-center gap-2">
-                  <MessageSquare className="h-4 w-4" />
-                  Send via SMS
-                </button>
-                <button 
-                  onClick={handleGeneratePDF}
-                  className="p-4 rounded-lg border border-gray-200 hover:border-primary/20 hover:bg-primary/5 transition-colors text-center flex items-center justify-center gap-2"
-                >
-                  <FileDown className="h-4 w-4" />
-                  Generate PDF
-                </button>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-6 shadow-lg bg-white/80 backdrop-blur-sm lg:sticky lg:top-6">
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg font-semibold">Live Preview</h2>
-                <span className="text-sm text-gray-500">(Updates in real-time as you edit)</span>
-              </div>
-              <div id="invoice-preview">
-                <InvoicePreviewContainer
-                  profileData={profileData}
+                <InvoiceFormNavigation
+                  currentTab={currentTab}
+                  onNext={handleNext}
+                  onBack={handleBack}
                   formData={formData}
                   showDiscount={showDiscount}
                   showTax={showTax}
                   showShipping={showShipping}
+                  paymentMethod={paymentMethod}
                   calculateTotal={calculateTotal}
+                  isEditing={isEditing}
+                  initialData={initialData}
                 />
               </div>
-            </div>
-          </Card>
+            </Card>
+          </div>
+
+          {/* Live Preview Section */}
+          <div>
+            <Card className="p-6 shadow-lg bg-white/80 backdrop-blur-sm">
+              <div className="space-y-4">
+                <h2 className="text-lg font-semibold text-gray-900">Live Preview</h2>
+                <div id="invoice-preview">
+                  <InvoicePreview
+                    formData={formData}
+                    showDiscount={showDiscount}
+                    showTax={showTax}
+                    showShipping={showShipping}
+                    profileData={profileData}
+                    calculateTotal={calculateTotal}
+                    logo={logo}
+                    signature={signature}
+                  />
+                </div>
+              </div>
+            </Card>
+          </div>
         </div>
       </div>
     </div>

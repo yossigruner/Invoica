@@ -1,16 +1,18 @@
-import { TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { TabsList, TabsTrigger, Tabs, TabsContent } from "@/components/ui/tabs";
 import { FileText, User, ListChecks, CreditCard, ClipboardList, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ReactNode } from "react";
 
 export type TabType = "from" | "details" | "items" | "payment" | "summary";
 
 interface InvoiceFormTabsProps {
   currentTab: TabType;
   completedTabs?: TabType[];
+  onTabChange?: (value: string) => void;
+  children?: ReactNode;
 }
 
-export const InvoiceFormTabs = ({ currentTab, completedTabs = [] }: InvoiceFormTabsProps) => {
+export const InvoiceFormTabs = ({ currentTab, completedTabs = [], onTabChange, children }: InvoiceFormTabsProps) => {
   const getTabIcon = (tab: TabType, isCompleted: boolean) => {
     if (isCompleted) {
       return <Check className="h-4 w-4 text-green-500" />;
@@ -46,7 +48,7 @@ export const InvoiceFormTabs = ({ currentTab, completedTabs = [] }: InvoiceFormT
   };
 
   return (
-    <ScrollArea className="w-full">
+    <Tabs value={currentTab} onValueChange={onTabChange}>
       <TabsList className="w-full mb-6 inline-flex h-auto p-1 bg-muted/50 rounded-lg">
         {["from", "details", "items", "payment", "summary"].map((tab) => {
           const isCompleted = completedTabs.includes(tab as TabType);
@@ -71,7 +73,7 @@ export const InvoiceFormTabs = ({ currentTab, completedTabs = [] }: InvoiceFormT
           );
         })}
       </TabsList>
-      <ScrollBar orientation="horizontal" />
-    </ScrollArea>
+      {children}
+    </Tabs>
   );
 };

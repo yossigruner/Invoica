@@ -27,10 +27,6 @@ model Profile {
   lastName            String   @map("last_name")
   email               String
   phone               String?
-  address             String?
-  city                String?
-  zip                 String?
-  country             String?
   companyName         String?  @map("company_name")
   companyLogo         String?  @map("company_logo")
   companyAddress      String?  @map("company_address")
