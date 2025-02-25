@@ -50,12 +50,18 @@ export interface CustomerData {
 
 export interface ProfileData {
   name: string;
-  address: string;
-  city: string;
-  zip: string;
-  country: string;
   email: string;
   phone: string;
+  companyName?: string;
+  companyAddress?: string;
+  companyCity?: string;
+  companyZip?: string;
+  companyCountry?: string;
+  companyPhone?: string;
+  companyEmail?: string;
+  companyWebsite?: string;
+  companyRegistration?: string;
+  companyVat?: string;
   bankName: string;
   accountName: string;
   accountNumber: string;
