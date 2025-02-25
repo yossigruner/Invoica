@@ -86,17 +86,26 @@ export const InvoiceForm = ({ initialData, isEditing }: InvoiceFormProps) => {
       logger.info('Setting profile data:', { profile });
       setProfileData({
         name: profile.companyName || `${profile.firstName} ${profile.lastName}`.trim(),
-        address: profile.address || '',
-        city: profile.city || '',
-        zip: profile.zip || '',
-        country: profile.country || '',
-        email: profile.email || '',
-        phone: profile.phone || '',
+        email: profile.companyEmail || profile.email || '',
+        phone: profile.companyPhone || profile.phone || '',
+        companyName: profile.companyName || '',
+        companyAddress: profile.companyAddress || '',
+        companyCity: profile.companyCity || '',
+        companyZip: profile.companyZip || '',
+        companyCountry: profile.companyCountry || '',
+        companyPhone: profile.companyPhone || '',
+        companyEmail: profile.companyEmail || '',
+        companyWebsite: profile.companyWebsite || '',
+        companyRegistration: profile.companyRegistration || '',
+        companyVat: profile.companyVat || '',
         bankName: profile.bankName || '',
         accountName: profile.accountName || '',
         accountNumber: profile.accountNumber || '',
         swiftCode: profile.swiftCode || '',
-        iban: profile.iban || ''
+        iban: profile.iban || '',
+        companyLogo: profile.companyLogo,
+        signature: profile.signature,
+        preferredCurrency: profile.preferredCurrency || ''
       });
       
       if (profile.companyLogo) {

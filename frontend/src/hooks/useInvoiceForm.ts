@@ -97,13 +97,19 @@ export const useInvoiceForm = (customerData: CustomerData | null, initialData?: 
       // Then, set up the profile data with company information taking precedence
       const profileDataToSet: ProfileData = {
         name: companyName,
-        // Use company address if available, fall back to personal address
-        address: profile.companyAddress || profile.address || '',
-        city: profile.companyCity || profile.city || '',
-        zip: profile.companyZip || profile.zip || '',
-        country: profile.companyCountry || profile.country || '',
+        // Use company address fields
         email: profile.companyEmail || profile.email || '',
         phone: profile.companyPhone || profile.phone || '',
+        companyName: profile.companyName || '',
+        companyAddress: profile.companyAddress || '',
+        companyCity: profile.companyCity || '',
+        companyZip: profile.companyZip || '',
+        companyCountry: profile.companyCountry || '',
+        companyPhone: profile.companyPhone || '',
+        companyEmail: profile.companyEmail || '',
+        companyWebsite: profile.companyWebsite || '',
+        companyRegistration: profile.companyRegistration || '',
+        companyVat: profile.companyVat || '',
         // Banking information
         bankName: profile.bankName || '',
         accountName: profile.accountName || '',

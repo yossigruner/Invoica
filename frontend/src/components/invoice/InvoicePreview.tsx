@@ -90,7 +90,7 @@ export const InvoicePreview = ({
   };
 
   const renderLogo = () => {
-    const logoData = logo || profileData?.companyLogo;
+    const logoData = profileData?.companyLogo;
     if (!logoData) return null;
 
     const logoSrc = getImageSrc(logoData);
@@ -100,7 +100,7 @@ export const InvoicePreview = ({
       <div className="relative w-32">
         <img 
           src={logoSrc}
-          alt={profileData.name || 'Company Logo'} 
+          alt={profileData.companyName || 'Company Logo'} 
           className="w-full h-auto object-contain"
           style={{ maxHeight: '48px', minHeight: '14px' }}
         />
@@ -111,15 +111,34 @@ export const InvoicePreview = ({
   return (
     <div className="h-[29.7cm] w-full bg-white">
       <div className="p-6">
+        <style type="text/css" media="print">
+          {`
+            @media print {
+              .payment-button-container {
+                display: none !important;
+              }
+              @page {
+                size: A4;
+                margin: 0;
+              }
+              body {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
+            }
+          `}
+        </style>
         {/* Header Section */}
         <div className="flex justify-between items-start mb-8">
           <div className="flex-1">
-            {renderLogo()}
-            <div className="text-sm text-gray-600 space-y-0.5 mt-2">
-              <p>{profileData.name}</p>
-              <p>{profileData.address}</p>
-              <p>{profileData.city}, {profileData.zip}</p>
-              <p>{profileData.country}</p>
+            <div className="flex flex-col gap-4">
+              {renderLogo()}
+              <div className="text-sm text-gray-600 space-y-0.5">
+                <p>{profileData.companyName || profileData.name}</p>
+                <p>{profileData.companyAddress}</p>
+                <p>{profileData.companyCity}, {profileData.companyZip}</p>
+                <p>{profileData.companyCountry}</p>
+              </div>
             </div>
           </div>
           <div className="text-right">
@@ -212,11 +231,6 @@ export const InvoicePreview = ({
           </div>
         </div>
 
-        {/* Total in Words */}
-        <div className="mt-4 text-sm text-gray-600">
-          <p>Total in words: {formatAmountInWords(total, formData.currency)}</p>
-        </div>
-
         <div className="grid grid-cols-2 gap-4 mt-4">
           {/* Payment Details - Only show for bank transfer */}
           {formData.paymentMethod === 'bank' && (
@@ -234,8 +248,11 @@ export const InvoicePreview = ({
           <div className={formData.paymentMethod === 'bank' ? '' : 'col-span-2'}>
             <h4 className="text-sm font-medium text-gray-900 mb-1">Contact Information:</h4>
             <div className="text-sm text-gray-600 space-y-0.5">
-              <p>{profileData?.email}</p>
-              <p>{profileData?.phone}</p>
+              <p>{profileData?.companyEmail || profileData?.email}</p>
+              <p>{profileData?.companyPhone || profileData?.phone}</p>
+              {profileData?.companyWebsite && (
+                <p>{profileData.companyWebsite}</p>
+              )}
             </div>
           </div>
         </div>
@@ -252,23 +269,26 @@ export const InvoicePreview = ({
         {(signature || profileData?.signature) && (
           <div className="mt-4 pt-2 border-t">
             <h4 className="text-sm font-medium text-gray-900 mb-1">Signature:</h4>
-            <img 
-              src={getImageSrc(signature || profileData?.signature)}
-              alt="Signature" 
-              className="h-12 object-contain"
-            />
+            <div className="w-32">
+              <img 
+                src={getImageSrc(signature || profileData?.signature)}
+                alt="Signature" 
+                className="w-full h-auto object-contain"
+                style={{ maxHeight: '48px', minHeight: '14px' }}
+              />
+            </div>
           </div>
         )}
 
         {/* Payment Button - Only show for credit card */}
         {formData.paymentMethod === 'card' && (
-          <div className="mt-6">
-            <button className="w-full bg-primary hover:bg-primary/90 text-white py-4 rounded-lg font-medium flex items-center justify-center gap-2 text-lg transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <div className="mt-6 print:hidden">
+            <button className="w-full bg-[#7C3AED] hover:bg-[#7C3AED]/90 text-white py-4 rounded-lg font-medium inline-flex items-center justify-center text-lg">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 relative top-[-1px]">
                 <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
                 <line x1="1" y1="10" x2="23" y2="10"></line>
               </svg>
-              Pay Invoice
+              <span>Pay Invoice</span>
             </button>
           </div>
         )}

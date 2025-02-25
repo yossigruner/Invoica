@@ -76,6 +76,8 @@ export const InvoicePreviewContainer = ({
           showShipping={showShipping}
           profileData={profileData}
           calculateTotal={calculateTotal}
+          logo={profileData?.companyLogo}
+          signature={profileData?.signature}
         />
       </div>
     </div>

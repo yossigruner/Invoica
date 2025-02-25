@@ -37,11 +37,16 @@ const defaultFormState: Profile = {
   lastName: '',
   email: '',
   phone: '',
-  address: '',
-  city: '',
-  zip: '',
-  country: '',
   companyName: '',
+  companyAddress: '',
+  companyCity: '',
+  companyZip: '',
+  companyCountry: '',
+  companyPhone: '',
+  companyEmail: '',
+  companyWebsite: '',
+  companyRegistration: '',
+  companyVat: '',
   companyLogo: '',
   signature: '',
   bankName: '',
@@ -71,11 +76,16 @@ const Profile = () => {
         lastName: profile.lastName || '',
         email: profile.email || '',
         phone: profile.phone || '',
-        address: profile.address || '',
-        city: profile.city || '',
-        zip: profile.zip || '',
-        country: profile.country || '',
         companyName: profile.companyName || '',
+        companyAddress: profile.companyAddress || '',
+        companyCity: profile.companyCity || '',
+        companyZip: profile.companyZip || '',
+        companyCountry: profile.companyCountry || '',
+        companyPhone: profile.companyPhone || '',
+        companyEmail: profile.companyEmail || '',
+        companyWebsite: profile.companyWebsite || '',
+        companyRegistration: profile.companyRegistration || '',
+        companyVat: profile.companyVat || '',
         companyLogo: profile.companyLogo || '',
         signature: profile.signature || '',
         bankName: profile.bankName || '',
@@ -134,20 +144,25 @@ const Profile = () => {
 
     try {
       // Start with required fields
-      const profileData: Profile = {
+      const profileData: any = {
         email: formData.email,
       };
 
-      // Add optional fields
-      const optionalFields: Partial<Profile> = {
+      // Add optional fields with camelCase keys
+      const optionalFields: any = {
         firstName: formData.firstName || undefined,
         lastName: formData.lastName || undefined,
         phone: formData.phone || undefined,
-        address: formData.address || undefined,
-        city: formData.city || undefined,
-        zip: formData.zip || undefined,
-        country: formData.country || undefined,
         companyName: formData.companyName || undefined,
+        companyAddress: formData.companyAddress || undefined,
+        companyCity: formData.companyCity || undefined,
+        companyZip: formData.companyZip || undefined,
+        companyCountry: formData.companyCountry || undefined,
+        companyPhone: formData.companyPhone || undefined,
+        companyEmail: formData.companyEmail || undefined,
+        companyWebsite: formData.companyWebsite || undefined,
+        companyRegistration: formData.companyRegistration || undefined,
+        companyVat: formData.companyVat || undefined,
         companyLogo: formData.companyLogo || undefined,
         signature: formData.signature || undefined,
         bankName: formData.bankName || undefined,
@@ -163,9 +178,9 @@ const Profile = () => {
 
       // Remove empty strings
       Object.keys(optionalFields).forEach(key => {
-        const value = optionalFields[key as keyof Profile];
+        const value = optionalFields[key];
         if (value === '') {
-          delete optionalFields[key as keyof Profile];
+          delete optionalFields[key];
         }
       });
 
@@ -248,6 +263,18 @@ const Profile = () => {
                   />
                 </div>
                 <div className="space-y-2 group">
+                  <Label htmlFor="email" className="text-gray-700 group-hover:text-primary-600 transition-colors">Email</Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    placeholder="Enter your email"
+                    className="h-11 transition-all border-gray-200 hover:border-primary-300 focus:border-primary-500 focus:ring-primary-500/20"
+                  />
+                </div>
+                <div className="space-y-2 group">
                   <Label htmlFor="phone" className="text-gray-700 group-hover:text-primary-600 transition-colors">Phone Number</Label>
                   <Input
                     id="phone"
@@ -255,50 +282,6 @@ const Profile = () => {
                     value={formData.phone}
                     onChange={handleInputChange}
                     placeholder="Enter your phone number"
-                    className="h-11 transition-all border-gray-200 hover:border-primary-300 focus:border-primary-500 focus:ring-primary-500/20"
-                  />
-                </div>
-                <div className="space-y-2 md:col-span-2 group">
-                  <Label htmlFor="address" className="text-gray-700 group-hover:text-primary-600 transition-colors">Street Address</Label>
-                  <Input
-                    id="address"
-                    name="address"
-                    value={formData.address}
-                    onChange={handleInputChange}
-                    placeholder="Enter your street address"
-                    className="h-11 transition-all border-gray-200 hover:border-primary-300 focus:border-primary-500 focus:ring-primary-500/20"
-                  />
-                </div>
-                <div className="space-y-2 group">
-                  <Label htmlFor="city" className="text-gray-700 group-hover:text-primary-600 transition-colors">City</Label>
-                  <Input
-                    id="city"
-                    name="city"
-                    value={formData.city}
-                    onChange={handleInputChange}
-                    placeholder="Enter your city"
-                    className="h-11 transition-all border-gray-200 hover:border-primary-300 focus:border-primary-500 focus:ring-primary-500/20"
-                  />
-                </div>
-                <div className="space-y-2 group">
-                  <Label htmlFor="country" className="text-gray-700 group-hover:text-primary-600 transition-colors">Country</Label>
-                  <Input
-                    id="country"
-                    name="country"
-                    value={formData.country}
-                    onChange={handleInputChange}
-                    placeholder="Enter your country"
-                    className="h-11 transition-all border-gray-200 hover:border-primary-300 focus:border-primary-500 focus:ring-primary-500/20"
-                  />
-                </div>
-                <div className="space-y-2 group">
-                  <Label htmlFor="zip" className="text-gray-700 group-hover:text-primary-600 transition-colors">ZIP Code</Label>
-                  <Input
-                    id="zip"
-                    name="zip"
-                    value={formData.zip}
-                    onChange={handleInputChange}
-                    placeholder="Enter your ZIP code"
                     className="h-11 transition-all border-gray-200 hover:border-primary-300 focus:border-primary-500 focus:ring-primary-500/20"
                   />
                 </div>
@@ -324,10 +307,120 @@ const Profile = () => {
                     name="companyName"
                     value={formData.companyName}
                     onChange={handleInputChange}
-                    placeholder="Enter your company name"
+                    placeholder="Enter company name"
                     className="h-11 transition-all border-gray-200 hover:border-primary-300 focus:border-primary-500 focus:ring-primary-500/20"
                   />
                 </div>
+
+                <div className="space-y-2 md:col-span-2 group">
+                  <Label htmlFor="companyAddress" className="text-gray-700 group-hover:text-primary-600 transition-colors">Company Address</Label>
+                  <Input
+                    id="companyAddress"
+                    name="companyAddress"
+                    value={formData.companyAddress}
+                    onChange={handleInputChange}
+                    placeholder="Enter company address"
+                    className="h-11 transition-all border-gray-200 hover:border-primary-300 focus:border-primary-500 focus:ring-primary-500/20"
+                  />
+                </div>
+
+                <div className="space-y-2 group">
+                  <Label htmlFor="companyCity" className="text-gray-700 group-hover:text-primary-600 transition-colors">City</Label>
+                  <Input
+                    id="companyCity"
+                    name="companyCity"
+                    value={formData.companyCity}
+                    onChange={handleInputChange}
+                    placeholder="Enter company city"
+                    className="h-11 transition-all border-gray-200 hover:border-primary-300 focus:border-primary-500 focus:ring-primary-500/20"
+                  />
+                </div>
+
+                <div className="space-y-2 group">
+                  <Label htmlFor="companyZip" className="text-gray-700 group-hover:text-primary-600 transition-colors">ZIP Code</Label>
+                  <Input
+                    id="companyZip"
+                    name="companyZip"
+                    value={formData.companyZip}
+                    onChange={handleInputChange}
+                    placeholder="Enter company ZIP code"
+                    className="h-11 transition-all border-gray-200 hover:border-primary-300 focus:border-primary-500 focus:ring-primary-500/20"
+                  />
+                </div>
+
+                <div className="space-y-2 group">
+                  <Label htmlFor="companyCountry" className="text-gray-700 group-hover:text-primary-600 transition-colors">Country</Label>
+                  <Input
+                    id="companyCountry"
+                    name="companyCountry"
+                    value={formData.companyCountry}
+                    onChange={handleInputChange}
+                    placeholder="Enter company country"
+                    className="h-11 transition-all border-gray-200 hover:border-primary-300 focus:border-primary-500 focus:ring-primary-500/20"
+                  />
+                </div>
+
+                <div className="space-y-2 group">
+                  <Label htmlFor="companyPhone" className="text-gray-700 group-hover:text-primary-600 transition-colors">Phone</Label>
+                  <Input
+                    id="companyPhone"
+                    name="companyPhone"
+                    value={formData.companyPhone}
+                    onChange={handleInputChange}
+                    placeholder="Enter company phone"
+                    className="h-11 transition-all border-gray-200 hover:border-primary-300 focus:border-primary-500 focus:ring-primary-500/20"
+                  />
+                </div>
+
+                <div className="space-y-2 group">
+                  <Label htmlFor="companyEmail" className="text-gray-700 group-hover:text-primary-600 transition-colors">Email</Label>
+                  <Input
+                    id="companyEmail"
+                    name="companyEmail"
+                    type="email"
+                    value={formData.companyEmail}
+                    onChange={handleInputChange}
+                    placeholder="Enter company email"
+                    className="h-11 transition-all border-gray-200 hover:border-primary-300 focus:border-primary-500 focus:ring-primary-500/20"
+                  />
+                </div>
+
+                <div className="space-y-2 group">
+                  <Label htmlFor="companyWebsite" className="text-gray-700 group-hover:text-primary-600 transition-colors">Website</Label>
+                  <Input
+                    id="companyWebsite"
+                    name="companyWebsite"
+                    value={formData.companyWebsite}
+                    onChange={handleInputChange}
+                    placeholder="Enter company website"
+                    className="h-11 transition-all border-gray-200 hover:border-primary-300 focus:border-primary-500 focus:ring-primary-500/20"
+                  />
+                </div>
+
+                <div className="space-y-2 group">
+                  <Label htmlFor="companyRegistration" className="text-gray-700 group-hover:text-primary-600 transition-colors">Registration Number</Label>
+                  <Input
+                    id="companyRegistration"
+                    name="companyRegistration"
+                    value={formData.companyRegistration}
+                    onChange={handleInputChange}
+                    placeholder="Enter registration number"
+                    className="h-11 transition-all border-gray-200 hover:border-primary-300 focus:border-primary-500 focus:ring-primary-500/20"
+                  />
+                </div>
+
+                <div className="space-y-2 group">
+                  <Label htmlFor="companyVat" className="text-gray-700 group-hover:text-primary-600 transition-colors">VAT Number</Label>
+                  <Input
+                    id="companyVat"
+                    name="companyVat"
+                    value={formData.companyVat}
+                    onChange={handleInputChange}
+                    placeholder="Enter VAT number"
+                    className="h-11 transition-all border-gray-200 hover:border-primary-300 focus:border-primary-500 focus:ring-primary-500/20"
+                  />
+                </div>
+
                 <div className="space-y-2 group">
                   <Label htmlFor="preferredCurrency" className="text-gray-700">Preferred Currency</Label>
                   <Select
