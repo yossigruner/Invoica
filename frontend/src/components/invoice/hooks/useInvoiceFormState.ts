@@ -120,7 +120,7 @@ export const useInvoiceFormState = (customerData: CustomerData | null, initialDa
     invoiceNumber: initialData?.invoiceNumber || generateInvoiceNumber(),
     issueDate: initialData?.issueDate || new Date().toISOString(),
     dueDate: initialData?.dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-    currency: initialData?.currency || "USD",
+    currency: initialData?.currency || profile?.preferredCurrency || "USD",
     items: initialItems,
     adjustments: {
       discount: {
