@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useCustomers } from "@/hooks/useCustomers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,18 +24,21 @@ import {
   ChevronRight,
   X
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import debounce from "lodash/debounce";
 
 const PAGE_SIZE_OPTIONS = [5, 10, 25, 50];
 
 export default function Customers() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [customerToEdit, setCustomerToEdit] = useState<Customer | null>(null);
   const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "");
+  const [inputValue, setInputValue] = useState(searchParams.get("search") || "");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(PAGE_SIZE_OPTIONS[1]);
   const [formData, setFormData] = useState<CreateCustomerDto>({
@@ -68,17 +71,37 @@ export default function Customers() {
 
   const navigate = useNavigate();
 
-  // Debounce search to avoid too many API calls
+  // Update URL when search changes
+  useEffect(() => {
+    if (searchQuery) {
+      searchParams.set("search", searchQuery);
+    } else {
+      searchParams.delete("search");
+    }
+    setSearchParams(searchParams);
+  }, [searchQuery, searchParams, setSearchParams]);
+
+  // Auto-focus input and restore cursor position
+  useEffect(() => {
+    if (searchInputRef.current) {
+      searchInputRef.current.focus();
+      const length = searchInputRef.current.value.length;
+      searchInputRef.current.setSelectionRange(length, length);
+    }
+  }, []);
+
   const debouncedSearch = useCallback(
     debounce((query: string) => {
       setSearchQuery(query);
-      setCurrentPage(1); // Reset to first page on new search
-    }, 300),
+      setCurrentPage(1);
+    }, 500),
     []
   );
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    debouncedSearch(e.target.value);
+    const value = e.target.value;
+    setInputValue(value);
+    debouncedSearch(value);
   };
 
   const handlePageSizeChange = (value: string) => {
@@ -212,8 +235,10 @@ export default function Customers() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
               <Input
+                ref={searchInputRef}
                 placeholder="Search customers..."
                 onChange={handleSearchChange}
+                value={inputValue}
                 className="pl-9 h-11 w-full"
               />
             </div>
