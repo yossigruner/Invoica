@@ -1,13 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { customersApi, type Customer, type CreateCustomerDto, type UpdateCustomerDto } from '@/api/customers';
+import { customersApi, type Customer, type CreateCustomerDto, type UpdateCustomerDto, type GetCustomersParams } from '@/api/customers';
 import { toast } from 'sonner';
 
-export function useCustomers() {
+export function useCustomers(params?: GetCustomersParams) {
   const queryClient = useQueryClient();
 
-  const { data: customers, isLoading, error } = useQuery({
-    queryKey: ['customers'],
-    queryFn: customersApi.getAll,
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['customers', params],
+    queryFn: () => customersApi.getAll(params),
   });
 
   const createMutation = useMutation({
@@ -48,7 +48,8 @@ export function useCustomers() {
   });
 
   return {
-    customers,
+    customers: data?.customers ?? [],
+    meta: data?.meta,
     isLoading,
     error,
     createCustomer: createMutation.mutate,

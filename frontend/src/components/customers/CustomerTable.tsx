@@ -1,11 +1,10 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Pen, Trash2, FileText } from "lucide-react";
+import { Pen, Trash2, FileText, Mail, Phone, MapPin } from "lucide-react";
 import { Customer } from "@/types";
 import { useNavigate } from "react-router-dom";
-import { Card } from "@/components/ui/card";
-import { logger } from "@/utils/logger";
-import { useEffect } from "react";
+import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
 
 interface CustomerTableProps {
   customers: Customer[];
@@ -16,16 +15,7 @@ interface CustomerTableProps {
 export const CustomerTable = ({ customers = [], onEdit, onDelete }: CustomerTableProps) => {
   const navigate = useNavigate();
 
-  // Log when customers prop changes
-  useEffect(() => {
-    logger.info('CustomerTable received customers:', {
-      count: customers.length,
-      customersData: customers
-    });
-  }, [customers]);
-
   const handleCreateInvoice = (customer: Customer) => {
-    logger.info('Creating invoice for customer:', { customer });
     navigate('/create-invoice', { 
       state: { 
         customer: {
@@ -42,154 +32,109 @@ export const CustomerTable = ({ customers = [], onEdit, onDelete }: CustomerTabl
     });
   };
 
-  // Mobile card view component
-  const MobileCustomerCard = ({ customer }: { customer: Customer }) => (
-    <Card className="p-4 mb-4 space-y-3">
-      <div className="flex justify-between items-start">
-        <div>
-          <h3 className="font-medium">{customer.name || 'Unnamed Customer'}</h3>
-          <p className="text-sm text-gray-500">{customer.email || 'No email'}</p>
-        </div>
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            size="icon"
-            onClick={() => { handleCreateInvoice(customer); }}
-            title="Create Invoice"
-            className="h-8 w-8"
-          >
-            <FileText className="h-4 w-4" />
-          </Button>
-          <Button 
-            variant="outline" 
-            size="icon"
-            onClick={() => { onEdit(customer); }}
-            title="Edit Customer"
-            className="h-8 w-8"
-          >
-            <Pen className="h-4 w-4" />
-          </Button>
-          <Button 
-            variant="outline" 
-            size="icon"
-            onClick={() => { onDelete(customer); }}
-            title="Delete Customer"
-            className="h-8 w-8"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-2 text-sm">
-        <div>
-          <p className="text-gray-500">Phone</p>
-          <p>{customer.phone || 'N/A'}</p>
-        </div>
-        <div>
-          <p className="text-gray-500">Location</p>
-          <p>{[customer.city, customer.country].filter(Boolean).join(', ') || 'N/A'}</p>
-        </div>
-      </div>
-    </Card>
-  );
+  const getInitials = (name: string) => {
+    const names = name.trim().split(' ');
+    if (names.length >= 2) {
+      return (names[0][0] + names[names.length - 1][0]).toUpperCase();
+    }
+    return name.charAt(0).toUpperCase();
+  };
 
-  if (!Array.isArray(customers)) {
-    logger.error('Invalid customers prop:', { customers });
+  if (!customers.length) {
     return (
-      <div className="text-center py-8 text-red-500">
-        Error: Invalid customer data
+      <div className="text-center py-8 text-gray-500">
+        No customers found. Add your first customer by clicking the "Add Customer" button above.
       </div>
     );
   }
 
   return (
-    <div>
-      {/* Mobile View */}
-      <div className="md:hidden">
-        {customers.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            No customers found. Add your first customer by clicking the "Add Customer" button above.
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {customers.map((customer) => (
-              <MobileCustomerCard key={customer.id} customer={customer} />
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Desktop View */}
-      <div className="hidden md:block rounded-lg border bg-white shadow-sm overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-50">
-              <TableHead className="font-semibold">Name</TableHead>
-              <TableHead className="font-semibold">Email</TableHead>
-              <TableHead className="font-semibold">Phone</TableHead>
-              <TableHead className="font-semibold">Address</TableHead>
-              <TableHead className="font-semibold">City</TableHead>
-              <TableHead className="font-semibold">State</TableHead>
-              <TableHead className="font-semibold">ZIP</TableHead>
-              <TableHead className="font-semibold">Country</TableHead>
-              <TableHead className="text-right font-semibold">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {customers.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={9} className="text-center py-8 text-gray-500">
-                  No customers found. Add your first customer by clicking the "Add Customer" button above.
-                </TableCell>
-              </TableRow>
-            ) : (
-              customers.map((customer) => (
-                <TableRow key={customer.id}>
-                  <TableCell>{customer.name || 'Unnamed Customer'}</TableCell>
-                  <TableCell>{customer.email || 'N/A'}</TableCell>
-                  <TableCell>{customer.phone || 'N/A'}</TableCell>
-                  <TableCell>{customer.address || 'N/A'}</TableCell>
-                  <TableCell>{customer.city || 'N/A'}</TableCell>
-                  <TableCell>{customer.state || 'N/A'}</TableCell>
-                  <TableCell>{customer.zip || 'N/A'}</TableCell>
-                  <TableCell>{customer.country || 'N/A'}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="icon"
-                        onClick={() => { handleCreateInvoice(customer); }}
-                        title="Create Invoice"
-                        className="hover:border-primary hover:text-primary"
-                      >
-                        <FileText className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="icon"
-                        onClick={() => { onEdit(customer); }}
-                        title="Edit Customer"
-                        className="hover:border-primary hover:text-primary"
-                      >
-                        <Pen className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="icon"
-                        onClick={() => { onDelete(customer); }}
-                        title="Delete Customer"
-                        className="hover:border-primary hover:text-primary"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
-    </div>
+    <Table>
+      <TableHeader>
+        <TableRow className="hover:bg-transparent bg-gray-50">
+          <TableHead className="font-bold text-black">Name</TableHead>
+          <TableHead className="font-bold text-black">Contact</TableHead>
+          <TableHead className="font-bold text-black">Location</TableHead>
+          <TableHead className="font-bold text-black">Created</TableHead>
+          <TableHead className="text-right font-bold text-black">Actions</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {customers.map((customer) => (
+          <TableRow key={customer.id} className="group hover:bg-gray-50">
+            <TableCell>
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
+                  {getInitials(customer.name)}
+                </div>
+                <div>
+                  <div className="font-semibold text-black">{customer.name}</div>
+                  {customer.country && (
+                    <Badge variant="secondary" className="mt-0.5 font-medium">
+                      {customer.country}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            </TableCell>
+            <TableCell>
+              <div className="space-y-1">
+                <div className="flex items-center gap-1.5 text-sm font-medium text-gray-900">
+                  <Mail className="h-3.5 w-3.5 text-gray-500" />
+                  {customer.email}
+                </div>
+                {customer.phone && (
+                  <div className="flex items-center gap-1.5 text-sm text-gray-600 font-medium">
+                    <Phone className="h-3.5 w-3.5" />
+                    {customer.phone}
+                  </div>
+                )}
+              </div>
+            </TableCell>
+            <TableCell>
+              {(customer.city || customer.state) && (
+                <div className="flex items-center gap-1.5 text-sm text-gray-600 font-medium">
+                  <MapPin className="h-3.5 w-3.5" />
+                  {[customer.city, customer.state].filter(Boolean).join(", ")}
+                </div>
+              )}
+            </TableCell>
+            <TableCell>
+              <div className="text-sm text-gray-600 font-medium">
+                {format(new Date(customer.createdAt), 'MMM dd, yyyy')}
+              </div>
+            </TableCell>
+            <TableCell className="text-right">
+              <div className="flex items-center justify-end gap-2">
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={() => onEdit(customer)}
+                  className="h-8 w-8 text-gray-500 hover:text-primary"
+                >
+                  <Pen className="h-4 w-4" />
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={() => handleCreateInvoice(customer)}
+                  className="h-8 w-8 text-gray-500 hover:text-primary"
+                >
+                  <FileText className="h-4 w-4" />
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={() => onDelete(customer)}
+                  className="h-8 w-8 text-gray-500 hover:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   );
 };

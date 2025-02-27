@@ -1,6 +1,5 @@
 export interface Customer {
   id: string;
-  user_id: string;
   name: string;
   email: string;
   phone?: string;
@@ -9,9 +8,9 @@ export interface Customer {
   state?: string;
   zip?: string;
   country?: string;
-  notes?: string;
-  created_at: string;
-  updated_at: string;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Profile {

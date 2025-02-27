@@ -8,12 +8,13 @@ import {
   Delete,
   UseGuards,
   Request,
+  Query,
 } from '@nestjs/common';
 import { CustomersService } from './customers.service';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { Request as ExpressRequest } from 'express';
 
 interface RequestWithUser extends ExpressRequest {
@@ -39,10 +40,25 @@ export class CustomersController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all customers' })
-  @ApiResponse({ status: 200, description: 'Return all customers.' })
-  async findAll(@Request() req: RequestWithUser) {
-    return this.customersService.findAll(req.user.id);
+  @ApiOperation({ summary: 'Get all customers with pagination and search' })
+  @ApiResponse({ status: 200, description: 'Return paginated customers.' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'search', required: false, type: String })
+  async findAll(
+    @Request() req: RequestWithUser,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('search') search?: string,
+  ) {
+    const pageNumber = page ? parseInt(page.toString()) : 1;
+    const pageSize = limit ? parseInt(limit.toString()) : 10;
+    
+    return this.customersService.findAll(req.user.id, {
+      page: pageNumber,
+      limit: pageSize,
+      search: search,
+    });
   }
 
   @Get(':id')

@@ -1,18 +1,7 @@
 import api from './axios';
+import { Customer } from '@/types';
 
-export interface Customer {
-  id: string;
-  name: string;
-  email: string;
-  phone?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zip?: string;
-  country?: string;
-  createdAt: string;
-  updatedAt: string;
-}
+export type { Customer };
 
 export interface CreateCustomerDto {
   name: string;
@@ -27,28 +16,49 @@ export interface CreateCustomerDto {
 
 export interface UpdateCustomerDto extends Partial<CreateCustomerDto> {}
 
+export interface GetCustomersParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+}
+
+export interface GetCustomersResponse {
+  customers: Customer[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
 export const customersApi = {
-  async create(data: CreateCustomerDto): Promise<Customer> {
-    const response = await api.post('/customers', data);
-    return response.data;
+  getAll: async (params?: GetCustomersParams): Promise<GetCustomersResponse> => {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.append('page', params.page.toString());
+    if (params?.limit) searchParams.append('limit', params.limit.toString());
+    if (params?.search) searchParams.append('search', params.search);
+
+    const { data } = await api.get<GetCustomersResponse>(`/customers${searchParams.toString() ? `?${searchParams.toString()}` : ''}`);
+    return data;
   },
 
-  async getAll(): Promise<Customer[]> {
-    const response = await api.get('/customers');
-    return response.data;
+  getOne: async (id: string): Promise<Customer> => {
+    const { data } = await api.get<Customer>(`/customers/${id}`);
+    return data;
   },
 
-  async getOne(id: string): Promise<Customer> {
-    const response = await api.get(`/customers/${id}`);
-    return response.data;
+  create: async (customer: CreateCustomerDto): Promise<Customer> => {
+    const { data } = await api.post<Customer>('/customers', customer);
+    return data;
   },
 
-  async update(id: string, data: UpdateCustomerDto): Promise<Customer> {
-    const response = await api.patch(`/customers/${id}`, data);
-    return response.data;
+  update: async (id: string, customer: UpdateCustomerDto): Promise<Customer> => {
+    const { data } = await api.patch<Customer>(`/customers/${id}`, customer);
+    return data;
   },
 
-  async delete(id: string): Promise<void> {
+  delete: async (id: string): Promise<void> => {
     await api.delete(`/customers/${id}`);
-  }
+  },
 }; 
