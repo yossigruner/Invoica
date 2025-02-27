@@ -231,6 +231,14 @@ export const InvoicePreview = ({
           </div>
         </div>
 
+        {/* Payment Terms Section */}
+        {formData.paymentTerms && (
+          <div className="mt-4 pt-4 border-t">
+            <h4 className="text-sm font-medium text-gray-900 mb-1">Payment Terms:</h4>
+            <p className="text-sm text-gray-600 whitespace-pre-wrap">{formData.paymentTerms}</p>
+          </div>
+        )}
+
         <div className="grid grid-cols-2 gap-4 mt-4">
           {/* Payment Details - Only show for bank transfer */}
           {formData.paymentMethod === 'bank' && (
@@ -282,13 +290,13 @@ export const InvoicePreview = ({
 
         {/* Payment Button - Only show for credit card */}
         {formData.paymentMethod === 'card' && (
-          <div className="mt-6 print:hidden">
-            <button className="w-full bg-[#7C3AED] hover:bg-[#7C3AED]/90 text-white py-4 rounded-lg font-medium inline-flex items-center justify-center text-lg">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 relative top-[-1px]">
-                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-                <line x1="1" y1="10" x2="23" y2="10"></line>
+          <div className="mt-6 mb-8 print:hidden">
+            <button className="w-full bg-[#8B5CF6] hover:bg-[#7C3AED] text-white py-3 rounded-lg font-medium inline-flex items-center justify-center text-base transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
+                <rect width="20" height="14" x="2" y="5" rx="2"></rect>
+                <line x1="2" x2="22" y1="10" y2="10"></line>
               </svg>
-              <span>Pay Invoice</span>
+              Pay Invoice
             </button>
           </div>
         )}

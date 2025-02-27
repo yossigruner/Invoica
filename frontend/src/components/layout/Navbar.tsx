@@ -57,7 +57,7 @@ export function Navbar() {
                   )}
                   onClick={(e) => e.preventDefault()}
                 >
-                  Estimates
+                  Estimates & Expenses
                   <span className="ml-2 inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium bg-primary/10 text-primary rounded-full">
                     Coming soon
                   </span>
