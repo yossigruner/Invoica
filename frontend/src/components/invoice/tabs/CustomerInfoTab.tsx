@@ -10,6 +10,7 @@ interface CustomerInfoTabProps {
       address: string;
       zip: string;
       city: string;
+      province: string;
       country: string;
       email: string;
       phone: string;
@@ -65,6 +66,16 @@ export const CustomerInfoTab = ({ formData, onInputChange }: CustomerInfoTabProp
               onChange={(e) => { onInputChange("to", "city", e.target.value); }}
             />
           </div>
+        </div>
+
+        <div className="grid gap-2">
+          <Label htmlFor="customer-province">Province/State:</Label>
+          <Input 
+            id="customer-province" 
+            placeholder="Province or State" 
+            value={formData.to.province}
+            onChange={(e) => { onInputChange("to", "province", e.target.value); }}
+          />
         </div>
 
         <div className="grid gap-2">

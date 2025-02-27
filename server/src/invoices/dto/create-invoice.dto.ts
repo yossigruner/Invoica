@@ -79,6 +79,11 @@ export class CreateInvoiceDto {
   @IsOptional()
   billingCity?: string;
 
+  @ApiProperty({ description: 'Billing province/state', required: false })
+  @IsString()
+  @IsOptional()
+  billingProvince?: string;
+
   @ApiProperty({ description: 'Billing zip', required: false })
   @IsString()
   @IsOptional()

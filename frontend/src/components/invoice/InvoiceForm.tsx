@@ -224,6 +224,7 @@ export const InvoiceForm = ({ initialData, isEditing }: InvoiceFormProps) => {
       billingPhone: formData.to.phone || '',
       billingAddress: formData.to.address,
       billingCity: formData.to.city,
+      billingProvince: formData.to.province || '',
       billingZip: formData.to.zip,
       billingCountry: formData.to.country,
       status: 'DRAFT' as const,

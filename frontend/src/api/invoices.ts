@@ -25,6 +25,7 @@ export interface Invoice {
   billingPhone: string;
   billingAddress: string;
   billingCity: string;
+  billingProvince: string;
   billingZip: string;
   billingCountry: string;
   items: InvoiceItem[];
@@ -54,6 +55,7 @@ export interface CreateInvoiceDto {
   billingPhone?: string;
   billingAddress?: string;
   billingCity?: string;
+  billingProvince?: string;
   billingZip?: string;
   billingCountry?: string;
   items: CreateInvoiceItemDto[];

@@ -5,6 +5,7 @@ export interface InvoiceFormData {
     address: string;
     zip: string;
     city: string;
+    province: string;
     country: string;
     email: string;
     phone: string;

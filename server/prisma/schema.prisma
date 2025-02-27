@@ -4,8 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url = env("POSTGRES_PRISMA_URL") // uses connection pooling
-  directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
+  url = env("DATABASE_URL")
 }
 
 model User {
@@ -73,12 +72,15 @@ model Invoice {
   billingPhone    String?       @map("billing_phone")
   billingAddress  String?       @map("billing_address")
   billingCity     String?       @map("billing_city")
+  billingProvince String?       @map("billing_province")
   billingZip      String?       @map("billing_zip")
   billingCountry  String?       @map("billing_country")
   discountValue   Float         @default(0) @map("discount_value")
   discountType    String        @default("percentage") @map("discount_type")
-  taxValue        Float         @default(0) @map("tax_value")
-  taxType         String        @default("percentage") @map("tax_type")
+  federalTaxValue Float         @default(0) @map("federal_tax_value")
+  federalTaxType  String        @default("percentage") @map("federal_tax_type")
+  provincialTaxValue Float      @default(0) @map("provincial_tax_value")
+  provincialTaxType  String     @default("percentage") @map("provincial_tax_type")
   shippingValue   Float         @default(0) @map("shipping_value")
   shippingType    String        @default("amount") @map("shipping_type")
   subtotal        Float

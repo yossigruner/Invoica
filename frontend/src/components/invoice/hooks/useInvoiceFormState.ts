@@ -113,6 +113,7 @@ export const useInvoiceFormState = (customerData: CustomerData | null, initialDa
       phone: initialData?.billingPhone || customerData?.phone || "",
       address: initialData?.billingAddress || customerData?.address || "",
       city: initialData?.billingCity || customerData?.city || "",
+      province: initialData?.billingProvince || customerData?.province || "",
       zip: initialData?.billingZip || customerData?.zip || "",
       country: initialData?.billingCountry || customerData?.country || "",
     },
