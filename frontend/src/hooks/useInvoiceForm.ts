@@ -58,6 +58,7 @@ export const useInvoiceForm = (customerData: CustomerData | null, initialData?: 
             phone: customerData.phone || prev.to.phone,
             address: customerData.address || prev.to.address,
             city: customerData.city || prev.to.city,
+            province: customerData.province || prev.to.province,
             zip: customerData.zip || prev.to.zip,
             country: customerData.country || prev.to.country,
           }

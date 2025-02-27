@@ -23,7 +23,7 @@ export const CustomerTable = ({ customers = [], onEdit, onDelete }: CustomerTabl
           address: customer.address || '',
           zip: customer.zip || '',
           city: customer.city || '',
-          state: customer.state || '',
+          province: customer.state || '',
           country: customer.country || '',
           email: customer.email || '',
           phone: customer.phone || ''

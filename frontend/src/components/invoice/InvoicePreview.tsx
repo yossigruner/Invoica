@@ -17,6 +17,7 @@ interface InvoicePreviewProps {
       country: string;
       email: string;
       phone: string;
+      province?: string;
     };
     items: InvoiceFormItem[];
     currency: string;
@@ -156,7 +157,12 @@ export const InvoicePreview = ({
           <div className="text-sm space-y-0.5">
             <p className="font-semibold text-gray-900">{formData.to.name}</p>
             <p className="text-gray-600">{formData.to.address}</p>
-            <p className="text-gray-600">{formData.to.city}, {formData.to.zip}, {formData.to.country}</p>
+            <p className="text-gray-600">
+              {formData.to.city}
+              {formData.to.province && `, ${formData.to.province}`}
+              {formData.to.zip && `, ${formData.to.zip}`}
+              {formData.to.country && `, ${formData.to.country}`}
+            </p>
             <p className="text-gray-600">{formData.to.email}</p>
             <p className="text-gray-600">{formData.to.phone}</p>
           </div>
