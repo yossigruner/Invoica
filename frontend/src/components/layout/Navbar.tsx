@@ -49,6 +49,20 @@ export function Navbar() {
               >
                 Customers
               </Link>
+              <div className="relative inline-flex items-center">
+                <Link
+                  to="#"
+                  className={cn(
+                    "px-4 py-2 rounded-md text-sm font-medium transition-colors text-gray-400 hover:text-gray-500"
+                  )}
+                  onClick={(e) => e.preventDefault()}
+                >
+                  Estimates
+                  <span className="ml-2 inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium bg-primary/10 text-primary rounded-full">
+                    Coming soon
+                  </span>
+                </Link>
+              </div>
             </>
           )}
         </nav>
