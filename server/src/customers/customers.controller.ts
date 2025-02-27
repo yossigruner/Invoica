@@ -45,11 +45,13 @@ export class CustomersController {
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'search', required: false, type: String })
+  @ApiQuery({ name: 'sortBy', required: false, enum: ['name', 'city', 'email', 'createdAt'] })
   async findAll(
     @Request() req: RequestWithUser,
     @Query('page') page?: number,
     @Query('limit') limit?: number,
     @Query('search') search?: string,
+    @Query('sortBy') sortBy?: 'name' | 'city' | 'email' | 'createdAt',
   ) {
     const pageNumber = page ? parseInt(page.toString()) : 1;
     const pageSize = limit ? parseInt(limit.toString()) : 10;
@@ -58,6 +60,7 @@ export class CustomersController {
       page: pageNumber,
       limit: pageSize,
       search: search,
+      sortBy: sortBy,
     });
   }
 

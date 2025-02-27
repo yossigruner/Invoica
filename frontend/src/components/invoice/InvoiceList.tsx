@@ -226,7 +226,7 @@ export const InvoiceList = () => {
               onValueChange={handlePageSizeChange}
             >
               <SelectTrigger className="w-[180px] h-10 font-medium">
-                <SelectValue placeholder="10 per page" />
+                <SelectValue placeholder="5 per page" />
               </SelectTrigger>
               <SelectContent>
                 {PAGE_SIZE_OPTIONS.map((size) => (

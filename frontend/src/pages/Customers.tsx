@@ -30,6 +30,13 @@ import debounce from "lodash/debounce";
 
 const PAGE_SIZE_OPTIONS = [5, 10, 25, 50];
 
+const SORT_OPTIONS = [
+  { label: 'Name', value: 'name' },
+  { label: 'Location', value: 'city' },
+  { label: 'Contact', value: 'email' },
+  { label: 'Created', value: 'createdAt' },
+] as const;
+
 export default function Customers() {
   const [searchParams, setSearchParams] = useSearchParams();
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -41,6 +48,7 @@ export default function Customers() {
   const [inputValue, setInputValue] = useState(searchParams.get("search") || "");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(PAGE_SIZE_OPTIONS[1]);
+  const [sortBy, setSortBy] = useState<typeof SORT_OPTIONS[number]['value']>('createdAt');
   const [formData, setFormData] = useState<CreateCustomerDto>({
     name: '',
     email: '',
@@ -67,6 +75,7 @@ export default function Customers() {
     page: currentPage,
     limit: pageSize,
     search: searchQuery || undefined,
+    sortBy,
   });
 
   const navigate = useNavigate();
@@ -231,7 +240,7 @@ export default function Customers() {
           </div>
 
           {/* Search and Filter Section */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-end gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
               <Input
@@ -242,21 +251,42 @@ export default function Customers() {
                 className="pl-9 h-11 w-full"
               />
             </div>
-            <Select
-              value={pageSize.toString()}
-              onValueChange={handlePageSizeChange}
-            >
-              <SelectTrigger className="w-[130px] h-11">
-                <SelectValue placeholder="10 per page" />
-              </SelectTrigger>
-              <SelectContent>
-                {PAGE_SIZE_OPTIONS.map((size) => (
-                  <SelectItem key={size} value={size.toString()}>
-                    {size} per page
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium text-gray-500">Order by</Label>
+              <Select
+                value={sortBy}
+                onValueChange={(value) => setSortBy(value as typeof sortBy)}
+              >
+                <SelectTrigger className="w-[130px] h-11">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  {SORT_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium text-gray-500">Show rows</Label>
+              <Select
+                value={pageSize.toString()}
+                onValueChange={handlePageSizeChange}
+              >
+                <SelectTrigger className="w-[130px] h-11">
+                  <SelectValue placeholder="10 per page" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PAGE_SIZE_OPTIONS.map((size) => (
+                    <SelectItem key={size} value={size.toString()}>
+                      {size} per page
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardHeader>
 

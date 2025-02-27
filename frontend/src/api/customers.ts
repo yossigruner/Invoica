@@ -20,6 +20,7 @@ export interface GetCustomersParams {
   page?: number;
   limit?: number;
   search?: string;
+  sortBy?: 'name' | 'city' | 'email' | 'createdAt';
 }
 
 export interface GetCustomersResponse {

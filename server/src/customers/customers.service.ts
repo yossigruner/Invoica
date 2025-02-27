@@ -8,6 +8,7 @@ interface PaginationParams {
   page: number;
   limit: number;
   search?: string;
+  sortBy?: 'name' | 'city' | 'email' | 'createdAt';
 }
 
 @Injectable()
@@ -24,7 +25,7 @@ export class CustomersService {
   }
 
   async findAll(userId: string, params: PaginationParams) {
-    const { page, limit, search } = params;
+    const { page, limit, search, sortBy } = params;
     const skip = (page - 1) * limit;
 
     // Build the where clause based on search parameter
@@ -46,12 +47,14 @@ export class CustomersService {
     // Get total count for pagination
     const total = await this.prisma.customer.count({ where });
 
-    // Get paginated customers
+    // Get paginated customers with sorting
     const customers = await this.prisma.customer.findMany({
       where,
       skip,
       take: limit,
-      orderBy: {
+      orderBy: sortBy ? {
+        [sortBy]: 'asc',
+      } : {
         createdAt: 'desc',
       },
     });
