@@ -15,6 +15,14 @@ RUN npm ci && npm ci -w frontend && npm ci -w server
 # Copy the rest of the source code
 COPY . .
 
+# Build arguments
+ARG VITE_API_URL
+ARG VITE_FRONTEND_URL
+
+# Environment variables
+ENV VITE_API_URL=$VITE_API_URL
+ENV VITE_FRONTEND_URL=$VITE_FRONTEND_URL
+
 # Build the application with environment variables
 ARG VITE_SUPABASE_URL
 ARG VITE_SUPABASE_ANON_KEY

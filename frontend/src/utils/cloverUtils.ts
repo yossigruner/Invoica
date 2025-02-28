@@ -1,5 +1,6 @@
 import { logger } from "./logger";
 import { supabase } from "@/lib/supabase";
+import { api } from "@/lib/axios";
 
 interface CloverMerchantResponse {
   id: string;
@@ -112,4 +113,34 @@ export const isValidApiKey = (apiKey: string): boolean => {
   // Clover API keys are typically long base64 strings
   const apiKeyRegex = /^[A-Za-z0-9+/=_-]{32,}$/;
   return apiKeyRegex.test(apiKey);
-}; 
+};
+
+/**
+ * Encrypts a value using the server's encryption
+ * @param value - The value to encrypt
+ * @returns The encrypted value
+ */
+export async function encryptValue(value: string): Promise<string> {
+  try {
+    const response = await api.post('/api/encrypt', { value });
+    return response.data.encryptedValue;
+  } catch (error) {
+    logger.error('Failed to encrypt value', error);
+    throw error;
+  }
+}
+
+/**
+ * Decrypts a value using the server's decryption
+ * @param encryptedValue - The value to decrypt
+ * @returns The decrypted value
+ */
+export async function decryptValue(encryptedValue: string): Promise<string> {
+  try {
+    const response = await api.post('/api/decrypt', { encryptedValue });
+    return response.data.decryptedValue;
+  } catch (error) {
+    logger.error('Failed to decrypt value', error);
+    throw error;
+  }
+} 

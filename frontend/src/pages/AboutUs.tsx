@@ -8,7 +8,7 @@ const AboutUs = () => {
         <Card className="p-8 shadow-lg bg-white/80 backdrop-blur-sm">
           <div className="max-w-3xl mx-auto">
             <h1 className="text-4xl font-bold text-center bg-gradient-to-r from-primary-500 to-primary-700 bg-clip-text text-transparent mb-6">
-              About InspectaInvoice
+              About Invoica
             </h1>
             
             <p className="text-gray-600 text-center mb-12">
@@ -50,7 +50,7 @@ const AboutUs = () => {
             <div className="border-t pt-12">
               <h2 className="text-2xl font-semibold mb-6">Our Mission</h2>
               <p className="text-gray-600 mb-6">
-                At InspectaInvoice, we're committed to simplifying the invoicing process for businesses worldwide. Our platform combines powerful features with user-friendly design to help you manage your billing efficiently and professionally.
+                At Invoica, we're committed to simplifying the invoicing process for businesses worldwide. Our platform combines powerful features with user-friendly design to help you manage your billing efficiently and professionally.
               </p>
               <p className="text-gray-600">
                 We believe that every business, regardless of size, deserves access to professional-grade invoicing tools. That's why we've created a solution that's both powerful and accessible, helping you focus on what matters most - growing your business.

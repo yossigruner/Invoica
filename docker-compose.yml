@@ -1,48 +1,77 @@
 version: '3.8'
 
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: invoica-postgres
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+      args:
+        - VITE_API_URL=http://localhost:3000
+        - VITE_FRONTEND_URL=http://localhost:8080
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    networks:
+      - invoica-network
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    ports:
+      - "3000:3000"
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-invoica}
-      PGDATA: /data/postgres
-    volumes:
-      - postgres:/data/postgres
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/invoica
+      - JWT_SECRET=${JWT_SECRET:-local_development_secret}
+      - NODE_ENV=production
+      - CLOVER_API_KEY=${CLOVER_API_KEY}
+      - CLOVER_MERCHANT_ID=${CLOVER_MERCHANT_ID}
+      - CLOVER_API_URL=${CLOVER_API_URL}
+      - FRONTEND_URL=http://localhost:8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - invoica-network
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=invoica
     ports:
       - "5432:5432"
-    networks:
-      - invoica-network
-    restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
+      test: ["CMD-SHELL", "pg_isready -U postgres -d invoica"]
+      interval: 5s
       timeout: 5s
       retries: 5
-
-  pgadmin:
-    image: dpage/pgadmin4
-    container_name: invoica-pgadmin
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@invoica.com}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
-      PGADMIN_CONFIG_SERVER_MODE: 'False'
-    volumes:
-      - pgadmin:/var/lib/pgadmin
-    ports:
-      - "5050:80"
     networks:
       - invoica-network
-    restart: unless-stopped
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@admin.com
+      - PGADMIN_DEFAULT_PASSWORD=admin
+      - PGADMIN_LISTEN_PORT=80
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin:/var/lib/pgadmin
     depends_on:
       - postgres
+    networks:
+      - invoica-network
+
+volumes:
+  postgres_data:
+  pgadmin:
 
 networks:
   invoica-network:
-    driver: bridge
-
-volumes:
-  postgres:
-  pgadmin: 
+    driver: bridge 

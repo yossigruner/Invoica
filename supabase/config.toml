@@ -1,5 +1,5 @@
 [project]
-name = "InspectaInvoice"
+name = "Invoica"
 
 [api]
 port = 54321

@@ -67,7 +67,7 @@ const ContactUs = () => {
                     </div>
                     <div>
                       <h4 className="font-semibold">Email</h4>
-                      <p className="text-gray-600">support@inspectainvoice.com</p>
+                      <p className="text-gray-600">support@invoica.com</p>
                     </div>
                   </div>
 

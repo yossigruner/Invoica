@@ -36,7 +36,7 @@ const ForgotPassword = () => {
               <span className="text-white font-bold">I</span>
             </div>
             <span className="text-xl font-semibold bg-gradient-to-r from-primary-500 to-primary-700 bg-clip-text text-transparent">
-              InspectaInvoice
+            Invoica
             </span>
           </div>
           <div className="flex items-center gap-2">
