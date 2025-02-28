@@ -16,7 +16,7 @@ export const CustomerTable = ({ customers = [], onEdit, onDelete }: CustomerTabl
   const navigate = useNavigate();
 
   const handleCreateInvoice = (customer: Customer) => {
-    navigate('/create-invoice', { 
+    navigate('/invoices/create', { 
       state: { 
         customer: {
           name: customer.name || '',

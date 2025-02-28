@@ -18,6 +18,7 @@ import ProfileWizard from "./pages/ProfileWizard";
 import AboutUs from "./pages/AboutUs";
 import ContactUs from "./pages/ContactUs";
 import Faq from "./pages/Faq";
+import { PayPage } from "./pages/PayPage";
 
 const queryClient = new QueryClient();
 
@@ -52,166 +53,47 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 // Layout component that includes Navbar and Footer
-const Layout = ({ children, includeFooter = true }: { children: React.ReactNode; includeFooter?: boolean }) => {
-  return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <main className="flex-grow">
-        {children}
-      </main>
-      {includeFooter && <Footer />}
-    </div>
-  );
-};
-
-const AppContent = () => {
-  return (
-    <Routes>
-      {/* Protected Routes */}
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <Invoices />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/customers"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <Customers />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/create-invoice"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <CreateInvoice />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/edit-invoice/:id"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <CreateInvoice />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/profile"
-        element={
-          <ProtectedRoute>
-            <Layout>
-              <Profile />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/profile-wizard"
-        element={
-          <ProtectedRoute>
-            <Layout includeFooter={false}>
-              <ProfileWizard />
-            </Layout>
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Public Routes */}
-      <Route
-        path="/login"
-        element={
-          <PublicRoute>
-            <Layout includeFooter={false}>
-              <Login />
-            </Layout>
-          </PublicRoute>
-        }
-      />
-      <Route
-        path="/register"
-        element={
-          <PublicRoute>
-            <Layout includeFooter={false}>
-              <Register />
-            </Layout>
-          </PublicRoute>
-        }
-      />
-      <Route
-        path="/forgot-password"
-        element={
-          <PublicRoute>
-            <Layout includeFooter={false}>
-              <ForgotPassword />
-            </Layout>
-          </PublicRoute>
-        }
-      />
-
-      {/* Public Information Pages */}
-      <Route
-        path="/about"
-        element={
-          <Layout>
-            <AboutUs />
-          </Layout>
-        }
-      />
-      <Route
-        path="/contact"
-        element={
-          <Layout>
-            <ContactUs />
-          </Layout>
-        }
-      />
-      <Route
-        path="/faq"
-        element={
-          <Layout>
-            <Faq />
-          </Layout>
-        }
-      />
-
-      {/* 404 Page */}
-      <Route
-        path="*"
-        element={
-          <Layout>
-            <NotFound />
-          </Layout>
-        }
-      />
-    </Routes>
-  );
-};
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <BrowserRouter>
-        <AuthProvider>
-          <AppContent />
-          <Toaster />
-          <Sonner />
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+const Layout = ({ children, includeNav = true }: { children: React.ReactNode, includeNav?: boolean }) => (
+  <div className="flex flex-col min-h-screen">
+    {includeNav && <Navbar />}
+    <main className="flex-grow">{children}</main>
+    {includeNav && <Footer />}
+  </div>
 );
 
-export default App;
+export default function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <BrowserRouter>
+          <AuthProvider>
+            <Routes>
+              {/* Public routes */}
+              <Route path="/login" element={<Layout includeNav={true}><Login /></Layout>} />
+              <Route path="/register" element={<Layout includeNav={true}><Register /></Layout>} />
+              <Route path="/forgot-password" element={<Layout includeNav={true}><ForgotPassword /></Layout>} />
+              <Route path="/about" element={<Layout includeNav={true}><AboutUs /></Layout>} />
+              <Route path="/contact" element={<Layout includeNav={true}><ContactUs /></Layout>} />
+              <Route path="/faq" element={<Layout includeNav={true}><Faq /></Layout>} />
+              <Route path="/pay/:id" element={<Layout includeNav={false}><PayPage /></Layout>} />
+
+              {/* Protected routes */}
+              <Route path="/" element={<ProtectedRoute><Layout includeNav={true}><Invoices /></Layout></ProtectedRoute>} />
+              <Route path="/invoices" element={<ProtectedRoute><Layout includeNav={true}><Invoices /></Layout></ProtectedRoute>} />
+              <Route path="/invoices/create" element={<ProtectedRoute><Layout includeNav={true}><CreateInvoice /></Layout></ProtectedRoute>} />
+              <Route path="/invoices/:id/edit" element={<ProtectedRoute><Layout includeNav={true}><CreateInvoice /></Layout></ProtectedRoute>} />
+              <Route path="/customers" element={<ProtectedRoute><Layout includeNav={true}><Customers /></Layout></ProtectedRoute>} />
+              <Route path="/profile" element={<ProtectedRoute><Layout includeNav={true}><Profile /></Layout></ProtectedRoute>} />
+              <Route path="/profile/wizard" element={<ProtectedRoute><Layout includeNav={true}><ProfileWizard /></Layout></ProtectedRoute>} />
+              
+              {/* 404 route */}
+              <Route path="*" element={<Layout includeNav={true}><NotFound /></Layout>} />
+            </Routes>
+            <Toaster />
+            <Sonner />
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+}

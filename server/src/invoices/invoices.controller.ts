@@ -27,28 +27,39 @@ interface RequestWithUser extends ExpressRequest {
 
 @ApiTags('invoices')
 @Controller('invoices')
-@UseGuards(JwtAuthGuard)
 @UseFilters(InvoiceErrorFilter)
-@ApiBearerAuth()
 export class InvoicesController {
   constructor(private readonly invoicesService: InvoicesService) {}
 
+  // Public endpoint for getting an invoice by ID without authentication
+  @Get(':id/public')
+  @ApiOperation({ summary: 'Get a public invoice by id' })
+  @ApiResponse({ status: 200, description: 'Return the invoice.' })
+  @ApiResponse({ status: 404, description: 'Invoice not found.' })
+  async findPublicOne(@Param('id') id: string) {
+    return this.invoicesService.findPublicOne(id);
+  }
+
   @Post()
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a new invoice' })
-  @ApiResponse({ status: 201, description: 'Invoice successfully created.' })
   @ApiResponse({ status: 400, description: 'Bad request.' })
   async create(@Request() req: RequestWithUser, @Body() createInvoiceDto: CreateInvoiceDto) {
     return this.invoicesService.create(req.user.id, createInvoiceDto);
   }
 
   @Get()
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get all invoices' })
-  @ApiResponse({ status: 200, description: 'Return all invoices.' })
   async findAll(@Request() req: RequestWithUser) {
     return this.invoicesService.findAll(req.user.id);
   }
 
   @Get(':id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get an invoice by id' })
   @ApiResponse({ status: 200, description: 'Return the invoice.' })
   @ApiResponse({ status: 404, description: 'Invoice not found.' })
@@ -57,6 +68,8 @@ export class InvoicesController {
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Update an invoice' })
   @ApiResponse({ status: 200, description: 'Invoice successfully updated.' })
   @ApiResponse({ status: 404, description: 'Invoice not found.' })
@@ -69,6 +82,8 @@ export class InvoicesController {
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete an invoice' })
   @ApiResponse({ status: 200, description: 'Invoice successfully deleted.' })
   @ApiResponse({ status: 404, description: 'Invoice not found.' })

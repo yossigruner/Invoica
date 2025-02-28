@@ -1,4 +1,13 @@
 import api from './axios';
+import axios from 'axios';
+
+// Create a public API instance without auth
+const publicApi = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000',
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
 
 export interface InvoiceItem {
   id: string;
@@ -33,11 +42,17 @@ export interface Invoice {
   total: number;
   createdAt: string;
   updatedAt: string;
+  discountType?: string;
+  discountValue?: number;
+  taxType?: string;
+  taxValue?: number;
+  shippingType?: string;
+  shippingValue?: number;
 }
 
 export interface CreateInvoiceItemDto {
   name: string;
-  description: string;
+  description?: string;
   quantity: number;
   rate: number;
 }
@@ -82,7 +97,14 @@ export const invoicesApi = {
   },
 
   async getOne(id: string): Promise<Invoice> {
+    // Use authenticated API for getting an invoice (protected endpoint)
     const response = await api.get(`/invoices/${id}`);
+    return response.data;
+  },
+
+  async getPublicOne(id: string): Promise<Invoice> {
+    // Use publicApi for getting a single invoice (public endpoint)
+    const response = await publicApi.get(`/invoices/${id}/public`);
     return response.data;
   },
 

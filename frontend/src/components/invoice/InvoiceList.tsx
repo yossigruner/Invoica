@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Search, Calendar, Download, FileDown, Mail, Trash2, Edit, FileText, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
+import { Search, Calendar, Download, FileDown, Mail, Trash2, Edit, FileText, ChevronLeft, ChevronRight, RefreshCw, CreditCard } from "lucide-react";
 import { useInvoices } from "@/hooks/useInvoices";
 import { useState, useMemo } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -95,12 +95,8 @@ export const InvoiceList = () => {
     document.body.removeChild(link);
   };
 
-  const handleViewInvoice = (invoiceId: string) => {
-    navigate(`/edit-invoice/${invoiceId}`);
-  };
-
   const handleEditInvoice = (invoice: Invoice) => {
-    navigate(`/edit-invoice/${invoice.id}`, {
+    navigate(`/invoices/${invoice.id}/edit`, {
       state: {
         customer: {
           id: invoice.customerId,
@@ -200,7 +196,7 @@ export const InvoiceList = () => {
                 <Download className="h-4 w-4 mr-2" />
                 Export CSV
               </Button>
-              <Link to="/create-invoice">
+              <Link to="/invoices/create">
                 <Button size="lg" className="h-10">
                   <FileText className="h-4 w-4 mr-2" />
                   Create Invoice
@@ -359,6 +355,16 @@ export const InvoiceList = () => {
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
+                        {invoice.status !== 'PAID' && (
+                          <Button 
+                            variant="default"
+                            size="icon"
+                            onClick={() => window.open(`/pay/${invoice.id}`, '_blank')}
+                            className="h-8 w-8 bg-primary hover:bg-primary/90"
+                          >
+                            <CreditCard className="h-4 w-4 text-white" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>

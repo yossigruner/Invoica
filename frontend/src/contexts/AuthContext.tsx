@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { authApi, LoginCredentials, RegisterData } from '@/api/auth';
 import { toast } from 'sonner';
 
@@ -21,34 +21,47 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// List of public routes that don't require authentication
+const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password', '/about', '/contact', '/faq'];
+const PUBLIC_ROUTE_PREFIXES = ['/pay/'];
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const isPublicRoute = (path: string) => {
+    if (PUBLIC_ROUTES.includes(path)) return true;
+    return PUBLIC_ROUTE_PREFIXES.some(prefix => path.startsWith(prefix));
+  };
 
   useEffect(() => {
-    checkAuth();
-  }, []);
+    const checkAuth = async () => {
+      try {
+        if (isPublicRoute(location.pathname)) {
+          setLoading(false);
+          return;
+        }
 
-  const checkAuth = async () => {
-    try {
-      console.log('🔍 Checking authentication status...');
-      if (authApi.isAuthenticated()) {
-        console.log('🎫 Token found, fetching user profile...');
-        const profile = await authApi.getProfile();
-        console.log('👤 Profile data:', profile);
-        setUser(profile);
-      } else {
-        console.log('🚫 No authentication token found');
+        if (authApi.isAuthenticated()) {
+          const profile = await authApi.getProfile();
+          setUser(profile);
+        } else {
+          if (!isPublicRoute(location.pathname)) {
+            navigate('/login', { replace: true });
+          }
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        await logout();
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('❌ Auth check failed:', error);
-      await logout();
-    } finally {
-      setLoading(false);
-      console.log('✅ Auth check completed');
-    }
-  };
+    };
+
+    checkAuth();
+  }, [navigate, location.pathname]);
 
   const login = async (credentials: LoginCredentials) => {
     try {

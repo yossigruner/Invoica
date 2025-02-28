@@ -15,7 +15,7 @@ const Index = () => {
                 <h1 className="text-2xl font-bold">Invoices</h1>
                 <p className="text-gray-500">Manage your invoices</p>
               </div>
-              <Link to="/create-invoice">
+              <Link to="/invoices/create">
                 <Button>
                   <Plus className="h-4 w-4 mr-2" />
                   Create Invoice

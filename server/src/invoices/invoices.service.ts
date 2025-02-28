@@ -459,6 +459,37 @@ export class InvoicesService {
     }
   }
 
+  async findPublicOne(id: string) {
+    try {
+      const invoice = await this.prisma.invoice.findUnique({
+        where: { id },
+        include: {
+          items: true,
+        },
+      });
+
+      if (!invoice) {
+        throw new InvoiceOperationError(
+          `Invoice with ID ${id} not found`,
+          InvoiceErrorCodes.INVOICE_NOT_FOUND,
+          { invoiceId: id }
+        );
+      }
+
+      return invoice;
+    } catch (error) {
+      if (error instanceof InvoiceOperationError) {
+        throw error;
+      }
+
+      throw new InvoiceOperationError(
+        'Failed to fetch invoice',
+        InvoiceErrorCodes.DATABASE_ERROR,
+        { originalError: error.message }
+      );
+    }
+  }
+
   private calculateAdjustment(amount: number, value?: number, type?: string): number {
     if (!value || value === 0) return 0;
     return type === 'percentage' ? (amount * value) / 100 : value;
