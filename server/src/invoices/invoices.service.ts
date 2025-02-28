@@ -461,29 +461,32 @@ export class InvoicesService {
 
   async findPublicOne(id: string) {
     try {
-      const invoice = await this.prisma.invoice.findUnique({
+      return await this.prisma.invoice.findUnique({
         where: { id },
         include: {
           items: true,
         },
       });
-
-      if (!invoice) {
-        throw new InvoiceOperationError(
-          `Invoice with ID ${id} not found`,
-          InvoiceErrorCodes.INVOICE_NOT_FOUND,
-          { invoiceId: id }
-        );
-      }
-
-      return invoice;
     } catch (error) {
-      if (error instanceof InvoiceOperationError) {
-        throw error;
-      }
-
       throw new InvoiceOperationError(
         'Failed to fetch invoice',
+        InvoiceErrorCodes.DATABASE_ERROR,
+        { originalError: error.message }
+      );
+    }
+  }
+
+  async findByInvoiceNumber(invoiceNumber: string) {
+    try {
+      return await this.prisma.invoice.findUnique({
+        where: { invoiceNumber },
+        include: {
+          items: true,
+        },
+      });
+    } catch (error) {
+      throw new InvoiceOperationError(
+        'Failed to fetch invoice by invoice number',
         InvoiceErrorCodes.DATABASE_ERROR,
         { originalError: error.message }
       );

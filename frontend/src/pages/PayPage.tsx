@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { invoicesApi } from "@/api/invoices";
 
 export const PayPage = () => {
   const { id } = useParams();
@@ -76,11 +77,13 @@ export const PayPage = () => {
 
   const handlePayment = async () => {
     try {
-      // This is a placeholder - integrate with your payment processor here
-      toast.success("Payment initiated");
+      const { href } = await invoicesApi.generatePaymentLink(id || "");
+      // Redirect to Clover's payment page
+      console.log('Redirecting to payment URL:', href);
+      window.location.href = href;
     } catch (error) {
       logger.error('Payment failed:', error);
-      toast.error("Payment failed");
+      toast.error("Failed to initiate payment");
     }
   };
 

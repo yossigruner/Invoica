@@ -6,7 +6,8 @@ const publicApi = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000',
   headers: {
     'Content-Type': 'application/json'
-  }
+  },
+  withCredentials: true
 });
 
 export interface InvoiceItem {
@@ -116,5 +117,10 @@ export const invoicesApi = {
 
   async delete(id: string): Promise<void> {
     await api.delete(`/invoices/${id}`);
+  },
+
+  async generatePaymentLink(id: string): Promise<{ href: string }> {
+    const response = await publicApi.post(`/invoices/${id}/payment`);
+    return response.data;
   }
 }; 

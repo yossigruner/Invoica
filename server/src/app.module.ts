@@ -11,12 +11,11 @@ import { ProfileModule } from './profile/profile.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
     }),
-    PrismaModule,
-    UsersModule,
     AuthModule,
+    UsersModule,
     InvoicesModule,
+    PrismaModule,
     CustomersModule,
     ProfileModule,
   ],

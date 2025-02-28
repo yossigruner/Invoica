@@ -23,7 +23,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // List of public routes that don't require authentication
 const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password', '/about', '/contact', '/faq'];
-const PUBLIC_ROUTE_PREFIXES = ['/pay/'];
+const PUBLIC_ROUTE_PREFIXES = ['/pay/', '/invoices/'];
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);

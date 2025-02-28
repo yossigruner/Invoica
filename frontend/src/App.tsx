@@ -19,6 +19,7 @@ import AboutUs from "./pages/AboutUs";
 import ContactUs from "./pages/ContactUs";
 import Faq from "./pages/Faq";
 import { PayPage } from "./pages/PayPage";
+import { PaymentSuccessPage } from "./pages/PaymentSuccessPage";
 
 const queryClient = new QueryClient();
 
@@ -76,6 +77,7 @@ export default function App() {
               <Route path="/contact" element={<Layout includeNav={true}><ContactUs /></Layout>} />
               <Route path="/faq" element={<Layout includeNav={true}><Faq /></Layout>} />
               <Route path="/pay/:id" element={<Layout includeNav={false}><PayPage /></Layout>} />
+              <Route path="/invoices/:id/success" element={<Layout includeNav={false}><PaymentSuccessPage /></Layout>} />
 
               {/* Protected routes */}
               <Route path="/" element={<ProtectedRoute><Layout includeNav={true}><Invoices /></Layout></ProtectedRoute>} />
