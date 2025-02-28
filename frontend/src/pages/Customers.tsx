@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import debounce from "lodash/debounce";
+import { debounce } from "lodash";
 
 const PAGE_SIZE_OPTIONS = [5, 10, 25, 50];
 
