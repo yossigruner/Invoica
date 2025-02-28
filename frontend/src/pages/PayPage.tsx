@@ -77,10 +77,14 @@ export const PayPage = () => {
 
   const handlePayment = async () => {
     try {
-      const { href } = await invoicesApi.generatePaymentLink(id || "");
+      const response = await invoicesApi.generatePaymentLink(id || "");
+      const paymentUrl = response.href || response.paymentUrl;
+      if (!paymentUrl) {
+        throw new Error('No payment URL received');
+      }
       // Redirect to Clover's payment page
-      console.log('Redirecting to payment URL:', href);
-      window.location.href = href;
+      console.log('Redirecting to payment URL:', paymentUrl);
+      window.location.href = paymentUrl;
     } catch (error) {
       logger.error('Payment failed:', error);
       toast.error("Failed to initiate payment");

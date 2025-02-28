@@ -119,8 +119,9 @@ export const invoicesApi = {
     await api.delete(`/invoices/${id}`);
   },
 
-  async generatePaymentLink(id: string): Promise<{ href: string }> {
+  async generatePaymentLink(id: string): Promise<{ href: string; paymentUrl?: string }> {
     const response = await publicApi.post(`/invoices/${id}/payment`);
-    return response.data;
+    const { href } = response.data;
+    return { href, paymentUrl: href }; // Return both for backward compatibility
   }
 }; 

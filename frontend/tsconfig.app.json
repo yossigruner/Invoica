@@ -9,9 +9,11 @@
     /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
     "isolatedModules": true,
     "moduleDetection": "force",
     "jsx": "react-jsx",
+    "noEmit": true,
 
     /* Project Reference Support */
     "composite": true,

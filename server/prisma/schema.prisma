@@ -77,10 +77,8 @@ model Invoice {
   billingCountry  String?       @map("billing_country")
   discountValue   Float         @default(0) @map("discount_value")
   discountType    String        @default("percentage") @map("discount_type")
-  federalTaxValue Float         @default(0) @map("federal_tax_value")
-  federalTaxType  String        @default("percentage") @map("federal_tax_type")
-  provincialTaxValue Float      @default(0) @map("provincial_tax_value")
-  provincialTaxType  String     @default("percentage") @map("provincial_tax_type")
+  taxValue        Float         @default(0) @map("tax_value")
+  taxType         String        @default("percentage") @map("tax_type")
   shippingValue   Float         @default(0) @map("shipping_value")
   shippingType    String        @default("amount") @map("shipping_type")
   subtotal        Float
