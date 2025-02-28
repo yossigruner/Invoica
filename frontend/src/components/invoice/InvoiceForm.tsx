@@ -261,6 +261,12 @@ export const InvoiceForm = ({ initialData, isEditing }: InvoiceFormProps) => {
         return;
       }
 
+      // Check if we have a valid ID when editing
+      if (isEditing && !initialData?.id) {
+        toast.error("Invalid invoice ID");
+        return;
+      }
+
       const totals = calculateTotal();
       const transformedData = transformFormData(formData, showDiscount, showTax, showShipping, paymentMethod, totals);
       
