@@ -1,90 +1,89 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useCallback, FormEvent } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { AxiosError } from "axios";
 
 export default function Login() {
   const { login } = useAuth();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
+  const [rememberMe, setRememberMe] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError(null);
-    console.log('🔐 Login attempt:', { email: formData.email });
+    e.stopPropagation();
     
-    try {
-      setLoading(true);
-      console.log('⏳ Starting login process...');
-      await login(formData);
-      console.log('✅ Login successful');
-    } catch (error) {
-      console.error("❌ Login error:", {
-        error,
-        status: error instanceof AxiosError ? error.response?.status : undefined,
-        data: error instanceof AxiosError ? error.response?.data : undefined,
-        message: error instanceof Error ? error.message : 'Unknown error',
-      });
+    if (!formData.email || !formData.password) {
+      setError("Please fill in all fields");
+      return;
+    }
 
-      if (error instanceof AxiosError && error.response?.data) {
-        // Display the specific error message from the server
-        const errorMessage = error.response.data.message || "Invalid credentials";
-        console.log('❌ Server error message:', errorMessage);
-        setError(errorMessage);
+    try {
+      setError(null);
+      const response = await login(formData);
+      
+      if (response?.access_token) {
+        navigate('/', { replace: true });
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error('Login error:', error.message);
+
+        if (error.message.includes('User not found')) {
+          setError("Account not found. Please register first or check your email.");
+        } else if (error.message.includes('Invalid credentials')) {
+          setError("Invalid password. Please try again.");
+        } else {
+          setError("An unexpected error occurred. Please try again.");
+        }
       } else {
-        console.log('❌ Unexpected error:', error);
         setError("An unexpected error occurred. Please try again.");
       }
     } finally {
       setLoading(false);
-      console.log('🔄 Login process completed');
     }
-  };
+  }, [formData, login, navigate]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log('📝 Form field changed:', e.target.name);
-    setError(null);
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    if (error) setError(null);
+  }, [error]);
 
   return (
-    <div className="container flex items-center justify-center min-h-screen bg-background">
-      <Card className="w-full max-w-[400px] shadow-lg">
-        <CardHeader className="space-y-3">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-lg">I</span>
+    <div className="min-h-screen flex items-center justify-center bg-[#FAFAFA]">
+      <div className="w-full max-w-[1100px] min-h-[600px] flex bg-white rounded-[32px] shadow-sm overflow-hidden">
+        {/* Login Form Section */}
+        <div className="w-[45%] p-12 flex flex-col">
+          <div className="mb-8 text-center">
+            <div className="flex justify-center mb-6">
+              <div className="w-14 h-14 rounded-full bg-[#7C5CFC] flex items-center justify-center">
+                <div className="w-3.5 h-3.5 rounded-full bg-white"></div>
+              </div>
             </div>
-            <span className="font-bold text-xl text-foreground">Inspecta</span>
+            <h1 className="text-[28px] font-semibold text-[#1A1A1A] mb-2">Welcome back</h1>
+            <p className="text-[15px] text-[#666666]">Welcome back! Please enter your details.</p>
           </div>
-          <div>
-            <CardTitle className="text-foreground">Sign In</CardTitle>
-          </div>
-          <CardDescription className="text-muted-foreground">
-            Enter your email and password to sign in to your account.
-          </CardDescription>
-        </CardHeader>
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
+
+          <form onSubmit={handleSubmit} className="flex-1 flex flex-col space-y-5" noValidate>
             {error && (
-              <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">
+              <div className="px-4 py-3 bg-[#FEF2F2] text-[#EF4444] text-[14px] rounded-lg">
                 {error}
               </div>
             )}
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-foreground">Email</Label>
-              <Input
+
+            <div className="space-y-1.5">
+              <label htmlFor="email" className="block text-[15px] font-medium text-[#1A1A1A]">
+                Email
+              </label>
+              <input
                 id="email"
                 name="email"
                 type="email"
@@ -92,46 +91,84 @@ export default function Login() {
                 value={formData.email}
                 onChange={handleChange}
                 required
-                className="border-input bg-background text-foreground"
+                className="w-full h-12 px-4 text-[15px] rounded-xl border border-[#E5E5E5] focus:outline-none focus:ring-2 focus:ring-[#7C5CFC] focus:border-transparent placeholder:text-[#999999]"
                 autoComplete="email"
+                disabled={loading}
               />
             </div>
-            <div className="space-y-2">
+
+            <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-foreground">Password</Label>
+                <label htmlFor="password" className="block text-[15px] font-medium text-[#1A1A1A]">
+                  Password
+                </label>
                 <Link
                   to="/forgot-password"
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                  className="text-[15px] text-[#7C5CFC] hover:underline font-medium"
                 >
                   Forgot password?
                 </Link>
               </div>
-              <Input
+              <input
                 id="password"
                 name="password"
                 type="password"
-                placeholder="Enter your password"
+                placeholder="••••••"
                 value={formData.password}
                 onChange={handleChange}
                 required
-                className="border-input bg-background text-foreground"
+                className="w-full h-12 px-4 text-[15px] rounded-xl border border-[#E5E5E5] focus:outline-none focus:ring-2 focus:ring-[#7C5CFC] focus:border-transparent placeholder:text-[#999999]"
                 autoComplete="current-password"
+                disabled={loading}
               />
             </div>
-          </CardContent>
-          <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90" disabled={loading}>
-              {loading ? "Signing in..." : "Sign in"}
-            </Button>
-            <div className="text-sm text-center text-muted-foreground">
-              Don't have an account?{" "}
-              <Link to="/register" className="text-primary hover:text-primary/80 transition-colors">
-                Sign up
-              </Link>
+
+            <div className="flex items-center">
+              <input
+                id="remember"
+                name="remember"
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="h-4 w-4 rounded-[4px] border-2 border-[#E5E5E5] text-[#7C5CFC] focus:ring-[#7C5CFC] focus:ring-offset-0"
+              />
+              <label htmlFor="remember" className="ml-2 text-[15px] text-[#666666]">
+                Remember me
+              </label>
             </div>
-          </CardFooter>
-        </form>
-      </Card>
+
+            <div className="flex-1 flex flex-col justify-end space-y-5">
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full h-12 bg-[#7C5CFC] text-white rounded-xl font-medium text-[15px] hover:bg-[#6B4FDB] transition-colors disabled:opacity-50"
+              >
+                {loading ? "Signing in..." : "Sign in"}
+              </button>
+
+              <p className="text-center text-[15px] text-[#666666]">
+                Don't have an account?{" "}
+                <Link to="/register" className="text-[#7C5CFC] hover:underline font-medium">
+                  Sign up
+                </Link>
+              </p>
+            </div>
+          </form>
+        </div>
+
+        {/* Decorative Arch Section */}
+        <div className="w-[55%] relative bg-[#F5F3FF]">
+          <div className="absolute inset-0 flex items-end justify-center">
+            <div 
+              className="w-full h-[80%] bg-[#7C5CFC] rounded-t-full"
+              style={{
+                background: 'linear-gradient(180deg, #7C5CFC 0%, #9F85FF 100%)',
+              }}
+            />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
+

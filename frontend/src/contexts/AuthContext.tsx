@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { authApi, LoginCredentials, RegisterData } from '@/api/auth';
+import { authApi, LoginCredentials, RegisterData, AuthResponse, ResetPasswordResponse } from '@/api/auth';
 import { toast } from 'sonner';
 
 interface User {
@@ -13,9 +13,10 @@ interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (credentials: LoginCredentials) => Promise<void>;
+  login: (credentials: LoginCredentials) => Promise<AuthResponse | undefined>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
   isAuthenticated: boolean;
 }
 
@@ -64,89 +65,81 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [navigate, location.pathname]);
 
   const login = async (credentials: LoginCredentials) => {
+    let response;
     try {
-      console.log('🔐 Starting login process...');
-      setLoading(true);
-      const response = await authApi.login(credentials);
-      console.log('🎫 Login response:', response);
+      response = await authApi.login(credentials);
       
-      if (!response.access_token) {
-        console.error('❌ Invalid login response - no access token');
-        throw new Error('Invalid login response');
+      console.log('response', response);
+
+      if (!response?.access_token) {
+        throw new Error('Invalid login response - no access token');
       }
 
-      console.log('💾 Setting auth token...');
       authApi.setAuthToken(response.access_token);
-      
-      console.log('👤 Fetching user profile...');
       const profile = await authApi.getProfile();
-      console.log('✅ Profile fetched:', profile);
       setUser(profile);
       
+      // Only navigate and show success toast if login was successful
+      navigate('/', { replace: true });
       toast.success('Login successful');
-      
-      console.log('🔄 Navigating to home page...');
-      setTimeout(() => {
-        navigate('/', { replace: true });
-      }, 100);
+      return response; // Return the response for the component to handle
     } catch (error) {
-      console.error('❌ Login failed:', error);
-      toast.error('Login failed. Please check your credentials.');
-      throw error;
+      // Don't show the toast for expected errors like "User not found"
+      if (!(error instanceof Error && error.message.includes('User not found'))) {
+        toast.error('Login failed. Please check your credentials.');
+      }
+      throw error; // Re-throw the error so the Login component can handle it
     } finally {
-      setLoading(false);
-      console.log('🔄 Login process completed');
     }
   };
 
   const register = async (data: RegisterData) => {
     try {
-      console.log('📝 Starting registration process...');
-      setLoading(true);
       const response = await authApi.register(data);
-      console.log('🎫 Registration response:', response);
       
       if (!response.access_token) {
-        console.error('❌ Invalid registration response - no access token');
         throw new Error('Invalid registration response');
       }
 
-      console.log('💾 Setting auth token...');
       authApi.setAuthToken(response.access_token);
-      
-      console.log('👤 Fetching user profile...');
       const profile = await authApi.getProfile();
-      console.log('✅ Profile fetched:', profile);
       setUser(profile);
       
+      navigate('/', { replace: true });
       toast.success('Registration successful');
-      
-      console.log('🔄 Navigating to home page...');
-      setTimeout(() => {
-        navigate('/', { replace: true });
-      }, 100);
     } catch (error) {
-      console.error('❌ Registration failed:', error);
-      toast.error('Registration failed. Please try again.');
+      if (error instanceof Error && error.message.includes('already exists')) {
+        toast.error('Email already exists. Please use a different email.');
+      } else {
+        toast.error('Registration failed. Please try again.');
+      }
       throw error;
     } finally {
-      setLoading(false);
-      console.log('🔄 Registration process completed');
     }
   };
 
   const logout = async () => {
     try {
-      console.log('🔒 Starting logout process...');
       await authApi.logout();
       setUser(null);
-      console.log('🔄 Navigating to login page...');
       navigate('/login', { replace: true });
       toast.success('Logged out successfully');
-      console.log('✅ Logout completed');
     } catch (error) {
-      console.error('❌ Logout failed:', error);
       toast.error('Logout failed');
+    }
+  };
+
+  const resetPassword = async (email: string) => {
+    try {
+      await authApi.resetPassword(email);
+      toast.success('Password reset instructions sent to your email');
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('User not found')) {
+        toast.error('No account found with this email address');
+      } else {
+        toast.error('Failed to send password reset instructions. Please try again.');
+      }
+      throw error;
     }
   };
 
@@ -156,6 +149,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     login,
     register,
     logout,
+    resetPassword,
     isAuthenticated: !!user,
   };
 

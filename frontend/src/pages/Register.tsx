@@ -1,83 +1,121 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useCallback, FormEvent } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
-import { ArrowLeft } from "lucide-react";
-import { AxiosError } from "axios";
 
 export default function Register() {
   const { register } = useAuth();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
+    firstName: "",
+    lastName: "",
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    e.stopPropagation();
     
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      toast.error("Please enter a valid email address");
-      return;
-    }
-
-    // Validate password length
-    if (formData.password.length < 8) {
-      toast.error("Password must be at least 8 characters long");
+    if (!formData.email || !formData.password || !formData.firstName || !formData.lastName) {
+      setError("Please fill in all fields");
       return;
     }
 
     try {
       setLoading(true);
+      setError(null);
       await register(formData);
     } catch (error) {
-      console.error("Registration error:", error);
-      if (error instanceof AxiosError && error.response?.data) {
-        // Display the specific error message from the server
-        toast.error(error.response.data.message || "Registration failed. Please try again.");
+      if (error instanceof Error) {
+        console.error('Registration error:', error.message);
+
+        if (error.message.includes('already exists')) {
+          setError("Email already exists. Please use a different email.");
+        } else {
+          setError(error.message);
+        }
       } else {
-        toast.error("Registration failed. Please try again.");
+        setError("An unexpected error occurred. Please try again.");
       }
     } finally {
       setLoading(false);
     }
-  };
+  }, [formData, register]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    if (error) setError(null);
+  }, [error]);
 
   return (
-    <div className="container flex items-center justify-center min-h-screen bg-background">
-      <Card className="w-full max-w-[400px] shadow-lg">
-        <CardHeader className="space-y-3">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-lg">I</span>
+    <div className="min-h-screen flex items-center justify-center bg-[#FAFAFA]">
+      <div className="w-full max-w-[1100px] min-h-[600px] flex bg-white rounded-[32px] shadow-sm overflow-hidden">
+        {/* Register Form Section */}
+        <div className="w-[45%] p-12 flex flex-col">
+          <div className="mb-8 text-center">
+            <div className="flex justify-center mb-6">
+              <div className="w-14 h-14 rounded-full bg-[#7C5CFC] flex items-center justify-center">
+                <div className="w-3.5 h-3.5 rounded-full bg-white"></div>
+              </div>
             </div>
-            <span className="font-bold text-xl text-foreground">Inspecta</span>
+            <h1 className="text-[28px] font-semibold text-[#1A1A1A] mb-2">Create an account</h1>
+            <p className="text-[15px] text-[#666666]">Enter your details to get started.</p>
           </div>
-          <div>
-            <CardTitle className="text-foreground">Create Account</CardTitle>
-          </div>
-          <CardDescription className="text-muted-foreground">
-            Enter your email and password to create your account.
-          </CardDescription>
-        </CardHeader>
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-foreground">Email</Label>
-              <Input
+
+          <form onSubmit={handleSubmit} className="flex-1 flex flex-col space-y-5" noValidate>
+            {error && (
+              <div className="px-4 py-3 bg-[#FEF2F2] text-[#EF4444] text-[14px] rounded-lg">
+                {error}
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label htmlFor="firstName" className="block text-[15px] font-medium text-[#1A1A1A]">
+                  First name
+                </label>
+                <input
+                  id="firstName"
+                  name="firstName"
+                  type="text"
+                  placeholder="Enter your first name"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  required
+                  className="w-full h-12 px-4 text-[15px] rounded-xl border border-[#E5E5E5] focus:outline-none focus:ring-2 focus:ring-[#7C5CFC] focus:border-transparent placeholder:text-[#999999]"
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="lastName" className="block text-[15px] font-medium text-[#1A1A1A]">
+                  Last name
+                </label>
+                <input
+                  id="lastName"
+                  name="lastName"
+                  type="text"
+                  placeholder="Enter your last name"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  required
+                  className="w-full h-12 px-4 text-[15px] rounded-xl border border-[#E5E5E5] focus:outline-none focus:ring-2 focus:ring-[#7C5CFC] focus:border-transparent placeholder:text-[#999999]"
+                  disabled={loading}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label htmlFor="email" className="block text-[15px] font-medium text-[#1A1A1A]">
+                Email
+              </label>
+              <input
                 id="email"
                 name="email"
                 type="email"
@@ -85,39 +123,61 @@ export default function Register() {
                 value={formData.email}
                 onChange={handleChange}
                 required
-                className="border-input bg-background text-foreground"
+                className="w-full h-12 px-4 text-[15px] rounded-xl border border-[#E5E5E5] focus:outline-none focus:ring-2 focus:ring-[#7C5CFC] focus:border-transparent placeholder:text-[#999999]"
                 autoComplete="email"
+                disabled={loading}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-foreground">Password</Label>
-              <Input
+
+            <div className="space-y-1.5">
+              <label htmlFor="password" className="block text-[15px] font-medium text-[#1A1A1A]">
+                Password
+              </label>
+              <input
                 id="password"
                 name="password"
                 type="password"
-                placeholder="At least 8 characters"
+                placeholder="Create a password"
                 value={formData.password}
                 onChange={handleChange}
                 required
-                minLength={8}
-                className="border-input bg-background text-foreground"
+                className="w-full h-12 px-4 text-[15px] rounded-xl border border-[#E5E5E5] focus:outline-none focus:ring-2 focus:ring-[#7C5CFC] focus:border-transparent placeholder:text-[#999999]"
                 autoComplete="new-password"
+                disabled={loading}
               />
             </div>
-          </CardContent>
-          <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90" disabled={loading}>
-              {loading ? "Creating account..." : "Create account"}
-            </Button>
-            <div className="text-sm text-center text-muted-foreground">
-              Already have an account?{" "}
-              <Link to="/login" className="text-primary hover:text-primary/80 transition-colors">
-                Sign in
-              </Link>
+
+            <div className="flex-1 flex flex-col justify-end space-y-5">
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full h-12 bg-[#7C5CFC] text-white rounded-xl font-medium text-[15px] hover:bg-[#6B4FDB] transition-colors disabled:opacity-50"
+              >
+                {loading ? "Creating account..." : "Create account"}
+              </button>
+
+              <p className="text-center text-[15px] text-[#666666]">
+                Already have an account?{" "}
+                <Link to="/login" className="text-[#7C5CFC] hover:underline font-medium">
+                  Sign in
+                </Link>
+              </p>
             </div>
-          </CardFooter>
-        </form>
-      </Card>
+          </form>
+        </div>
+
+        {/* Decorative Arch Section */}
+        <div className="w-[55%] relative bg-[#F5F3FF]">
+          <div className="absolute inset-0 flex items-end justify-center">
+            <div 
+              className="w-full h-[80%] bg-[#7C5CFC] rounded-t-full"
+              style={{
+                background: 'linear-gradient(180deg, #7C5CFC 0%, #9F85FF 100%)',
+              }}
+            />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

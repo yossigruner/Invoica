@@ -1,96 +1,115 @@
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card } from "@/components/ui/card";
-import { toast } from "sonner";
-import { ArrowLeft } from "lucide-react";
+export default function ForgotPassword() {
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+  const { resetPassword } = useAuth();
 
-const ForgotPassword = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [emailSent, setEmailSent] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    
+    e.stopPropagation();
+
+    if (!email) {
+      setError('Please enter your email address');
+      return;
+    }
+
+    setError('');
+    setLoading(true);
+
     try {
-      console.log("Sending password reset email...");
-      toast.success("Password reset email sent!");
-      setEmailSent(true);
+      await resetPassword(email);
+      setSuccess(true);
     } catch (error) {
-      toast.error("Failed to send reset email. Please try again.");
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('An unexpected error occurred');
+      }
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-100 to-primary-50 p-4">
-      <Card className="w-full max-w-md p-8 shadow-xl">
-        <div className="flex flex-col items-center gap-6 mb-6">
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-md">
-              <span className="text-white font-bold">I</span>
-            </div>
-            <span className="text-xl font-semibold bg-gradient-to-r from-primary-500 to-primary-700 bg-clip-text text-transparent">
-            Invoica
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Link to="/login">
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-              >
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-            </Link>
-            <h2 className="text-2xl font-bold">Reset Password</h2>
-          </div>
-        </div>
-        
-        {emailSent ? (
-          <div className="space-y-4">
-            <div className="text-center p-4">
-              <h3 className="text-xl font-semibold mb-2">Check your email</h3>
-              <p className="text-muted-foreground">
-                We've sent you instructions to reset your password.
-              </p>
-            </div>
-            <Link to="/login">
-              <Button variant="outline" className="w-full h-12">
-                Back to Sign In
-              </Button>
-            </Link>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <p className="text-muted-foreground">
-              Enter your email address and we'll send you a link to reset your password.
+    <div className="min-h-screen flex">
+      {/* Left section with form */}
+      <div className="flex-1 flex items-center justify-center p-8">
+        <div className="w-full max-w-md space-y-8">
+          <div className="text-center">
+            <h2 className="text-4xl font-bold tracking-tight text-gray-900">
+              Forgot Password
+            </h2>
+            <p className="mt-2 text-sm text-gray-600">
+              Enter your email address and we'll send you instructions to reset your password.
             </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="mt-8 space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
+                name="email"
                 type="email"
-                placeholder="Enter your email"
-                className="h-12"
+                autoComplete="email"
                 required
+                placeholder="Email address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
+                disabled={loading || success}
               />
             </div>
-            <Button type="submit" className="w-full h-12" disabled={isLoading}>
-              {isLoading ? "Sending..." : "Send Reset Link"}
-            </Button>
+
+            {error && (
+              <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">
+                {error}
+              </div>
+            )}
+
+            {success && (
+              <div className="text-sm text-green-600 bg-green-50 p-3 rounded-md">
+                Check your email for password reset instructions.
+              </div>
+            )}
+
+            <div className="flex flex-col gap-4">
+              <Button
+                type="submit"
+                disabled={loading || success}
+                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+              >
+                {loading ? 'Sending...' : 'Reset Password'}
+              </Button>
+
+              <div className="text-sm text-center">
+                <Link
+                  to="/login"
+                  className="font-medium text-primary hover:text-primary/90"
+                >
+                  Back to Login
+                </Link>
+              </div>
+            </div>
           </form>
-        )}
-      </Card>
+        </div>
+      </div>
+
+      {/* Right section with decorative arch */}
+      <div className="hidden lg:block lg:w-1/2 relative">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/80 to-primary"></div>
+        <div className="absolute inset-0">
+          <div className="h-full w-full" style={{
+            background: `radial-gradient(circle at 50% 0%, transparent 25%, rgba(0, 0, 0, 0.15) 26%)`
+          }}></div>
+        </div>
+      </div>
     </div>
   );
-};
-
-export default ForgotPassword;
+}
