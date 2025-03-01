@@ -60,15 +60,11 @@ export const useInvoiceFormState = (customerData: CustomerData | null, initialDa
         initialItems = itemsToMap.map((item: any) => {
           logger.info('Processing item from database:', { item });
           return {
-            id: item.id,
-            invoice_id: item.invoice_id,
             name: item.name || "",
             description: item.description || "",
             quantity: Number(item.quantity) || 0,
             rate: Number(item.rate) || 0,
-            amount: Number(item.amount) || 0,
-            created_at: item.created_at,
-            updated_at: item.updated_at
+            amount: Number(item.quantity || 0) * Number(item.rate || 0)
           };
         });
         logger.info('Successfully mapped items:', { 
@@ -107,7 +103,6 @@ export const useInvoiceFormState = (customerData: CustomerData | null, initialDa
 
   const [formData, setFormData] = useState<InvoiceFormData>({
     to: {
-      id: initialData?.customerId || customerData?.id || "",
       name: initialData?.billingName || customerData?.name || "",
       email: initialData?.billingEmail || customerData?.email || "",
       phone: initialData?.billingPhone || customerData?.phone || "",
@@ -121,7 +116,13 @@ export const useInvoiceFormState = (customerData: CustomerData | null, initialDa
     issueDate: initialData?.issueDate || new Date().toISOString(),
     dueDate: initialData?.dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
     currency: initialData?.currency || profile?.preferredCurrency || "USD",
-    items: initialItems,
+    items: initialItems.map(item => ({
+      name: item.name,
+      description: item.description,
+      quantity: item.quantity,
+      rate: item.rate,
+      amount: item.quantity * item.rate
+    })),
     adjustments: {
       discount: {
         type: initialData?.discountType === 'fixed' ? 'amount' : 'percentage',

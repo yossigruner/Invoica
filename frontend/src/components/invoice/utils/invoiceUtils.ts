@@ -62,102 +62,76 @@ export function handleCreditCardPayment(paymentInfo: PaymentInfo): Promise<void>
 }
 
 export const transformFormData = (formData: any) => {
-  if (!formData.currency) {
-    throw new Error('Currency is required');
+  // Format dates if they exist
+  const issueDate = formData.issueDate ? new Date(formData.issueDate).toISOString() : undefined;
+  const dueDate = formData.dueDate ? new Date(formData.dueDate).toISOString() : undefined;
+
+  // Extract billing information from the 'to' object
+  const {
+    name: billingName = '',
+    email: billingEmail = '',
+    phone: billingPhone = '',
+    address: billingAddress = '',
+    city: billingCity = '',
+    province: billingProvince = '',
+    zip: billingZip = '',
+    country: billingCountry = '',
+    id: customerId = undefined
+  } = formData.to || {};
+
+  // Validate required fields
+  if (!billingName || typeof billingName !== 'string') {
+    throw new Error('Billing name is required and must be a string');
   }
 
-  // Log date values for debugging
-  console.log('Transforming form data dates:', {
-    issueDate: formData.issueDate,
-    dueDate: formData.dueDate,
-    rawFormData: formData
-  });
-
-  // Log payment information
-  console.log('Payment information:', {
-    paymentMethod: formData.paymentMethod,
-    paymentTerms: formData.paymentTerms,
-    rawFormData: formData
-  });
-
-  // Ensure dates are in ISO format and handle undefined/null cases
-  const issueDate = formData.issueDate ? new Date(formData.issueDate).toISOString() : null;
-  const dueDate = formData.dueDate ? new Date(formData.dueDate).toISOString() : null;
-
-  // Log date transformations
-  console.log('Date transformation:', {
-    original: {
-      issueDate: formData.issueDate,
-      dueDate: formData.dueDate,
-    },
-    transformed: {
-      issueDate,
-      dueDate,
-    }
-  });
-
-  if (!issueDate) {
-    throw new Error('Issue date is required');
+  if (!billingEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(billingEmail)) {
+    throw new Error('A valid billing email is required');
   }
 
-  if (!dueDate) {
-    throw new Error('Due date is required');
-  }
+  // Extract adjustment values
+  const {
+    discount = { type: 'percentage', value: 0 },
+    tax = { type: 'percentage', value: 0 },
+    shipping = { type: 'amount', value: 0 }
+  } = formData.adjustments || {};
 
-  const transformedData = {
-    customerId: formData.to.id,
-    invoiceNumber: formData.invoiceNumber,
+  // Transform the data to match the server's expected structure
+  const transformedData: Record<string, any> = {
+    customerId: customerId || undefined,
+    invoiceNumber: formData.invoiceNumber || '',
     issueDate,
     dueDate,
-    currency: formData.currency,
-    paymentMethod: formData.paymentMethod,
-    paymentTerms: formData.paymentTerms,
+    currency: formData.currency || 'USD',
+    paymentMethod: formData.paymentMethod || '',
+    paymentTerms: formData.paymentTerms || '',
     additionalNotes: formData.additionalNotes || '',
     status: formData.status || 'DRAFT',
-    billingName: formData.to.name,
-    billingEmail: formData.to.email,
-    billingPhone: formData.to.phone,
-    billingAddress: formData.to.address,
-    billingCity: formData.to.city,
-    billingZip: formData.to.zip,
-    billingCountry: formData.to.country,
+    billingName: String(billingName).trim(),
+    billingEmail: String(billingEmail).trim().toLowerCase(),
+    billingPhone: String(billingPhone || '').trim(),
+    billingAddress: String(billingAddress || '').trim(),
+    billingCity: String(billingCity || '').trim(),
+    billingProvince: String(billingProvince || '').trim(),
+    billingZip: String(billingZip || '').trim(),
+    billingCountry: String(billingCountry || '').trim(),
     items: formData.items.map((item: any) => ({
-      name: item.name,
-      description: item.description,
+      name: String(item.name || '').trim(),
+      description: String(item.description || '').trim(),
       quantity: Number(item.quantity),
       rate: Number(item.rate)
     })),
-    discountType: formData.adjustments?.discount?.type || 'percentage',
-    discountValue: formData.adjustments?.discount?.value ? Number(formData.adjustments.discount.value) : 0,
-    taxType: formData.adjustments?.tax?.type || 'percentage',
-    taxValue: formData.adjustments?.tax?.value ? Number(formData.adjustments.tax.value) : 0,
-    shippingType: formData.adjustments?.shipping?.type || 'amount',
-    shippingValue: formData.adjustments?.shipping?.value ? Number(formData.adjustments.shipping.value) : 0
+    discountType: discount.type === 'amount' ? 'fixed' : 'percentage',
+    discountValue: Number(discount.value) || 0,
+    taxType: tax.type === 'amount' ? 'fixed' : 'percentage',
+    taxValue: Number(tax.value) || 0,
+    shippingType: shipping.type === 'amount' ? 'fixed' : 'percentage',
+    shippingValue: Number(shipping.value) || 0
   };
 
-  // Enhanced logging for debugging
-  console.log('Transformed data:', {
-    ...transformedData,
-    payment: {
-      method: transformedData.paymentMethod,
-      terms: transformedData.paymentTerms
-    },
-    summary: {
-      additionalNotes: transformedData.additionalNotes,
-      adjustments: {
-        discount: {
-          type: transformedData.discountType,
-          value: transformedData.discountValue
-        },
-        tax: {
-          type: transformedData.taxType,
-          value: transformedData.taxValue
-        },
-        shipping: {
-          type: transformedData.shippingType,
-          value: transformedData.shippingValue
-        }
-      }
+  // Remove undefined values
+  Object.keys(transformedData).forEach(key => {
+    if (transformedData[key] === undefined) {
+      delete transformedData[key];
     }
   });
 

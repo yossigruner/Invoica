@@ -42,11 +42,7 @@ export const useInvoiceForm = (customerData: CustomerData | null, initialData?: 
   // Synchronize payment method with form data
   useEffect(() => {
     logger.info('Payment method changed:', { paymentMethod });
-    setFormData(prev => ({
-      ...prev,
-      paymentMethod
-    }));
-  }, [paymentMethod, setFormData]);
+  }, [paymentMethod]);
 
   const handleInputChange = useCallback((section: keyof InvoiceFormData | "", field: string, value: string | number) => {
     setFormData(prev => {

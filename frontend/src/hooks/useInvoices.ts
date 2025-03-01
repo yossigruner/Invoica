@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { invoicesApi, type Invoice, type CreateInvoiceDto, type UpdateInvoiceDto } from '@/api/invoices';
 import { toast } from 'sonner';
+import { logger } from '@/utils/logger';
 
 export function useInvoices() {
   const queryClient = useQueryClient();
@@ -11,38 +12,95 @@ export function useInvoices() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: CreateInvoiceDto) => invoicesApi.create(data),
+    mutationFn: async (data: CreateInvoiceDto) => {
+      try {
+        logger.info('Creating invoice:', data);
+        return await invoicesApi.create(data);
+      } catch (error: any) {
+        logger.error('Failed to create invoice:', error);
+        throw error;
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
-      toast.success('Invoice created successfully');
     },
-    onError: (error) => {
-      console.error('Failed to create invoice:', error);
-      toast.error('Failed to create invoice');
+    onError: (error: any) => {
+      if (error.response?.data?.message) {
+        if (Array.isArray(error.response.data.message)) {
+          error.response.data.message.forEach((msg: string) => {
+            toast.error(msg);
+          });
+        } else {
+          toast.error(error.response.data.message);
+        }
+      } else {
+        toast.error('Failed to create invoice');
+      }
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateInvoiceDto }) =>
-      invoicesApi.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['invoices'] });
-      toast.success('Invoice updated successfully');
+    mutationFn: async (params: { id: string; data: UpdateInvoiceDto }) => {
+      try {
+        logger.info('Update mutation called with:', { 
+          id: params?.id,
+          data: params?.data
+        });
+        
+        if (!params?.id) {
+          const error = new Error('Invoice ID is required for update');
+          logger.error('Missing invoice ID:', { params });
+          throw error;
+        }
+
+        return await invoicesApi.update(params.id, params.data);
+      } catch (error: any) {
+        logger.error('Failed to update invoice:', { 
+          error,
+          params
+        });
+        throw error;
+      }
     },
-    onError: (error) => {
-      console.error('Failed to update invoice:', error);
-      toast.error('Failed to update invoice');
+    onSuccess: (_, variables) => {
+      logger.info('Update successful:', { id: variables.id });
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+    },
+    onError: (error: any, variables) => {
+      logger.error('Failed to update invoice:', { 
+        error, 
+        id: variables.id,
+        data: variables.data 
+      });
+      if (error.response?.data?.message) {
+        if (Array.isArray(error.response.data.message)) {
+          error.response.data.message.forEach((msg: string) => {
+            toast.error(msg);
+          });
+        } else {
+          toast.error(error.response.data.message);
+        }
+      } else {
+        toast.error('Failed to update invoice');
+      }
     },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: invoicesApi.delete,
+    mutationFn: async (id: string) => {
+      try {
+        logger.info('Deleting invoice:', id);
+        return await invoicesApi.delete(id);
+      } catch (error: any) {
+        logger.error('Failed to delete invoice:', error);
+        throw error;
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
-      toast.success('Invoice deleted successfully');
     },
-    onError: (error) => {
-      console.error('Failed to delete invoice:', error);
+    onError: (error: any) => {
+      logger.error('Failed to delete invoice:', error);
       toast.error('Failed to delete invoice');
     },
   });
@@ -51,9 +109,16 @@ export function useInvoices() {
     invoices,
     isLoading,
     error,
-    createInvoice: createMutation.mutate,
-    updateInvoice: updateMutation.mutate,
-    deleteInvoice: deleteMutation.mutate,
+    createInvoice: (data: CreateInvoiceDto) => createMutation.mutateAsync(data),
+    updateInvoice: async (params: { id: string; data: UpdateInvoiceDto }) => {
+      logger.info('updateInvoice called with:', {
+        id: params?.id,
+        hasData: !!params?.data,
+        data: params?.data
+      });
+      return updateMutation.mutateAsync(params);
+    },
+    deleteInvoice: (id: string) => deleteMutation.mutateAsync(id),
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
     isDeleting: deleteMutation.isPending,

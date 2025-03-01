@@ -1,9 +1,21 @@
 import axios from 'axios';
 
-// Create axios instance with base URL
+// Create the main API instance with auth
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000',
-  withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  withCredentials: true
+});
+
+// Create a public API instance without auth
+export const publicApi = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  withCredentials: true
 });
 
 // Request interceptor for API calls

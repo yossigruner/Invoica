@@ -6,10 +6,8 @@ import { DetailsTab } from "./tabs/DetailsTab";
 import { PaymentTab } from "./tabs/PaymentTab";
 import { ItemsTab } from "./tabs/ItemsTab";
 import { SummaryTab } from "./tabs/SummaryTab";
-import { InvoicePreviewContainer } from "./preview/InvoicePreviewContainer";
 import { useState, useEffect } from "react";
 import { useInvoiceForm } from "./hooks/useInvoiceForm";
-import { InvoiceFormHeader } from "./header/InvoiceFormHeader";
 import { InvoiceFormNavigation } from "./navigation/InvoiceFormNavigation";
 import { useProfile } from "@/hooks/useProfile";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -18,12 +16,13 @@ import { toast } from "sonner";
 import { logger } from "@/utils/logger";
 import { Loading } from "@/components/ui/loading";
 import { CustomerData, InvoiceFormData, InvoiceFormItem, ProfileData } from "./types/invoice";
-import { Invoice } from '@/api/invoices';
+import { Invoice, CreateInvoiceDto, invoicesApi } from '@/api/invoices';
 import { Save, Mail, MessageSquare, FileDown } from "lucide-react";
 import html2pdf from "html2pdf.js";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { InvoicePreview } from "./InvoicePreview";
+import { InvoiceActionDialog } from "./dialogs/InvoiceActionDialog";
 
 const TABS = ["from", "details", "items", "payment", "summary"] as const;
 
@@ -42,6 +41,66 @@ interface PreviewProps {
 
 type InputChangeHandler = (section: keyof InvoiceFormData | "", field: string, value: string | number) => void;
 
+interface FormData {
+  invoiceNumber: string;
+  issueDate: string;
+  dueDate: string;
+  currency: string;
+  customerId: string;
+  billingName: string;
+  billingEmail: string;
+  billingAddress: string;
+  billingCity: string;
+  billingState: string;
+  billingCountry: string;
+  billingPostalCode: string;
+  items: Array<{
+    name: string;
+    description?: string;
+    quantity: number;
+    rate: number;
+  }>;
+  notes?: string;
+  terms?: string;
+  discountType?: 'fixed' | 'percentage';
+  discountValue?: number;
+  taxType?: 'fixed' | 'percentage';
+  taxValue?: number;
+  shippingType?: 'fixed' | 'percentage';
+  shippingValue?: number;
+}
+
+interface TransformedData {
+  invoiceNumber: string;
+  issueDate: string;
+  dueDate: string;
+  currency: string;
+  customerId: string;
+  status: 'DRAFT';
+  billingName: string;
+  billingEmail: string;
+  billingAddress: string;
+  billingCity: string;
+  billingProvince: string;
+  billingZip: string;
+  billingCountry: string;
+  items: Array<{
+    name: string;
+    description: string;
+    quantity: number;
+    rate: number;
+  }>;
+  paymentMethod: string;
+  paymentTerms: string;
+  additionalNotes: string;
+  discountType?: 'fixed' | 'percentage';
+  discountValue?: number;
+  taxType?: 'fixed' | 'percentage';
+  taxValue?: number;
+  shippingType?: 'fixed' | 'percentage';
+  shippingValue?: number;
+}
+
 export const InvoiceForm = ({ initialData, isEditing }: InvoiceFormProps) => {
   const location = useLocation();
   const state = location.state as { customer?: CustomerData };
@@ -50,6 +109,9 @@ export const InvoiceForm = ({ initialData, isEditing }: InvoiceFormProps) => {
   const [currentTab, setCurrentTab] = useState<TabType>("from");
   const [completedTabs, setCompletedTabs] = useState<TabType[]>([]);
   const { profile, isLoading: profileLoading } = useProfile();
+  const [isSaving, setIsSaving] = useState(false);
+  const [showActionDialog, setShowActionDialog] = useState(false);
+  const [savedInvoiceId, setSavedInvoiceId] = useState<string>();
 
   const {
     formData,
@@ -180,10 +242,15 @@ export const InvoiceForm = ({ initialData, isEditing }: InvoiceFormProps) => {
     }
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     const currentIndex = TABS.indexOf(currentTab);
     if (currentIndex < TABS.length - 1) {
       setCurrentTab(TABS[currentIndex + 1]);
+    } else if (currentIndex === TABS.length - 1) {
+      // If we're on the last tab, save the invoice first
+      await handleSaveInvoice();
+      // Only show the dialog if the save was successful (no error was thrown)
+      setShowActionDialog(true);
     }
   };
 
@@ -200,56 +267,109 @@ export const InvoiceForm = ({ initialData, isEditing }: InvoiceFormProps) => {
     showTax: boolean,
     showShipping: boolean,
     paymentMethod: string,
-    totals: ReturnType<typeof calculateTotal>
+    totals: {
+      subtotal: number;
+      total: number;
+      discountAmount?: number;
+      taxAmount?: number;
+      shippingAmount?: number;
+    }
   ) => {
-    logger.info('Transforming form data:', {
-      formData,
-      showDiscount,
-      showTax,
-      showShipping,
-      paymentMethod
-    });
-
-    // Transform the data to match the server's expected structure
-    const transformedData = {
+    const transformedData: {
+      customerId?: string;
+      invoiceNumber: string;
+      issueDate: string;
+      dueDate: string;
+      currency: string;
+      paymentMethod: string;
+      paymentTerms?: string;
+      billingName: string;
+      billingEmail: string;
+      billingPhone?: string;
+      billingAddress?: string;
+      billingCity?: string;
+      billingProvince?: string;
+      billingZip?: string;
+      billingCountry?: string;
+      status: 'DRAFT';
+      items: Array<{
+        name: string;
+        description: string;
+        quantity: number;
+        rate: number;
+      }>;
+      additionalNotes?: string;
+      discountType?: 'fixed' | 'percentage';
+      discountValue?: number;
+      taxType?: 'fixed' | 'percentage';
+      taxValue?: number;
+      shippingType?: 'fixed' | 'percentage';
+      shippingValue?: number;
+    } = {
+      customerId: formData.to.id || undefined,
       invoiceNumber: formData.invoiceNumber,
       issueDate: formData.issueDate,
       dueDate: formData.dueDate,
       currency: formData.currency,
-      paymentMethod: paymentMethod,
-      paymentTerms: formData.paymentTerms || '',
-      additionalNotes: formData.additionalNotes || '',
+      paymentMethod,
+      paymentTerms: formData.paymentTerms || undefined,
       billingName: formData.to.name,
       billingEmail: formData.to.email,
-      billingPhone: formData.to.phone || '',
-      billingAddress: formData.to.address,
-      billingCity: formData.to.city,
-      billingProvince: formData.to.province || '',
-      billingZip: formData.to.zip,
-      billingCountry: formData.to.country,
+      billingPhone: formData.to.phone || undefined,
+      billingAddress: formData.to.address || undefined,
+      billingCity: formData.to.city || undefined,
+      billingProvince: formData.to.province || undefined,
+      billingZip: formData.to.zip || undefined,
+      billingCountry: formData.to.country || undefined,
       status: 'DRAFT' as const,
-      items: formData.items.map((item: InvoiceFormItem) => ({
+      items: formData.items.map(item => ({
         name: item.name,
         description: item.description || '',
         quantity: Number(item.quantity),
-        rate: Number(item.rate),
+        rate: Number(item.rate)
       })),
-      discountType: showDiscount ? (formData.adjustments.discount.type === 'amount' ? 'fixed' : 'percentage') : undefined,
-      discountValue: showDiscount ? Number(formData.adjustments.discount.value) : undefined,
-      taxType: showTax ? (formData.adjustments.tax.type === 'amount' ? 'fixed' : 'percentage') : undefined,
-      taxValue: showTax ? Number(formData.adjustments.tax.value) : undefined,
-      shippingType: showShipping ? (formData.adjustments.shipping.type === 'amount' ? 'fixed' : 'percentage') : undefined,
-      shippingValue: showShipping ? Number(formData.adjustments.shipping.value) : undefined,
-      customerId: formData.to.id || undefined
+      additionalNotes: formData.additionalNotes || undefined,
+      discountType: undefined,
+      discountValue: undefined,
+      taxType: undefined,
+      taxValue: undefined,
+      shippingType: undefined,
+      shippingValue: undefined
     };
 
-    logger.info('Transformed data:', transformedData);
+    if (showDiscount) {
+      transformedData.discountType = formData.adjustments.discount.type === 'amount' ? 'fixed' : 'percentage';
+      transformedData.discountValue = Number(formData.adjustments.discount.value);
+    }
+
+    if (showTax) {
+      transformedData.taxType = formData.adjustments.tax.type === 'amount' ? 'fixed' : 'percentage';
+      transformedData.taxValue = Number(formData.adjustments.tax.value);
+    }
+
+    if (showShipping) {
+      transformedData.shippingType = formData.adjustments.shipping.type === 'amount' ? 'fixed' : 'percentage';
+      transformedData.shippingValue = Number(formData.adjustments.shipping.value);
+    }
 
     return transformedData;
   };
 
+  const handleSendEmail = async () => {
+    // TODO: Implement email sending
+    toast.info("Email sending will be implemented soon");
+  };
+
+  const handleSendSMS = async () => {
+    // TODO: Implement SMS sending
+    toast.info("SMS sending will be implemented soon");
+  };
+
   const handleSaveInvoice = async () => {
+    let transformedData: CreateInvoiceDto | undefined;
     try {
+      setIsSaving(true);
+      
       // Validate required dates
       if (!formData.issueDate) {
         toast.error("Please set an issue date");
@@ -268,30 +388,28 @@ export const InvoiceForm = ({ initialData, isEditing }: InvoiceFormProps) => {
       }
 
       const totals = calculateTotal();
-      const transformedData = transformFormData(formData, showDiscount, showTax, showShipping, paymentMethod, totals);
+      transformedData = transformFormData(formData, showDiscount, showTax, showShipping, paymentMethod, totals);
       
-      logger.info('Submitting invoice with data:', {
-        formData,
+      logger.info('Submitting invoice with transformed data:', {
         transformedData,
         isEditing,
-        initialData,
         invoiceId: initialData?.id
       });
       
       if (isEditing && initialData?.id) {
-        logger.info('Updating invoice:', { id: initialData.id });
-        const response = await updateInvoice({
+        const updateData = {
           id: initialData.id,
           data: transformedData
-        });
-        logger.info('Update response:', response);
+        };
+        
+        logger.info('Updating invoice:', updateData);
+        const result = await updateInvoice(updateData);
         toast.success("Invoice updated successfully!");
-        navigate("/");
+        setSavedInvoiceId(result.id);
       } else {
-        const response = await createInvoice(transformedData);
-        logger.info('Create response:', response);
+        const result = await createInvoice(transformedData);
         toast.success("Invoice created successfully!");
-        navigate("/");
+        setSavedInvoiceId(result.id);
       }
     } catch (error: any) {
       // Handle validation errors
@@ -307,12 +425,15 @@ export const InvoiceForm = ({ initialData, isEditing }: InvoiceFormProps) => {
         toast.error(isEditing ? "Failed to update invoice" : "Failed to create invoice");
       }
       logger.error(isEditing ? 'Failed to update invoice' : 'Failed to create invoice', { 
-        error, 
-        formData,
+        error,
+        transformedData,
         isEditing,
         invoiceId: initialData?.id,
         errorDetails: error.response?.data
       });
+      throw error; // Re-throw the error so handleNext knows the save failed
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -379,12 +500,19 @@ export const InvoiceForm = ({ initialData, isEditing }: InvoiceFormProps) => {
                   </div>
                   <div className="flex gap-2">
                     <Button
-                      onClick={handleSaveInvoice}
-                      disabled={invoicesLoading}
+                      onClick={async () => {
+                        await handleSaveInvoice();
+                        setShowActionDialog(true);
+                      }}
+                      disabled={isSaving || invoicesLoading}
                       className="flex items-center gap-2"
                     >
-                      <Save className="h-4 w-4" />
-                      {invoicesLoading ? "Saving..." : isEditing ? "Update" : "Save"}
+                      <Save className={isSaving ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
+                      {isSaving ? (
+                        isEditing ? "Updating..." : "Saving..."
+                      ) : (
+                        isEditing ? "Update" : "Save"
+                      )}
                     </Button>
                     <Button
                       onClick={handleGeneratePDF}
@@ -496,6 +624,20 @@ export const InvoiceForm = ({ initialData, isEditing }: InvoiceFormProps) => {
           </div>
         </div>
       </div>
+      <InvoiceActionDialog
+        isOpen={showActionDialog}
+        onClose={() => {
+          setShowActionDialog(false);
+          navigate("/");
+        }}
+        onSave={handleSaveInvoice}
+        onSendEmail={handleSendEmail}
+        onSendSMS={handleSendSMS}
+        onDownloadPDF={handleGeneratePDF}
+        isEditing={!!isEditing}
+        invoiceId={savedInvoiceId}
+        isSaving={isSaving}
+      />
     </div>
   );
 };

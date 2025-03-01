@@ -1,25 +1,16 @@
-import api from './axios';
-import axios from 'axios';
-
-// Create a public API instance without auth
-const publicApi = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000',
-  headers: {
-    'Content-Type': 'application/json'
-  },
-  withCredentials: true
-});
+import api, { publicApi } from './axios';
+import { logger } from '@/utils/logger';
 
 export interface InvoiceItem {
   id: string;
   name: string;
-  description: string;
+  description?: string;
   quantity: number;
   rate: number;
   amount: number;
 }
 
-export type InvoiceStatus = 'DRAFT' | 'SENT' | 'PAID' | 'OVERDUE' | 'CANCELLED';
+export type InvoiceStatus = 'DRAFT' | 'PENDING' | 'PAID' | 'CANCELLED';
 
 export interface Invoice {
   id: string;
@@ -51,18 +42,11 @@ export interface Invoice {
   shippingValue?: number;
 }
 
-export interface CreateInvoiceItemDto {
-  name: string;
-  description?: string;
-  quantity: number;
-  rate: number;
-}
-
 export interface CreateInvoiceDto {
   customerId?: string;
   invoiceNumber: string;
   issueDate: string;
-  dueDate?: string;
+  dueDate: string;
   currency: string;
   paymentMethod: string;
   status: InvoiceStatus;
@@ -74,20 +58,25 @@ export interface CreateInvoiceDto {
   billingProvince?: string;
   billingZip?: string;
   billingCountry?: string;
-  items: CreateInvoiceItemDto[];
-  discountType?: string;
+  items: {
+    name: string;
+    description?: string;
+    quantity: number;
+    rate: number;
+  }[];
+  discountType?: 'fixed' | 'percentage';
   discountValue?: number;
-  taxType?: string;
+  taxType?: 'fixed' | 'percentage';
   taxValue?: number;
-  shippingType?: string;
+  shippingType?: 'fixed' | 'percentage';
   shippingValue?: number;
 }
 
-export interface UpdateInvoiceDto extends Partial<CreateInvoiceDto> {}
+export type UpdateInvoiceDto = Partial<CreateInvoiceDto>;
 
 export const invoicesApi = {
   async create(data: CreateInvoiceDto): Promise<Invoice> {
-    console.log('Creating invoice with data:', data);
+    logger.info('Creating invoice with data:', data);
     const response = await api.post('/invoices', data);
     return response.data;
   },
@@ -98,24 +87,24 @@ export const invoicesApi = {
   },
 
   async getOne(id: string): Promise<Invoice> {
-    // Use authenticated API for getting an invoice (protected endpoint)
+    logger.info('Fetching invoice:', id);
     const response = await api.get(`/invoices/${id}`);
     return response.data;
   },
 
   async getPublicOne(id: string): Promise<Invoice> {
-    // Use publicApi for getting a single invoice (public endpoint)
     const response = await publicApi.get(`/invoices/${id}/public`);
     return response.data;
   },
 
   async update(id: string, data: UpdateInvoiceDto): Promise<Invoice> {
-    console.log('Updating invoice with data:', { id, data });
+    logger.info('Updating invoice:', { id, data });
     const response = await api.patch(`/invoices/${id}`, data);
     return response.data;
   },
 
   async delete(id: string): Promise<void> {
+    logger.info('Deleting invoice:', id);
     await api.delete(`/invoices/${id}`);
   },
 
