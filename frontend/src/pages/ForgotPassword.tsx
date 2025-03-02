@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
@@ -38,76 +36,80 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="min-h-screen flex">
-      {/* Left section with form */}
-      <div className="flex-1 flex items-center justify-center p-8">
-        <div className="w-full max-w-md space-y-8">
-          <div className="text-center">
-            <h2 className="text-4xl font-bold tracking-tight text-gray-900">
-              Forgot Password
-            </h2>
-            <p className="mt-2 text-sm text-gray-600">
-              Enter your email address and we'll send you instructions to reset your password.
-            </p>
+    <div className="min-h-screen flex items-center justify-center bg-[#FAFAFA]">
+      <div className="w-full max-w-[1100px] min-h-[600px] flex bg-white rounded-[32px] shadow-sm overflow-hidden">
+        {/* Form Section */}
+        <div className="w-[45%] p-12 flex flex-col">
+          <div className="mb-8 text-center">
+            <div className="flex justify-center mb-6">
+              <div className="w-14 h-14 rounded-full bg-[#7C5CFC] flex items-center justify-center">
+                <div className="w-3.5 h-3.5 rounded-full bg-white"></div>
+              </div>
+            </div>
+            <h1 className="text-[28px] font-semibold text-[#1A1A1A] mb-2">Reset Password</h1>
+            <p className="text-[15px] text-[#666666]">Enter your email address and we'll send you instructions to reset your password.</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-            <div className="space-y-2">
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                placeholder="Email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
-                disabled={loading || success}
-              />
-            </div>
-
+          <form onSubmit={handleSubmit} className="flex-1 flex flex-col space-y-5">
             {error && (
-              <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">
+              <div className="px-4 py-3 bg-[#FEF2F2] text-[#EF4444] text-[14px] rounded-lg">
                 {error}
               </div>
             )}
 
             {success && (
-              <div className="text-sm text-green-600 bg-green-50 p-3 rounded-md">
+              <div className="px-4 py-3 bg-[#F0FDF4] text-[#22C55E] text-[14px] rounded-lg">
                 Check your email for password reset instructions.
               </div>
             )}
 
-            <div className="flex flex-col gap-4">
-              <Button
+            <div className="space-y-1.5">
+              <label htmlFor="email" className="block text-[15px] font-medium text-[#1A1A1A]">
+                Email
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full h-12 px-4 text-[15px] rounded-xl border border-[#E5E5E5] focus:outline-none focus:ring-2 focus:ring-[#7C5CFC] focus:border-transparent placeholder:text-[#999999]"
+                autoComplete="email"
+                disabled={loading || success}
+              />
+            </div>
+
+            <div className="flex-1 flex flex-col justify-end space-y-5">
+              <button
                 type="submit"
                 disabled={loading || success}
-                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+                className="w-full h-12 bg-[#7C5CFC] text-white rounded-xl font-medium text-[15px] hover:bg-[#6B4FDB] transition-colors disabled:opacity-50"
               >
-                {loading ? 'Sending...' : 'Reset Password'}
-              </Button>
+                {loading ? "Sending..." : "Reset Password"}
+              </button>
 
-              <div className="text-sm text-center">
-                <Link
-                  to="/login"
-                  className="font-medium text-primary hover:text-primary/90"
-                >
+              <p className="text-center text-[15px] text-[#666666]">
+                Remember your password?{" "}
+                <Link to="/login" className="text-[#7C5CFC] hover:underline font-medium">
                   Back to Login
                 </Link>
-              </div>
+              </p>
             </div>
           </form>
         </div>
-      </div>
 
-      {/* Right section with decorative arch */}
-      <div className="hidden lg:block lg:w-1/2 relative">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/80 to-primary"></div>
-        <div className="absolute inset-0">
-          <div className="h-full w-full" style={{
-            background: `radial-gradient(circle at 50% 0%, transparent 25%, rgba(0, 0, 0, 0.15) 26%)`
-          }}></div>
+        {/* Decorative Arch Section */}
+        <div className="w-[55%] relative bg-[#F5F3FF]">
+          <div className="absolute inset-0 flex items-end justify-center">
+            <div 
+              className="w-full h-[80%] bg-[#7C5CFC] rounded-t-full"
+              style={{
+                background: 'linear-gradient(180deg, #7C5CFC 0%, #9F85FF 100%)',
+              }}
+            />
+          </div>
         </div>
       </div>
     </div>

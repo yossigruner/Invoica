@@ -3,9 +3,10 @@ import { InvoicesController } from './invoices.controller';
 import { InvoicesService } from './invoices.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { ProfileModule } from '../profile/profile.module';
+import { CommunicationsModule } from '../communications/communications.module';
 
 @Module({
-  imports: [ProfileModule],
+  imports: [ProfileModule, CommunicationsModule],
   controllers: [InvoicesController],
   providers: [InvoicesService, PrismaService],
   exports: [InvoicesService],

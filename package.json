@@ -17,5 +17,9 @@
   "devDependencies": {
     "@types/lodash": "^4.17.15",
     "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "@sendgrid/mail": "^8.1.4",
+    "twilio": "^5.4.5"
   }
 }
