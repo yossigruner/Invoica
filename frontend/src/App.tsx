@@ -14,7 +14,6 @@ import CreateInvoice from "./pages/CreateInvoice";
 import Customers from "./pages/Customers";
 import NotFound from "./pages/NotFound";
 import Profile from "./pages/Profile";
-import ProfileWizard from "./pages/ProfileWizard";
 import AboutUs from "./pages/AboutUs";
 import ContactUs from "./pages/ContactUs";
 import Faq from "./pages/Faq";
@@ -86,7 +85,6 @@ export default function App() {
               <Route path="/invoices/:id/edit" element={<ProtectedRoute><Layout includeNav={true}><CreateInvoice /></Layout></ProtectedRoute>} />
               <Route path="/customers" element={<ProtectedRoute><Layout includeNav={true}><Customers /></Layout></ProtectedRoute>} />
               <Route path="/profile" element={<ProtectedRoute><Layout includeNav={true}><Profile /></Layout></ProtectedRoute>} />
-              <Route path="/profile/wizard" element={<ProtectedRoute><Layout includeNav={true}><ProfileWizard /></Layout></ProtectedRoute>} />
               
               {/* 404 route */}
               <Route path="*" element={<Layout includeNav={true}><NotFound /></Layout>} />
