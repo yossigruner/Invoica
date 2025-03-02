@@ -236,3 +236,16 @@ docker-compose up --build
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+# backend/.env
+
+# Twilio Credentials
+TWILIO_ACCOUNT_SID=AC********************************  # Your Account SID from Twilio Console
+TWILIO_AUTH_TOKEN=********************************    # Your Auth Token from Twilio Console
+
+# SendGrid Credentials
+SENDGRID_API_KEY=SG.***************************      # Your SendGrid API Key
+SENDGRID_FROM_EMAIL=your-verified@email.com         # Your verified sender email
+
+# Application URLs
+FRONTEND_URL=http://localhost:3000                   # Your frontend URL

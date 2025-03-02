@@ -631,12 +631,12 @@ export const InvoiceForm = ({ initialData, isEditing }: InvoiceFormProps) => {
           navigate("/");
         }}
         onSave={handleSaveInvoice}
-        onSendEmail={handleSendEmail}
-        onSendSMS={handleSendSMS}
         onDownloadPDF={handleGeneratePDF}
         isEditing={!!isEditing}
         invoiceId={savedInvoiceId}
         isSaving={isSaving}
+        recipientEmail={formData.to.email}
+        recipientPhone={formData.to.phone}
       />
     </div>
   );

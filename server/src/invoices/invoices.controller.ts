@@ -11,6 +11,7 @@ import {
   UseFilters,
   HttpException,
   HttpStatus,
+  NotFoundException,
 } from '@nestjs/common';
 import { InvoicesService } from './invoices.service';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
@@ -22,6 +23,7 @@ import { InvoiceErrorFilter } from './filters/invoice-error.filter';
 import axios from 'axios';
 import { ConfigService } from '@nestjs/config';
 import { ProfileService } from '../profile/profile.service';
+import { CommunicationsService } from '../communications/communications.service';
 
 interface RequestWithUser extends ExpressRequest {
   user: {
@@ -38,6 +40,7 @@ export class InvoicesController {
     private readonly invoicesService: InvoicesService,
     private readonly configService: ConfigService,
     private readonly profileService: ProfileService,
+    private readonly communicationsService: CommunicationsService,
   ) {}
 
   // Public endpoint for getting an invoice by ID without authentication
@@ -240,5 +243,51 @@ export class InvoicesController {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+  }
+
+  @Post(':id/send-email')
+  async sendEmail(
+    @Param('id') id: string,
+    @Body('email') email: string,
+  ) {
+    const invoice = await this.invoicesService.findPublicOne(id);
+    if (!invoice) {
+      throw new NotFoundException('Invoice not found');
+    }
+
+    const subject = `Invoice #${invoice.invoiceNumber}`;
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h1>Your Invoice is Ready</h1>
+        <p>Dear ${invoice.billingName},</p>
+        <p>Your invoice #${invoice.invoiceNumber} has been generated.</p>
+        <p><strong>Amount Due:</strong> ${invoice.currency} ${invoice.total}</p>
+        <p><strong>Due Date:</strong> ${invoice.dueDate}</p>
+        <div style="margin: 20px 0;">
+          <a href="${this.configService.get('FRONTEND_URL')}/pay/${id}" 
+             style="background-color: #4F46E5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">
+            View and Pay Invoice
+          </a>
+        </div>
+      </div>
+    `;
+
+    await this.communicationsService.sendEmail(email, subject, html);
+    return { success: true };
+  }
+
+  @Post(':id/send-sms')
+  async sendSMS(
+    @Param('id') id: string,
+    @Body('phoneNumber') phoneNumber: string,
+  ) {
+    const invoice = await this.invoicesService.findPublicOne(id);
+    if (!invoice) {
+      throw new NotFoundException('Invoice not found');
+    }
+
+    const message = `Your invoice #${invoice.invoiceNumber} is ready. View and pay here: ${this.configService.get('FRONTEND_URL')}/pay/${id}`;
+    await this.communicationsService.sendSMS(phoneNumber, message);
+    return { success: true };
   }
 } 

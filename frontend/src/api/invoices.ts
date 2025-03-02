@@ -1,5 +1,6 @@
 import api, { publicApi } from './axios';
 import { logger } from '@/utils/logger';
+import axios from 'axios';
 
 export interface InvoiceItem {
   id: string;
@@ -112,5 +113,19 @@ export const invoicesApi = {
     const response = await publicApi.post(`/invoices/${id}/payment`);
     const { href } = response.data;
     return { href, paymentUrl: href }; // Return both for backward compatibility
+  },
+
+  sendSMS: async (invoiceId: string, phoneNumber: string) => {
+    const response = await api.post(`/invoices/${invoiceId}/send-sms`, {
+      phoneNumber
+    });
+    return response.data;
+  },
+
+  sendEmail: async (invoiceId: string, email: string) => {
+    const response = await api.post(`/invoices/${invoiceId}/send-email`, {
+      email
+    });
+    return response.data;
   }
 }; 

@@ -3,31 +3,35 @@ import { Button } from "@/components/ui/button";
 import { Save, Mail, MessageSquare, Copy, ExternalLink, Link as LinkIcon, X, FileDown } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { invoicesApi } from "@/api/invoices";
+import { logger } from "@/utils/logger";
 
 interface InvoiceActionDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: () => Promise<void>;
-  onSendEmail?: () => Promise<void>;
-  onSendSMS?: () => Promise<void>;
-  onDownloadPDF?: () => Promise<void>;
   isEditing: boolean;
   isSaving: boolean;
   invoiceId?: string;
+  recipientEmail?: string;
+  recipientPhone?: string;
+  onDownloadPDF?: () => Promise<void>;
 }
 
 export const InvoiceActionDialog = ({
   isOpen,
   onClose,
   onSave,
-  onSendEmail,
-  onSendSMS,
-  onDownloadPDF,
   isEditing,
   isSaving,
-  invoiceId
+  invoiceId,
+  recipientEmail,
+  recipientPhone,
+  onDownloadPDF
 }: InvoiceActionDialogProps) => {
   const [isCopied, setIsCopied] = useState(false);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [isSendingSMS, setIsSendingSMS] = useState(false);
   const baseUrl = window.location.origin;
   const paymentLink = invoiceId ? `${baseUrl}/pay/${invoiceId}` : undefined;
 
@@ -50,6 +54,42 @@ export const InvoiceActionDialog = ({
     }
   };
 
+  const handleSendEmail = async () => {
+    if (!invoiceId || !recipientEmail) {
+      toast.error("No recipient email address available");
+      return;
+    }
+
+    try {
+      setIsSendingEmail(true);
+      await invoicesApi.sendEmail(invoiceId, recipientEmail);
+      toast.success("Email sent successfully!");
+    } catch (error) {
+      logger.error('Failed to send email:', error);
+      toast.error("Failed to send email");
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
+
+  const handleSendSMS = async () => {
+    if (!invoiceId || !recipientPhone) {
+      toast.error("No recipient phone number available");
+      return;
+    }
+
+    try {
+      setIsSendingSMS(true);
+      await invoicesApi.sendSMS(invoiceId, recipientPhone);
+      toast.success("SMS sent successfully!");
+    } catch (error) {
+      logger.error('Failed to send SMS:', error);
+      toast.error("Failed to send SMS");
+    } finally {
+      setIsSendingSMS(false);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden border-none shadow-lg">
@@ -60,6 +100,7 @@ export const InvoiceActionDialog = ({
             className="h-6 w-6 text-gray-500 hover:text-gray-900"
             onClick={onClose}
           >
+            <X className="h-4 w-4" />
           </Button>
         </div>
         <div className="p-6 space-y-6">
@@ -81,24 +122,26 @@ export const InvoiceActionDialog = ({
             </Button>
 
             {/* Email Button */}
-            {onSendEmail && (
+            {recipientEmail && (
               <Button
-                onClick={onSendEmail}
-                className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium transition-all duration-200 shadow-sm hover:shadow-md active:scale-[0.99]"
+                onClick={handleSendEmail}
+                disabled={isSendingEmail}
+                className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium transition-all duration-200 shadow-sm hover:shadow-md active:scale-[0.99] disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                <Mail className="h-5 w-5 mr-2" />
-                Email
+                <Mail className={`h-5 w-5 mr-2 ${isSendingEmail ? 'animate-spin' : ''}`} />
+                {isSendingEmail ? 'Sending...' : 'Email'}
               </Button>
             )}
 
             {/* SMS Button */}
-            {onSendSMS && (
+            {recipientPhone && (
               <Button
-                onClick={onSendSMS}
-                className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-medium transition-all duration-200 shadow-sm hover:shadow-md active:scale-[0.99]"
+                onClick={handleSendSMS}
+                disabled={isSendingSMS}
+                className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-medium transition-all duration-200 shadow-sm hover:shadow-md active:scale-[0.99] disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                <MessageSquare className="h-5 w-5 mr-2" />
-                SMS
+                <MessageSquare className={`h-5 w-5 mr-2 ${isSendingSMS ? 'animate-spin' : ''}`} />
+                {isSendingSMS ? 'Sending...' : 'SMS'}
               </Button>
             )}
 
