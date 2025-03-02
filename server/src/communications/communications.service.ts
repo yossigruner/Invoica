@@ -14,7 +14,7 @@ export class CommunicationsService {
     const authToken = this.configService.get<string>('TWILIO_AUTH_TOKEN');
     
     if (accountSid && authToken) {
-      //this.twilioClient = twilio(accountSid, authToken);
+      this.twilioClient = new twilio.Twilio(accountSid, authToken);
       this.logger.log('Twilio client initialized');
     } else {
       this.logger.warn('Twilio credentials not found in environment variables');
