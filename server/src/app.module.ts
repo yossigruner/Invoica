@@ -1,23 +1,33 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { PrismaModule } from './prisma/prisma.module';
-import { UsersModule } from './users/users.module';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
-import { InvoicesModule } from './invoices/invoices.module';
-import { CustomersModule } from './customers/customers.module';
+import { UsersModule } from './users/users.module';
+import { PrismaModule } from './prisma/prisma.module';
 import { ProfileModule } from './profile/profile.module';
+import { InvoicesModule } from './invoices/invoices.module';
+import { CommunicationsModule } from './communications/communications.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    ThrottlerModule.forRoot([{
+      name: 'default',
+      ttl: 60000, // time to live in milliseconds
+      limit: 10, // number of requests allowed per TTL
+    }]),
     AuthModule,
     UsersModule,
-    InvoicesModule,
     PrismaModule,
-    CustomersModule,
     ProfileModule,
+    InvoicesModule,
+    CommunicationsModule,
   ],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {} 

@@ -1,7 +1,7 @@
 import { useParams } from "react-router-dom";
 import { usePublicInvoice } from "@/hooks/usePublicInvoice";
 import { Loading } from "@/components/ui/loading";
-import { FileText } from "lucide-react";
+import { FileText, Download } from "lucide-react";
 import { toast } from "sonner";
 import { logger } from "@/utils/logger";
 import { Button } from "@/components/ui/button";
@@ -10,10 +10,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { invoicesApi } from "@/api/invoices";
+import { useState } from "react";
 
 export const PayPage = () => {
   const { id } = useParams();
   const { invoice, isLoading, error } = usePublicInvoice(id || "");
+  const [isDownloading, setIsDownloading] = useState(false);
 
   if (isLoading) {
     return (
@@ -91,6 +93,29 @@ export const PayPage = () => {
     }
   };
 
+  const handleDownloadPdf = async () => {
+    if (!id) return;
+    
+    try {
+      setIsDownloading(true);
+      const blob = await invoicesApi.downloadPdf(id);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `invoice-${invoice?.invoiceNumber || 'download'}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      a.remove();
+      toast.success('PDF downloaded successfully');
+    } catch (error) {
+      logger.error('Failed to download PDF:', error);
+      toast.error('Failed to download PDF');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   const totals = calculateTotal();
 
   return (
@@ -144,9 +169,43 @@ export const PayPage = () => {
         <div className="max-w-md mx-auto w-full space-y-8">
           {/* Invoice Details */}
           <div className="space-y-6 pb-8 border-b">
-            <div>
-              <h2 className="text-2xl font-bold mb-2">Invoice #{invoice.invoiceNumber}</h2>
-              <p className="text-gray-500">Due {new Date(invoice.dueDate).toLocaleDateString()}</p>
+            <div className="flex justify-between items-center">
+              <div>
+                <h2 className="text-2xl font-bold mb-2">Invoice #{invoice.invoiceNumber}</h2>
+                <p className="text-gray-500">Due {new Date(invoice.dueDate).toLocaleDateString()}</p>
+              </div>
+              <div className="flex flex-col items-end gap-1">
+                <Button
+                  variant="secondary"
+                  size="default"
+                  onClick={handleDownloadPdf}
+                  disabled={isDownloading}
+                  className={`
+                    relative overflow-hidden group bg-white border-2 border-[#8B5CF6]/20 
+                    hover:border-[#8B5CF6] hover:bg-[#8B5CF6]/5 
+                    text-gray-700 hover:text-[#8B5CF6] 
+                    transition-all duration-300 ease-in-out
+                    ${isDownloading ? 'pl-4 pr-5' : 'pl-4 pr-4'}
+                  `}
+                >
+                  <div className="flex items-center gap-3">
+                    {isDownloading ? (
+                      <>
+                        <div className="h-5 w-5 border-2 border-[#8B5CF6] border-t-transparent rounded-full animate-spin" />
+                        <span className="font-medium">Downloading...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Download className="h-5 w-5 transition-transform group-hover:-translate-y-0.5 duration-300" />
+                      </>
+                    )}
+                  </div>
+                  {!isDownloading && (
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#8B5CF6]/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                  )}
+                </Button>
+                <span className="text-xs text-gray-500">Download as PDF</span>
+              </div>
             </div>
 
             <div className="space-y-3">

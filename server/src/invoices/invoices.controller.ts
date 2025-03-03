@@ -14,6 +14,7 @@ import {
   NotFoundException,
   Res,
   Req,
+  Logger,
 } from '@nestjs/common';
 import { InvoicesService } from './invoices.service';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
@@ -28,6 +29,8 @@ import { ProfileService } from '../profile/profile.service';
 import { CommunicationsService } from '../communications/communications.service';
 import { PdfService } from './services/pdf.service';
 import { JwtPayload } from 'jsonwebtoken';
+import { Throttle } from '@nestjs/throttler';
+import { RateLimitGuard } from '../common/guards/rate-limit.guard';
 
 interface RequestWithUser extends ExpressRequest {
   user: {
@@ -40,6 +43,8 @@ interface RequestWithUser extends ExpressRequest {
 @Controller('invoices')
 @UseFilters(InvoiceErrorFilter)
 export class InvoicesController {
+  private readonly logger = new Logger(InvoicesController.name);
+
   constructor(
     private readonly invoicesService: InvoicesService,
     private readonly configService: ConfigService,
@@ -50,10 +55,13 @@ export class InvoicesController {
 
   // Public endpoint for getting an invoice by ID without authentication
   @Get(':id/public')
+  @UseGuards(RateLimitGuard)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({ summary: 'Get a public invoice by id' })
   @ApiResponse({ status: 200, description: 'Return the invoice.' })
   @ApiResponse({ status: 404, description: 'Invoice not found.' })
-  async findPublicOne(@Param('id') id: string) {
+  async findPublicOne(@Param('id') id: string, @Req() req: Record<string, any>) {
+    this.logger.log(`Public invoice access attempt - IP: ${req.ip}, Invoice ID: ${id}`);
     return this.invoicesService.findPublicOne(id);
   }
 
@@ -109,10 +117,13 @@ export class InvoicesController {
   }
 
   @Post(':id/payment')
+  @UseGuards(RateLimitGuard)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @ApiOperation({ summary: 'Generate a Clover payment link for an invoice' })
   @ApiResponse({ status: 200, description: 'Return the payment URL.' })
   @ApiResponse({ status: 404, description: 'Invoice not found.' })
-  async generatePaymentLink(@Param('id') id: string) {
+  async generatePaymentLink(@Param('id') id: string, @Req() req: Record<string, any>) {
+    this.logger.log(`Payment link generation attempt - IP: ${req.ip}, Invoice ID: ${id}`);
     console.log('Generating payment link for invoice:', id);
     try {
       const invoice = await this.invoicesService.findPublicOne(id);
@@ -251,10 +262,14 @@ export class InvoicesController {
   }
 
   @Post(':id/send-email')
+  @UseGuards(RateLimitGuard)
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
   async sendEmail(
     @Param('id') id: string,
     @Body('email') email: string,
+    @Req() req: Record<string, any>
   ) {
+    this.logger.log(`Email send attempt - IP: ${req.ip}, Invoice ID: ${id}, Email: ${email}`);
     const invoice = await this.invoicesService.findPublicOne(id);
     if (!invoice) {
       throw new NotFoundException('Invoice not found');
@@ -282,10 +297,14 @@ export class InvoicesController {
   }
 
   @Post(':id/send-sms')
+  @UseGuards(RateLimitGuard)
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
   async sendSMS(
     @Param('id') id: string,
     @Body('phoneNumber') phoneNumber: string,
+    @Req() req: Record<string, any>
   ) {
+    this.logger.log(`SMS send attempt - IP: ${req.ip}, Invoice ID: ${id}, Phone: ${phoneNumber}`);
     const invoice = await this.invoicesService.findPublicOne(id);
     if (!invoice) {
       throw new NotFoundException('Invoice not found');
@@ -297,18 +316,26 @@ export class InvoicesController {
   }
 
   @Get(':id/pdf')
+  @UseGuards(RateLimitGuard)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   async downloadPdf(
     @Param('id') id: string,
     @Res() response: Response,
+    @Req() req: Record<string, any>
   ) {
+    this.logger.log(`PDF download attempt - IP: ${req.ip}, Invoice ID: ${id}`);
+    
     const invoice = await this.invoicesService.findPublicOne(id);
     if (!invoice) {
+      this.logger.warn(`PDF download failed - Invoice not found - IP: ${req.ip}, Invoice ID: ${id}`);
       throw new NotFoundException('Invoice not found');
     }
 
     const profile = await this.invoicesService.getProfileData(invoice.userId);
     const pdf = await this.pdfService.generatePdf(invoice, profile);
 
+    this.logger.log(`PDF download successful - IP: ${req.ip}, Invoice ID: ${id}, Invoice Number: ${invoice.invoiceNumber}`);
+    
     response.setHeader('Content-Type', 'application/pdf');
     response.setHeader('Content-Disposition', `attachment; filename="invoice-${invoice.invoiceNumber || 'download'}.pdf"`);
     response.send(pdf);
