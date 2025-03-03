@@ -12,18 +12,22 @@ import {
   HttpException,
   HttpStatus,
   NotFoundException,
+  Res,
+  Req,
 } from '@nestjs/common';
 import { InvoicesService } from './invoices.service';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
 import { UpdateInvoiceDto } from './dto/update-invoice.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { Request as ExpressRequest } from 'express';
+import { Request as ExpressRequest, Response } from 'express';
 import { InvoiceErrorFilter } from './filters/invoice-error.filter';
 import axios from 'axios';
 import { ConfigService } from '@nestjs/config';
 import { ProfileService } from '../profile/profile.service';
 import { CommunicationsService } from '../communications/communications.service';
+import { PdfService } from './services/pdf.service';
+import { JwtPayload } from 'jsonwebtoken';
 
 interface RequestWithUser extends ExpressRequest {
   user: {
@@ -41,6 +45,7 @@ export class InvoicesController {
     private readonly configService: ConfigService,
     private readonly profileService: ProfileService,
     private readonly communicationsService: CommunicationsService,
+    private readonly pdfService: PdfService,
   ) {}
 
   // Public endpoint for getting an invoice by ID without authentication
@@ -289,5 +294,23 @@ export class InvoicesController {
     const message = `Your invoice #${invoice.invoiceNumber} is ready. View and pay here: ${this.configService.get('FRONTEND_URL')}/pay/${id}`;
     await this.communicationsService.sendSMS(phoneNumber, message);
     return { success: true };
+  }
+
+  @Get(':id/pdf')
+  async downloadPdf(
+    @Param('id') id: string,
+    @Res() response: Response,
+  ) {
+    const invoice = await this.invoicesService.findPublicOne(id);
+    if (!invoice) {
+      throw new NotFoundException('Invoice not found');
+    }
+
+    const profile = await this.invoicesService.getProfileData(invoice.userId);
+    const pdf = await this.pdfService.generatePdf(invoice, profile);
+
+    response.setHeader('Content-Type', 'application/pdf');
+    response.setHeader('Content-Disposition', `attachment; filename="invoice-${invoice.invoiceNumber || 'download'}.pdf"`);
+    response.send(pdf);
   }
 } 

@@ -11,7 +11,7 @@ export interface InvoiceItem {
   amount: number;
 }
 
-export type InvoiceStatus = 'DRAFT' | 'PENDING' | 'PAID' | 'CANCELLED';
+export type InvoiceStatus = 'DRAFT' | 'SENT' | 'PAID' | 'OVERDUE' | 'CANCELLED';
 
 export interface Invoice {
   id: string;
@@ -125,6 +125,13 @@ export const invoicesApi = {
   sendEmail: async (invoiceId: string, email: string) => {
     const response = await api.post(`/invoices/${invoiceId}/send-email`, {
       email
+    });
+    return response.data;
+  },
+
+  downloadPdf: async (invoiceId: string): Promise<Blob> => {
+    const response = await publicApi.get(`/invoices/${invoiceId}/pdf`, {
+      responseType: 'blob'
     });
     return response.data;
   }

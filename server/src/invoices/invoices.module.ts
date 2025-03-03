@@ -4,11 +4,12 @@ import { InvoicesService } from './invoices.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { ProfileModule } from '../profile/profile.module';
 import { CommunicationsModule } from '../communications/communications.module';
+import { PdfService } from './services/pdf.service';
 
 @Module({
   imports: [ProfileModule, CommunicationsModule],
   controllers: [InvoicesController],
-  providers: [InvoicesService, PrismaService],
+  providers: [InvoicesService, PrismaService, PdfService],
   exports: [InvoicesService],
 })
 export class InvoicesModule {} 

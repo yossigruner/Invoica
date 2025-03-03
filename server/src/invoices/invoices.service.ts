@@ -4,10 +4,14 @@ import { CreateInvoiceDto } from './dto/create-invoice.dto';
 import { UpdateInvoiceDto } from './dto/update-invoice.dto';
 import { InvoiceStatus, Prisma } from '@prisma/client';
 import { InvoiceOperationError, InvoiceErrorCodes } from './errors/invoice.errors';
+import { ProfileService } from '../profile/profile.service';
 
 @Injectable()
 export class InvoicesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private profileService: ProfileService,
+  ) {}
 
   async create(userId: string, createInvoiceDto: CreateInvoiceDto) {
     try {
@@ -496,5 +500,9 @@ export class InvoicesService {
   private calculateAdjustment(amount: number, value?: number, type?: string): number {
     if (!value || value === 0) return 0;
     return type === 'percentage' ? (amount * value) / 100 : value;
+  }
+
+  async getProfileData(userId: string) {
+    return this.profileService.findOne(userId);
   }
 } 

@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Search, Calendar, Download, FileDown, Mail, Trash2, Edit, FileText, ChevronLeft, ChevronRight, RefreshCw, CreditCard } from "lucide-react";
 import { useInvoices } from "@/hooks/useInvoices";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { DateRange } from "react-day-picker";
@@ -17,19 +17,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
-import { type Invoice, CreateInvoiceDto } from "@/api/invoices";
+import { type Invoice, type InvoiceStatus, CreateInvoiceDto, invoicesApi } from "@/api/invoices";
+import { Progress } from "@/components/ui/progress";
 
 const PAGE_SIZE_OPTIONS = [5, 10, 25, 50];
 
-const statusColors = {
+type StatusColor = {
+  [K in InvoiceStatus]: string;
+};
+
+const statusColors: StatusColor = {
   DRAFT: "bg-gray-100 text-gray-800",
   SENT: "bg-blue-100 text-blue-800",
   PAID: "bg-green-100 text-green-800",
   OVERDUE: "bg-red-100 text-red-800",
-  CANCELLED: "bg-yellow-100 text-yellow-800",
+  CANCELLED: "bg-yellow-100 text-yellow-800"
 };
-
-type InvoiceStatus = NonNullable<CreateInvoiceDto['status']>;
 
 export const InvoiceList = () => {
   const navigate = useNavigate();
@@ -41,6 +44,9 @@ export const InvoiceList = () => {
   const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null);
   const [showStatusDialog, setShowStatusDialog] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [downloadProgress, setDownloadProgress] = useState(false);
+  const [downloadingInvoiceNumber, setDownloadingInvoiceNumber] = useState<string | null>(null);
+  const [progress, setProgress] = useState(0);
 
   const filteredInvoices = useMemo(() => {
     return invoices?.filter((invoice) => {
@@ -157,6 +163,48 @@ export const InvoiceList = () => {
     setPageSize(Number(value));
     setCurrentPage(1);
   };
+
+  const handleDownloadPdf = async (invoice: Invoice) => {
+    try {
+      setDownloadProgress(true);
+      setDownloadingInvoiceNumber(invoice.invoiceNumber);
+      
+      const blob = await invoicesApi.downloadPdf(invoice.id);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `invoice-${invoice.invoiceNumber || 'download'}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      a.remove();
+
+      toast.success('PDF downloaded successfully');
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      toast.error('Failed to download PDF');
+    } finally {
+      setDownloadProgress(false);
+      setDownloadingInvoiceNumber(null);
+    }
+  };
+
+  // Add effect for progress animation
+  useEffect(() => {
+    if (downloadProgress) {
+      const timer = setInterval(() => {
+        setProgress((oldProgress) => {
+          const newProgress = oldProgress + 2;
+          return newProgress >= 100 ? 0 : newProgress;
+        });
+      }, 100);
+
+      return () => {
+        clearInterval(timer);
+        setProgress(0);
+      };
+    }
+  }, [downloadProgress]);
 
   if (isLoading) {
     return (
@@ -334,7 +382,7 @@ export const InvoiceList = () => {
                         <Button 
                           variant="ghost" 
                           size="icon"
-                          onClick={() => toast.info("Download PDF coming soon")}
+                          onClick={() => handleDownloadPdf(invoice)}
                           className="h-8 w-8 text-gray-500 hover:text-primary"
                         >
                           <FileDown className="h-4 w-4" />
@@ -463,6 +511,24 @@ export const InvoiceList = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Download Progress Dialog */}
+      <Dialog open={downloadProgress} onOpenChange={(open) => !open && setDownloadProgress(false)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-black">
+              Downloading Invoice
+            </DialogTitle>
+            <DialogDescription className="text-gray-600">
+              Generating PDF for invoice #{downloadingInvoiceNumber}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-6">
+            <Progress value={progress} className="w-full animate-pulse" />
+            <p className="text-sm text-gray-500 mt-2 text-center">Please wait while we prepare your download...</p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }; 
