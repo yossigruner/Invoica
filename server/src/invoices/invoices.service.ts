@@ -5,6 +5,7 @@ import { UpdateInvoiceDto } from './dto/update-invoice.dto';
 import { InvoiceStatus, Prisma } from '@prisma/client';
 import { InvoiceOperationError, InvoiceErrorCodes } from './errors/invoice.errors';
 import { ProfileService } from '../profile/profile.service';
+import { QueryInvoiceDto } from './dto/query-invoice.dto';
 
 @Injectable()
 export class InvoicesService {
@@ -187,18 +188,88 @@ export class InvoicesService {
     }
   }
 
-  async findAll(userId: string) {
+  async findAll(userId: string, query?: QueryInvoiceDto) {
     try {
-      return await this.prisma.invoice.findMany({
-        where: { userId },
+
+      console.log('Query parameters:', query);
+
+      const where: Prisma.InvoiceWhereInput = { userId };
+
+      // Add search conditions if searchQuery is provided
+      if (query?.searchQuery) {
+        where.OR = [
+          { invoiceNumber: { contains: query.searchQuery, mode: 'insensitive' } },
+          { billingName: { contains: query.searchQuery, mode: 'insensitive' } },
+          { billingEmail: { contains: query.searchQuery, mode: 'insensitive' } },
+          { billingAddress: { contains: query.searchQuery, mode: 'insensitive' } }
+        ];
+
+        // Handle status search separately since it's an enum
+        const upperSearchQuery = query.searchQuery.toUpperCase();
+        if (['DRAFT', 'SENT', 'PAID', 'OVERDUE', 'CANCELLED'].includes(upperSearchQuery)) {
+          where.OR.push({ status: upperSearchQuery as InvoiceStatus });
+        }
+      }
+
+      // Add date range conditions if provided
+      if (query?.startDate || query?.endDate) {
+        where.issueDate = {};
+        if (query.startDate) {
+          where.issueDate.gte = new Date(query.startDate);
+        }
+        if (query.endDate) {
+          where.issueDate.lte = new Date(query.endDate);
+        }
+      }
+
+      // Get total count for pagination
+      const total = await this.prisma.invoice.count({ where });
+
+      // Calculate pagination
+      const page = Number(query?.page) || 1;
+      const limit = Number(query?.limit) || 10;
+      const skip = (page - 1) * limit;
+
+      console.log('Query parameters:', {
+        where,
+        pagination: { page, limit, skip },
+        total
+      });
+
+      // Get paginated results
+      const invoices = await this.prisma.invoice.findMany({
+        where,
         include: {
           items: true,
         },
         orderBy: {
           createdAt: 'desc',
         },
+        skip,
+        take: limit,
       });
+
+      console.log('Query results:', {
+        totalInvoices: invoices.length,
+        pagination: {
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit)
+        }
+      });
+
+      return {
+        data: invoices,
+        meta: {
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit),
+        },
+      };
     } catch (error) {
+      console.error('Error in findAll:', error);
       throw new InvoiceOperationError(
         'Failed to fetch invoices',
         InvoiceErrorCodes.DATABASE_ERROR,

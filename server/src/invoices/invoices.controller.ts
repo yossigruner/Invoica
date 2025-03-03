@@ -15,6 +15,7 @@ import {
   Res,
   Req,
   Logger,
+  Query,
 } from '@nestjs/common';
 import { InvoicesService } from './invoices.service';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
@@ -28,9 +29,9 @@ import { ConfigService } from '@nestjs/config';
 import { ProfileService } from '../profile/profile.service';
 import { CommunicationsService } from '../communications/communications.service';
 import { PdfService } from './services/pdf.service';
-import { JwtPayload } from 'jsonwebtoken';
 import { Throttle } from '@nestjs/throttler';
 import { RateLimitGuard } from '../common/guards/rate-limit.guard';
+import { QueryInvoiceDto } from './dto/query-invoice.dto';
 
 interface RequestWithUser extends ExpressRequest {
   user: {
@@ -78,8 +79,11 @@ export class InvoicesController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get all invoices' })
-  async findAll(@Request() req: RequestWithUser) {
-    return this.invoicesService.findAll(req.user.id);
+  async findAll(
+    @Request() req: RequestWithUser,
+    @Query() query: QueryInvoiceDto
+  ) {
+    return this.invoicesService.findAll(req.user.id, query);
   }
 
   @Get(':id')

@@ -17,8 +17,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
-import { type Invoice, type InvoiceStatus, CreateInvoiceDto, invoicesApi } from "@/api/invoices";
+import { type Invoice, type InvoiceStatus, type CreateInvoiceDto, invoicesApi } from "@/api/invoices";
 import { Progress } from "@/components/ui/progress";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { type UpdateInvoiceDto } from "@/api/invoices";
+
+type PaginatedResponse<T> = {
+  data: T[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+};
 
 const PAGE_SIZE_OPTIONS = [5, 10, 25, 50];
 
@@ -36,7 +48,7 @@ const statusColors: StatusColor = {
 
 export const InvoiceList = () => {
   const navigate = useNavigate();
-  const { invoices, isLoading, error, deleteInvoice, updateInvoice } = useInvoices();
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
@@ -48,36 +60,103 @@ export const InvoiceList = () => {
   const [downloadingInvoiceNumber, setDownloadingInvoiceNumber] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
 
-  const filteredInvoices = useMemo(() => {
-    return invoices?.filter((invoice) => {
-      const matchesSearch = 
-        invoice.invoiceNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        invoice.billingName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        invoice.total.toString().includes(searchQuery.toLowerCase());
-
-      if (dateRange?.from && dateRange?.to) {
-        const invoiceDate = new Date(invoice.issueDate);
-        return (
-          matchesSearch &&
-          invoiceDate >= dateRange.from &&
-          invoiceDate <= dateRange.to
+  const { data: invoicesData, isLoading, error } = useQuery<PaginatedResponse<Invoice>>({
+    queryKey: ['invoices', currentPage, pageSize, searchQuery, dateRange],
+    queryFn: async () => {
+      try {
+        const params = {
+          page: currentPage,
+          limit: pageSize,
+          searchQuery: searchQuery || undefined,
+          startDate: dateRange?.from?.toISOString(),
+          endDate: dateRange?.to?.toISOString(),
+        };
+        
+        // Log the parameters being sent to the server
+        console.log('Sending request with params:', params);
+        console.log('URL with params:', new URL('/invoices', window.location.origin).toString() + 
+          '?' + new URLSearchParams(
+            Object.entries(params)
+              .filter(([_, value]) => value !== undefined)
+              .map(([key, value]) => [key, String(value)])
+          ).toString()
         );
+        
+        const response = await invoicesApi.getAll(params);
+        console.log('Server response:', response);
+        return response;
+      } catch (error) {
+        console.error('Error fetching invoices:', error);
+        throw error;
       }
+    },
+    initialData: {
+      data: [],
+      meta: {
+        total: 0,
+        page: 1,
+        limit: pageSize,
+        totalPages: 0
+      }
+    }
+  });
 
-      return matchesSearch;
-    }) || [];
-  }, [invoices, searchQuery, dateRange]);
+  // Add debug logging
+  console.log('Final invoicesData:', invoicesData);
 
-  const totalPages = Math.ceil((filteredInvoices?.length || 0) / pageSize);
-  const startIndex = (currentPage - 1) * pageSize;
-  const endIndex = startIndex + pageSize;
-  const paginatedInvoices = useMemo(() => {
-    return filteredInvoices.slice(startIndex, endIndex);
-  }, [filteredInvoices, startIndex, endIndex]);
+  const { mutate: deleteInvoice } = useMutation({
+    mutationFn: invoicesApi.delete,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      toast.success("Invoice deleted successfully");
+      setInvoiceToDelete(null);
+    },
+    onError: () => {
+      toast.error("Failed to delete invoice");
+    },
+  });
+
+  const { mutate: updateInvoice } = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateInvoiceDto }) => 
+      invoicesApi.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      toast.success("Invoice updated successfully");
+      setShowStatusDialog(false);
+      setSelectedInvoice(null);
+    },
+    onError: () => {
+      toast.error("Failed to update invoice");
+    },
+  });
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+  };
+
+  const handlePageSizeChange = (value: string) => {
+    setPageSize(Number(value));
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const handleDateRangeChange = (range: DateRange | undefined) => {
+    setDateRange(range);
+    setCurrentPage(1);
+  };
 
   const exportToCSV = () => {
+    if (!invoicesData.data.length) {
+      toast.error("No invoices to export");
+      return;
+    }
+
     const headers = ["Invoice #", "Customer", "Date", "Amount", "Status"];
-    const csvData = filteredInvoices.map(invoice => [
+    const csvData = invoicesData.data.map((invoice: Invoice) => [
       invoice.invoiceNumber,
       invoice.billingName,
       format(new Date(invoice.issueDate), "yyyy-MM-dd"),
@@ -87,7 +166,7 @@ export const InvoiceList = () => {
     
     const csvContent = [
       headers.join(","),
-      ...csvData.map(row => row.join(","))
+      ...csvData.map((row: string[]) => row.join(","))
     ].join("\n");
     
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -155,15 +234,6 @@ export const InvoiceList = () => {
     }
   };
 
-  const handlePageChange = (newPage: number) => {
-    setCurrentPage(newPage);
-  };
-
-  const handlePageSizeChange = (value: string) => {
-    setPageSize(Number(value));
-    setCurrentPage(1);
-  };
-
   const handleDownloadPdf = async (invoice: Invoice) => {
     try {
       setDownloadProgress(true);
@@ -206,6 +276,28 @@ export const InvoiceList = () => {
     }
   }, [downloadProgress]);
 
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <div className="h-12 w-12 rounded-full bg-destructive/10 flex items-center justify-center">
+            <FileText className="h-6 w-6 text-destructive" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold">Error loading invoices</h3>
+            <p className="text-sm text-gray-500">Please try again later</p>
+          </div>
+          <Button 
+            variant="outline" 
+            onClick={() => queryClient.invalidateQueries({ queryKey: ['invoices'] })}
+          >
+            Try Again
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
@@ -216,6 +308,11 @@ export const InvoiceList = () => {
       </div>
     );
   }
+
+  const totalInvoices = invoicesData.meta.total;
+  const currentPageNumber = invoicesData.meta.page;
+  const currentLimit = invoicesData.meta.limit;
+  const totalPages = invoicesData.meta.totalPages;
 
   return (
     <div className="space-y-6">
@@ -230,7 +327,7 @@ export const InvoiceList = () => {
               <div>
                 <h1 className="text-2xl font-bold tracking-tight text-black">Invoices</h1>
                 <p className="text-sm font-medium text-gray-600">
-                  {filteredInvoices.length} total invoices
+                  {totalInvoices} total invoices
                 </p>
               </div>
             </div>
@@ -260,7 +357,7 @@ export const InvoiceList = () => {
               <Input
                 placeholder="Search invoices..."
                 value={searchQuery}
-                onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+                onChange={handleSearchChange}
                 className="pl-10 h-10"
               />
             </div>
@@ -270,7 +367,7 @@ export const InvoiceList = () => {
               onValueChange={handlePageSizeChange}
             >
               <SelectTrigger className="w-[180px] h-10 font-medium">
-                <SelectValue placeholder="5 per page" />
+                <SelectValue placeholder="10 per page" />
               </SelectTrigger>
               <SelectContent>
                 {PAGE_SIZE_OPTIONS.map((size) => (
@@ -311,7 +408,7 @@ export const InvoiceList = () => {
                   mode="range"
                   defaultMonth={dateRange?.from}
                   selected={dateRange}
-                  onSelect={setDateRange}
+                  onSelect={handleDateRangeChange}
                   numberOfMonths={2}
                 />
               </PopoverContent>
@@ -332,14 +429,8 @@ export const InvoiceList = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedInvoices.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                    No invoices found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                paginatedInvoices.map((invoice) => (
+              {invoicesData.data.length > 0 ? (
+                invoicesData.data.map((invoice: Invoice) => (
                   <TableRow key={invoice.id} className="group hover:bg-gray-50">
                     <TableCell className="font-semibold text-black">
                       {invoice.invoiceNumber}
@@ -356,7 +447,7 @@ export const InvoiceList = () => {
                     <TableCell>
                       <Badge 
                         variant="secondary"
-                        className={cn(statusColors[invoice.status], "font-medium")}
+                        className={cn(statusColors[invoice.status as keyof StatusColor], "font-medium")}
                       >
                         {invoice.status.charAt(0) + invoice.status.slice(1).toLowerCase()}
                       </Badge>
@@ -417,6 +508,12 @@ export const InvoiceList = () => {
                     </TableCell>
                   </TableRow>
                 ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                    No invoices found
+                  </TableCell>
+                </TableRow>
               )}
             </TableBody>
           </Table>
@@ -424,7 +521,9 @@ export const InvoiceList = () => {
           {/* Pagination */}
           <div className="flex items-center justify-between p-4 border-t bg-white">
             <div className="text-sm text-gray-600">
-              Showing {startIndex + 1} to {Math.min(endIndex, filteredInvoices.length)} of {filteredInvoices.length} invoices
+              Showing {((currentPage - 1) * pageSize) + 1} to{' '}
+              {Math.min(currentPage * pageSize, totalInvoices)}{' '}
+              of {totalInvoices} invoices
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -438,13 +537,13 @@ export const InvoiceList = () => {
                 Previous
               </Button>
               <span className="flex items-center text-sm font-medium text-gray-600 px-4 bg-white rounded-md border h-9">
-                Page {currentPage} of {totalPages || 1}
+                Page {currentPage} of {totalPages}
               </span>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages || totalPages === 0}
+                disabled={currentPage === totalPages}
                 className="h-9 font-medium"
               >
                 Next

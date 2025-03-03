@@ -75,6 +75,24 @@ export interface CreateInvoiceDto {
 
 export type UpdateInvoiceDto = Partial<CreateInvoiceDto>;
 
+export interface PaginatedResponse<T> {
+  data: T[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
+export interface GetInvoicesParams {
+  page?: number;
+  limit?: number;
+  searchQuery?: string;
+  startDate?: string;
+  endDate?: string;
+}
+
 export const invoicesApi = {
   async create(data: CreateInvoiceDto): Promise<Invoice> {
     logger.info('Creating invoice with data:', data);
@@ -82,8 +100,17 @@ export const invoicesApi = {
     return response.data;
   },
 
-  async getAll(): Promise<Invoice[]> {
-    const response = await api.get('/invoices');
+  async getAll(params?: GetInvoicesParams): Promise<PaginatedResponse<Invoice>> {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.append('page', params.page.toString());
+    if (params?.limit) searchParams.append('limit', params.limit.toString());
+    if (params?.searchQuery) searchParams.append('searchQuery', params.searchQuery);
+    if (params?.startDate) searchParams.append('startDate', params.startDate);
+    if (params?.endDate) searchParams.append('endDate', params.endDate);
+
+    const queryString = searchParams.toString();
+    const url = queryString ? `/invoices?${queryString}` : '/invoices';
+    const response = await api.get(url);
     return response.data;
   },
 
