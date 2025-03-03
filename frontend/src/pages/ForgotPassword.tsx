@@ -41,9 +41,13 @@ export default function ForgotPassword() {
         {/* Form Section */}
         <div className="w-[45%] p-12 flex flex-col">
           <div className="mb-8 text-center">
-            <div className="flex justify-center mb-6">
-              <div className="w-14 h-14 rounded-full bg-[#7C5CFC] flex items-center justify-center">
-                <div className="w-3.5 h-3.5 rounded-full bg-white"></div>
+          <div className="flex justify-center mb-6">
+              <div className="relative w-12 h-12 flex items-center justify-center">
+                {/* Outer glow */}
+                <div className="absolute w-[200%] h-[200%] rounded-full bg-[#7C5CFC] opacity-5"></div>
+                <div className="absolute w-[150%] h-[150%] rounded-full bg-[#7C5CFC] opacity-10"></div>
+                {/* Main circle */}
+                <div className="relative w-full h-full rounded-full bg-[#7C5CFC]"></div>
               </div>
             </div>
             <h1 className="text-[28px] font-semibold text-[#1A1A1A] mb-2">Reset Password</h1>
@@ -101,15 +105,13 @@ export default function ForgotPassword() {
         </div>
 
         {/* Decorative Arch Section */}
-        <div className="w-[55%] relative bg-[#F5F3FF]">
-          <div className="absolute inset-0 flex items-end justify-center">
-            <div 
-              className="w-full h-[80%] bg-[#7C5CFC] rounded-t-full"
-              style={{
-                background: 'linear-gradient(180deg, #7C5CFC 0%, #9F85FF 100%)',
-              }}
-            />
-          </div>
+        <div className="w-[55%] relative bg-[#F5F3FF] flex items-center justify-center">
+          <div 
+            className="w-[40%] aspect-[2/2.2] rounded-t-full"
+            style={{
+              background: 'linear-gradient(180deg, #7C5CFC 0%, #9F85FF 70%, rgba(255, 255, 255, 0) 100%)'
+            }}
+          />
         </div>
       </div>
     </div>
