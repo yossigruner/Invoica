@@ -24,7 +24,7 @@ A modern, full-stack invoicing application built with React, NestJS, and Postgre
 - Customer management
 - Invoice creation and management
 - PDF invoice generation
-- Payment processing integration
+- Payment processing integration with Clover
 - Profile and company settings
 - Multi-currency support
 - Email notifications
@@ -47,6 +47,7 @@ A modern, full-stack invoicing application built with React, NestJS, and Postgre
 - JWT for authentication
 - Swagger for API documentation
 - Class Validator for validation
+- Clover API integration for payments
 
 ## Getting Started
 
@@ -80,10 +81,20 @@ JWT_SECRET=local_development_secret
 VITE_API_URL=http://localhost:3000
 VITE_FRONTEND_URL=http://localhost:8080
 
-# Clover API Configuration (optional)
-CLOVER_API_KEY=your_clover_api_key_here
-CLOVER_MERCHANT_ID=your_clover_merchant_id_here
-CLOVER_API_URL=https://sandbox.dev.clover.com/v3
+# Clover Integration Configuration
+CLOVER_CLIENT_ID=your_clover_client_id
+CLOVER_CLIENT_SECRET=your_clover_client_secret
+CLOVER_REDIRECT_URI=http://localhost:8080/clover/callback
+CLOVER_API_URL=https://sandbox.dev.clover.com
+
+# Email Configuration
+SENDGRID_API_KEY=your_sendgrid_api_key
+SENDGRID_FROM_EMAIL=your_verified_email@example.com
+
+# SMS Configuration
+TWILIO_ACCOUNT_SID=your_twilio_account_sid
+TWILIO_AUTH_TOKEN=your_twilio_auth_token
+TWILIO_PHONE_NUMBER=your_twilio_phone_number
 ```
 
 3. Start all services:
@@ -249,3 +260,29 @@ SENDGRID_FROM_EMAIL=your-verified@email.com         # Your verified sender email
 
 # Application URLs
 FRONTEND_URL=http://localhost:3000                   # Your frontend URL
+
+## Clover Integration
+
+The application includes integration with Clover for processing credit card payments. To set up the Clover integration:
+
+1. Create a Clover Developer account at https://developer.clover.com
+2. Create a new application in the Clover Developer Dashboard
+3. Configure the following environment variables:
+   - `CLOVER_CLIENT_ID`: Your Clover application's client ID
+   - `CLOVER_CLIENT_SECRET`: Your Clover application's client secret
+   - `CLOVER_REDIRECT_URI`: The callback URL for OAuth (default: http://localhost:8080/api/clover/callback)
+   - `CLOVER_API_URL`: The Clover API URL (use sandbox URL for testing)
+
+4. In the Clover Developer Dashboard:
+   - Add the redirect URI to your application's allowed redirects
+   - Enable the required OAuth scopes (e.g., `com.clover.pos:read`, `com.clover.pos:write`)
+   - Set up webhook endpoints for payment status updates
+
+5. The integration will be available in the Profile page under "Payment Integration"
+
+### Testing the Integration
+
+1. Use the Clover sandbox environment for testing
+2. Create a test merchant account in the Clover sandbox
+3. Use test card numbers provided by Clover for payment testing
+4. Monitor the application logs for any integration issues

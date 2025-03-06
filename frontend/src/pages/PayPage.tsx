@@ -80,7 +80,8 @@ export const PayPage = () => {
   const handlePayment = async () => {
     try {
       const response = await invoicesApi.generatePaymentLink(id || "");
-      const paymentUrl = response.href || response.paymentUrl;
+      console.log(response);
+      const paymentUrl = response.checkoutUrl;
       if (!paymentUrl) {
         throw new Error('No payment URL received');
       }

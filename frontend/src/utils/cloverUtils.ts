@@ -1,6 +1,4 @@
 import { logger } from "./logger";
-import { supabase } from "@/lib/supabase";
-import { api } from "@/lib/axios";
 
 interface CloverMerchantResponse {
   id: string;
@@ -18,6 +16,10 @@ export const validateCloverCredentials = async (apiKey: string, merchantId: stri
     // Clover API base URL for sandbox/testing
     const baseUrl = import.meta.env.VITE_CLOVER_API_BASE_URL || 'https://sandbox.dev.clover.com';
     
+    console.log('baseUrl', baseUrl);
+    console.log('apiKey', apiKey);
+    console.log('merchantId', merchantId);
+
     // Make a test API call to validate credentials
     const response = await fetch(`${baseUrl}/v3/merchants/${merchantId}`, {
       headers: {
