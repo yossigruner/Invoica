@@ -1,3 +1,4 @@
+import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Navbar } from "@/components/layout/Navbar";
@@ -20,6 +21,7 @@ import { Loading } from "@/components/ui/loading";
 import { Eye, EyeOff } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import type { Profile } from '@/types/profile';
+import CloverIntegration from '@/components/clover/CloverIntegration';
 
 const CURRENCY_OPTIONS = [
   { value: 'USD', label: 'USD - US Dollar' },
@@ -577,68 +579,9 @@ const Profile = () => {
               </div>
             </div>
 
-            {/* Payment Integration Section */}
-            <div className="space-y-6 rounded-lg bg-gray-50/50 p-6 transition-all hover:bg-white hover:shadow-md">
-              <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
-                <div className="bg-primary-100 p-2 rounded-lg">
-                  <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                  </svg>
-                </div>
-                <h2 className="text-xl font-semibold text-gray-800">Payment Integration</h2>
-              </div>
+            <CloverIntegration />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2 group">
-                  <Label htmlFor="cloverApiKey" className="text-gray-700 group-hover:text-primary-600 transition-colors">Clover API Key</Label>
-                  <div className="relative">
-                    <Input
-                      id="cloverApiKey"
-                      name="cloverApiKey"
-                      type={showApiKey ? "text" : "password"}
-                      value={formData.cloverApiKey || ''}
-                      onChange={handleInputChange}
-                      placeholder="Enter your Clover API key"
-                      autoComplete="new-password"
-                      className="h-11 pr-10 transition-all border-gray-200 hover:border-primary-300 focus:border-primary-500 focus:ring-primary-500/20"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowApiKey(!showApiKey)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                    >
-                      {showApiKey ? <EyeOff size={16} /> : <Eye size={16} />}
-                    </button>
-                  </div>
-                </div>
-                <div className="space-y-2 group">
-                  <Label htmlFor="cloverMerchantId" className="text-gray-700 group-hover:text-primary-600 transition-colors">Clover Merchant ID</Label>
-                  <Input
-                    id="cloverMerchantId"
-                    name="cloverMerchantId"
-                    value={formData.cloverMerchantId || ''}
-                    onChange={handleInputChange}
-                    placeholder="Enter your Clover merchant ID"
-                    className="h-11 transition-all border-gray-200 hover:border-primary-300 focus:border-primary-500 focus:ring-primary-500/20"
-                  />
-                </div>
-              </div>
-
-              <div className="mt-4 p-4 bg-primary-50 rounded-lg border border-primary-100">
-                <div className="flex items-start gap-3">
-                  <svg className="w-5 h-5 text-primary-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <div className="text-sm">
-                    <p className="text-primary-900 font-medium">Secure Payment Processing</p>
-                    <p className="text-primary-700 mt-1">
-                      Your Clover credentials are encrypted before storage and are only used for processing credit card payments.
-                      Make sure to keep these credentials secure and never share them with anyone.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            
 
             <div className="flex justify-end pt-6 border-t border-gray-200">
               <Button 

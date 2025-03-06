@@ -136,10 +136,14 @@ export const invoicesApi = {
     await api.delete(`/invoices/${id}`);
   },
 
-  async generatePaymentLink(id: string): Promise<{ href: string; paymentUrl?: string }> {
+  async generatePaymentLink(id: string): Promise<{
+    paymentId: string;
+    amount: number;
+    status: string;
+    createdAt: string;
+  }> {
     const response = await publicApi.post(`/invoices/${id}/payment`);
-    const { href } = response.data;
-    return { href, paymentUrl: href }; // Return both for backward compatibility
+    return response.data;
   },
 
   sendSMS: async (invoiceId: string, phoneNumber: string) => {

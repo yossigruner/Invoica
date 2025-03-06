@@ -32,6 +32,8 @@ import { PdfService } from './services/pdf.service';
 import { Throttle } from '@nestjs/throttler';
 import { RateLimitGuard } from '../common/guards/rate-limit.guard';
 import { QueryInvoiceDto } from './dto/query-invoice.dto';
+import { CloverService } from '../clover/clover.service';
+import { IsTaxId } from 'class-validator';
 
 interface RequestWithUser extends ExpressRequest {
   user: {
@@ -52,6 +54,7 @@ export class InvoicesController {
     private readonly profileService: ProfileService,
     private readonly communicationsService: CommunicationsService,
     private readonly pdfService: PdfService,
+    private readonly cloverService: CloverService,
   ) {}
 
   // Public endpoint for getting an invoice by ID without authentication
@@ -128,92 +131,35 @@ export class InvoicesController {
   @ApiResponse({ status: 404, description: 'Invoice not found.' })
   async generatePaymentLink(@Param('id') id: string, @Req() req: Record<string, any>) {
     this.logger.log(`Payment link generation attempt - IP: ${req.ip}, Invoice ID: ${id}`);
-    console.log('Generating payment link for invoice:', id);
+    
     try {
       const invoice = await this.invoicesService.findPublicOne(id);
-      console.log('Found invoice:', {
-        invoiceId: id,
-        invoiceNumber: invoice?.invoiceNumber,
-        total: invoice?.total,
-        currency: invoice?.currency,
-        userId: invoice?.userId
-      });
-
       if (!invoice) {
         throw new HttpException('Invoice not found', HttpStatus.NOT_FOUND);
       }
 
-      // Get user's profile to access Clover credentials
-      const profile = await this.profileService.findOne(invoice.userId);
-      console.log('Found profile:', {
-        userId: invoice.userId,
-        hasCloverMerchantId: profile?.cloverMerchantId,
-        hasCloverApiKey: profile?.cloverApiKey
-      });
-
-      if (!profile.cloverMerchantId || !profile.cloverApiKey) {
-        throw new HttpException('Clover credentials not configured', HttpStatus.BAD_REQUEST);
-      }
-
-      const CLOVER_API_BASE_URL = this.configService.get<string>('CLOVER_API_BASE_URL');
-      const REDIRECT_URL = this.configService.get<string>('FRONTEND_URL');
-      console.log('Configuration:', {
-        hasCloverApiUrl: !!CLOVER_API_BASE_URL,
-        redirectUrl: REDIRECT_URL
-      });
-
-      if (!CLOVER_API_BASE_URL) {
-        throw new HttpException('Clover API URL not configured', HttpStatus.INTERNAL_SERVER_ERROR);
-      }
-
-      const checkoutData = {
-        customer: {
-          email: invoice.billingEmail,
-          firstName: invoice.billingName.split(' ')[0],
-          lastName: invoice.billingName.split(' ').slice(1).join(' '),
-          phoneNumber: invoice.billingPhone || undefined
-        },
-        shoppingCart: {
-          lineItems: [{
-            name: `Invoice #${invoice.invoiceNumber}`,
-            unitQty: 1,
-            price: Math.round(invoice.total * 100), // Convert total to cents
-            description: `Payment for Invoice #${invoice.invoiceNumber}`
-          }]
-        }
-      };
-      console.log('Checkout data:', checkoutData);
-      console.log('Clover API request:', {
-        url: `${CLOVER_API_BASE_URL}/invoicingcheckoutservice/v1/checkouts`,
-        method: 'POST',
-        headers: {
-          'X-Clover-Merchant-Id': profile.cloverMerchantId,
-          'Authorization': `Bearer ${profile.cloverApiKey}`,
-          'Content-Type': 'application/json',
-        }
-      });
-
-      const response = await axios.post(
-        `${CLOVER_API_BASE_URL}/invoicingcheckoutservice/v1/checkouts`,
-        checkoutData,
-        {
-          headers: {
-            'X-Clover-Merchant-Id': profile.cloverMerchantId,
-            'Authorization': `Bearer ${profile.cloverApiKey}`,
-            'Content-Type': 'application/json',
-          },
-        }
+      // Generate payment using Clover service
+      const payment = await this.cloverService.generatePaymentLink(
+        invoice.userId,
+        invoice.currency,
+        invoice.subtotal,
+        invoice.taxValue,
+        `Payment for Invoice #${invoice.invoiceNumber}`,
+        invoice.billingEmail,
+        invoice.billingName
       );
 
-      console.log('Clover API response:', {
-        status: response.status,
-        hasUrl: !!response.data?.href,
-        data: response.data
-      });
+      this.logger.log('Payment created successfully:', payment);
 
-      return { href: response.data.href };
+      return {
+        paymentId: payment.paymentId,
+        amount: payment.amount,
+        status: payment.status,
+        createdAt: payment.createdAt,
+        checkoutUrl: payment.checkoutUrl
+      };
     } catch (error) {
-      console.error('Payment link generation error:', {
+      this.logger.error('Payment link generation error:', {
         name: error.name,
         message: error.message,
         status: error.response?.status,

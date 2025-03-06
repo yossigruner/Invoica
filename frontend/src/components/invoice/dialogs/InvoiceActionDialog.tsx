@@ -32,6 +32,7 @@ export const InvoiceActionDialog = ({
   const [isCopied, setIsCopied] = useState(false);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [isSendingSMS, setIsSendingSMS] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
   const baseUrl = window.location.origin;
   const paymentLink = invoiceId ? `${baseUrl}/pay/${invoiceId}` : undefined;
 
@@ -48,9 +49,22 @@ export const InvoiceActionDialog = ({
     }
   };
 
-  const handleOpenPaymentLink = () => {
-    if (paymentLink) {
-      window.open(paymentLink, '_blank');
+  const handleOpenPaymentLink = async () => {
+    if (!invoiceId) return;
+
+    try {
+      const payment = await invoicesApi.generatePaymentLink(invoiceId);
+      setPaymentStatus(payment.status);
+      
+      if (payment.status === 'SUCCESS') {
+        toast.success("Payment processed successfully!");
+        // You might want to refresh the invoice status here
+      } else {
+        toast.info(`Payment status: ${payment.status}`);
+      }
+    } catch (error) {
+      logger.error('Failed to process payment:', error);
+      toast.error("Failed to process payment");
     }
   };
 

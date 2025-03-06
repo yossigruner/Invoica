@@ -16,6 +16,7 @@ model User {
   customers Customer[]
   invoices  Invoice[]
   profile   Profile?
+  cloverIntegration CloverIntegration?
 
   @@map("users")
 }
@@ -133,4 +134,19 @@ enum InvoiceStatus {
   PAID
   OVERDUE
   CANCELLED
+}
+
+model CloverIntegration {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id])
+  merchantId    String   @unique
+  accessToken   String
+  refreshToken  String?
+  tokenExpiry   DateTime
+  connectedAt   DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([userId])
+  @@index([merchantId])
 }
