@@ -4,71 +4,18 @@ A modern, full-stack invoicing application built with React, NestJS, and Postgre
 
 ## Project Structure
 
-This is a monorepo using Turborepo with the following packages:
-
-- `apps/frontend`: React application built with Vite
-- `apps/server`: NestJS backend service
-
-## Prerequisites
-
-- Node.js (v18 or later)
-- npm (v8 or later)
-- PostgreSQL
-
-## Getting Started
-
-1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/invoica.git
-cd invoica
 ```
-
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Set up environment variables:
-```bash
-cp .env.example .env
-# Edit .env with your configuration
-```
-
-4. Start the development servers:
-```bash
-npm run dev
-```
-
-This will start both the frontend and backend servers in development mode.
-
-## Available Scripts
-
-- `npm run dev` - Start both frontend and backend in development mode
-- `npm run build` - Build both frontend and backend
-- `npm run lint` - Run linting for all packages
-- `npm run type-check` - Run type checking for all packages
-- `npm run clean` - Clean build outputs
-- `npm run format` - Format code using Prettier
-
-## Development
-
-The project uses Turborepo for task running and workspace management. Key features:
-
-- Parallel execution of tasks
-- Caching of task outputs
-- Remote caching support
-- Workspace dependencies management
-
-## Building for Production
-
-1. Build all packages:
-```bash
-npm run build
-```
-
-2. Start the production server:
-```bash
-npm run start:prod -w apps/server
+.
+├── frontend/           # React frontend application
+│   ├── src/           # Source files
+│   ├── public/        # Static files
+│   └── ...           # Frontend configuration files
+├── server/            # NestJS backend application
+│   ├── src/          # Source files
+│   ├── prisma/       # Database schema and migrations
+│   └── ...          # Backend configuration files
+├── docker/           # Docker configuration files
+└── ...              # Root configuration files
 ```
 
 ## Features
@@ -101,6 +48,119 @@ npm run start:prod -w apps/server
 - Swagger for API documentation
 - Class Validator for validation
 - Clover API integration for payments
+
+## Getting Started
+
+There are two ways to run the application: using Docker (recommended) or manual setup.
+
+### 🐳 Docker Setup (Recommended)
+
+#### Prerequisites
+- Docker
+- Docker Compose
+
+#### Quick Start
+
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/invoica.git
+cd invoica
+```
+
+2. Create a `.env` file in the root directory:
+```env
+# Database Configuration
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_DB=invoica
+
+# JWT Configuration
+JWT_SECRET=local_development_secret
+
+# Frontend Configuration
+VITE_API_URL=http://localhost:3000
+VITE_FRONTEND_URL=http://localhost:8080
+
+# Clover Integration Configuration
+CLOVER_CLIENT_ID=your_clover_client_id
+CLOVER_CLIENT_SECRET=your_clover_client_secret
+CLOVER_REDIRECT_URI=http://localhost:8080/clover/callback
+CLOVER_API_URL=https://sandbox.dev.clover.com
+
+# Email Configuration
+SENDGRID_API_KEY=your_sendgrid_api_key
+SENDGRID_FROM_EMAIL=your_verified_email@example.com
+
+# SMS Configuration
+TWILIO_ACCOUNT_SID=your_twilio_account_sid
+TWILIO_AUTH_TOKEN=your_twilio_auth_token
+TWILIO_PHONE_NUMBER=your_twilio_phone_number
+```
+
+3. Start all services:
+```bash
+docker-compose up --build
+```
+
+#### Available Services
+
+1. **Frontend**: http://localhost:8080
+   - React application served by Nginx
+
+2. **Backend API**: http://localhost:3000
+   - NestJS API server
+   - API Documentation: http://localhost:3000/api
+
+3. **PostgreSQL**: localhost:5432
+   - Username: postgres
+   - Password: postgres
+   - Database: invoica
+
+4. **pgAdmin**: http://localhost:5050
+   - Email: admin@admin.com
+   - Password: admin
+
+### Manual Setup
+
+#### Prerequisites
+- Node.js 18+ or 20+
+- PostgreSQL database
+
+#### Steps
+
+1. Install dependencies:
+```bash
+# Install root dependencies
+npm install
+
+# Install frontend dependencies
+npm install -w frontend
+
+# Install backend dependencies
+npm install -w server
+```
+
+2. Set up environment variables:
+   - Copy `.env.example` to `.env` in both frontend and server directories
+   - Update the environment variables as needed
+
+3. Run database migrations:
+```bash
+cd server
+npx prisma migrate deploy
+npx prisma generate
+cd ..
+```
+
+4. Start the development servers:
+```bash
+# Start both frontend and backend
+npm run dev
+
+# Or start them separately:
+npm run dev:frontend  # Frontend only
+npm run dev:server    # Backend only
+```
 
 ## Database Management
 

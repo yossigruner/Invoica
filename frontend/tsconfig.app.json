@@ -15,6 +15,13 @@
     "jsx": "react-jsx",
     "noEmit": true,
 
+    /* Project Reference Support */
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
+    "emitDeclarationOnly": true,
+    "outDir": "./dist/app",
+
     /* Linting */
     "strict": true,
     "noUnusedLocals": true,
@@ -28,6 +35,5 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src"],
-  "references": [{ "path": "./tsconfig.node.json" }]
+  "include": ["src"]
 }

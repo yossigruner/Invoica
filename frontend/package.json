@@ -4,13 +4,12 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --mode development",
-    "build": "vite build --mode production",
-    "preview": "vite preview --mode production",
+    "dev": "vite",
+    "build": "vite build",
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
     "type-check": "tsc --noEmit",
-    "clean": "rm -rf dist"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@fontsource/alex-brush": "^5.0.8",
