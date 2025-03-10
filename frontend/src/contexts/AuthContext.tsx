@@ -83,18 +83,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       navigate('/', { replace: true });
       toast.success('Login successful');
       return response; // Return the response for the component to handle
-    } catch (error: any) {
-      // Handle different types of errors
-      if (error.response?.status === 401) {
-        toast.error('Invalid email or password');
-      } else if (error.response?.status === 404) {
-        toast.error('User not found. Please register first.');
-      } else if (error.message?.includes('User not found')) {
-        toast.error('User not found. Please register first.');
-      } else {
-        toast.error(error.message || 'Login failed. Please try again.');
+    } catch (error) {
+      // Don't show the toast for expected errors like "User not found"
+      if (!(error instanceof Error && error.message.includes('User not found'))) {
+        toast.error('Login failed. Please check your credentials.');
       }
       throw error; // Re-throw the error so the Login component can handle it
+    } finally {
     }
   };
 
