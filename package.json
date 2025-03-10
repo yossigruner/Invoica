@@ -3,21 +3,21 @@
   "version": "1.0.0",
   "private": true,
   "workspaces": [
-    "frontend",
-    "server"
+    "apps/*"
   ],
   "scripts": {
-    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:server\"",
-    "dev:frontend": "npm run dev -w frontend",
-    "dev:server": "npm run start:dev -w server",
-    "build": "npm run build -w frontend && npm run build -w server",
-    "lint": "npm run lint -w frontend && npm run lint -w server",
-    "type-check": "npm run type-check -w frontend && tsc -p server/tsconfig.json --noEmit"
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "lint": "turbo lint",
+    "type-check": "turbo type-check",
+    "clean": "turbo clean",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/lodash": "^4.17.15",
-    "concurrently": "^8.2.2"
+    "prettier": "^3.0.0",
+    "turbo": "latest"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
