@@ -169,10 +169,11 @@ export const useInvoiceForm = (customerData: CustomerData | null, initialData?: 
     );
 
     const discount = calculateAdjustment(subtotal, formData.adjustments.discount);
-    const tax = calculateAdjustment(subtotal, formData.adjustments.tax);
+    const afterDiscount = subtotal - discount;
+    const tax = calculateAdjustment(afterDiscount, formData.adjustments.tax);
     const shipping = calculateAdjustment(subtotal, formData.adjustments.shipping);
 
-    const total = subtotal - discount + tax + shipping;
+    const total = afterDiscount + tax + shipping;
 
     return {
       subtotal,

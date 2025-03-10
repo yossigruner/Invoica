@@ -165,11 +165,17 @@ export class PdfService {
             <div class="summary">
               <div>Subtotal: ${invoice.subtotal.toFixed(2)} ${formattedData.currency}</div>
               ${invoice.discountValue > 0 ? 
-                `<div style="color: #dc2626">Discount: -${invoice.discountValue.toFixed(2)} ${formattedData.currency}</div>` : ''}
+                `<div style="color: #dc2626">Discount ${invoice.discountType === 'percentage' ? 
+                  `(${invoice.discountValue}%): -${(invoice.subtotal * invoice.discountValue / 100).toFixed(2)}` : 
+                  `: -${invoice.discountValue.toFixed(2)}`} ${formattedData.currency}</div>` : ''}
               ${invoice.taxValue > 0 ? 
-                `<div>Tax: +${invoice.taxValue.toFixed(2)} ${formattedData.currency}</div>` : ''}
+                `<div>Tax ${invoice.taxType === 'percentage' ? 
+                  `(${invoice.taxValue}%): +${((invoice.subtotal - (invoice.discountValue || 0)) * invoice.taxValue / 100).toFixed(2)}` : 
+                  `: +${invoice.taxValue.toFixed(2)}`} ${formattedData.currency}</div>` : ''}
               ${invoice.shippingValue > 0 ? 
-                `<div>Shipping: +${invoice.shippingValue.toFixed(2)} ${formattedData.currency}</div>` : ''}
+                `<div>Shipping ${invoice.shippingType === 'percentage' ? 
+                  `(${invoice.shippingValue}%): +${(invoice.subtotal * invoice.shippingValue / 100).toFixed(2)}` : 
+                  `: +${invoice.shippingValue.toFixed(2)}`} ${formattedData.currency}</div>` : ''}
               <div class="total">Total: ${invoice.total.toFixed(2)} ${formattedData.currency}</div>
             </div>
 

@@ -57,7 +57,7 @@ export const InvoiceFormTabs = ({ currentTab, completedTabs = [], onTabChange, c
               key={tab}
               value={tab}
               className={cn(
-                "flex-1 min-w-[60px] sm:min-w-[120px] transition-all py-2 sm:py-3",
+                "flex-1 min-w-[40px] sm:min-w-[80px] transition-all py-2 sm:py-3",
                 "data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm",
                 "hover:bg-white/50",
                 isCompleted && "text-green-600"

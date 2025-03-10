@@ -13,7 +13,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (credentials: LoginCredentials) => Promise<AuthResponse | undefined>;
+  login: (credentials: { email: string; password: string }) => Promise<AuthResponse | undefined>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
@@ -64,7 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkAuth();
   }, [navigate, location.pathname]);
 
-  const login = async (credentials: LoginCredentials) => {
+  const login = async (credentials: { email: string; password: string }) => {
     let response;
     try {
       response = await authApi.login(credentials);

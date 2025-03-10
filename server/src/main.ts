@@ -2,19 +2,22 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import cors from 'cors';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // Enable CORS with complete configuration
-  app.enableCors({
-    origin: ['http://localhost:8080', 'http://localhost:5173'],
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
-    exposedHeaders: ['Content-Range', 'X-Content-Range'],
-    credentials: true,
-    maxAge: 3600,
-  });
+  app.use(cors({
+    origin: [
+      'http://localhost:8080',
+      'http://localhost:5173',
+      process.env.VITE_FRONTEND_URL
+    ].filter((origin): origin is string => !!origin),
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
+  }));
 
   // Enable validation pipes
   app.useGlobalPipes(new ValidationPipe({

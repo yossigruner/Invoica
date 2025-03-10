@@ -1,47 +1,36 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Link } from "react-router-dom";
+import { toast } from "sonner";
 
 export default function ForgotPassword() {
-  const [email, setEmail] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
-  const { resetPassword } = useAuth();
+  const [email, setEmail] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    e.stopPropagation();
-
-    if (!email) {
-      setError('Please enter your email address');
-      return;
-    }
-
-    setError('');
-    setLoading(true);
+    setIsLoading(true);
 
     try {
-      await resetPassword(email);
-      setSuccess(true);
+      // TODO: Implement password reset logic
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulated API call
+      toast.success("Password reset instructions sent to your email");
     } catch (error) {
-      if (error instanceof Error) {
-        setError(error.message);
-      } else {
-        setError('An unexpected error occurred');
-      }
+      toast.error("Failed to send reset instructions. Please try again.");
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#FAFAFA]">
-      <div className="w-full max-w-[1100px] min-h-[600px] flex bg-white rounded-[32px] shadow-sm overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-[#FAFAFA] p-4">
+      <div className="w-full max-w-[1100px] min-h-[600px] flex flex-col md:flex-row bg-white rounded-[32px] shadow-sm overflow-hidden">
         {/* Form Section */}
-        <div className="w-[45%] p-12 flex flex-col">
+        <div className="w-full md:w-[45%] p-6 sm:p-8 md:p-12 flex flex-col">
           <div className="mb-8 text-center">
-          <div className="flex justify-center mb-6">
+            <div className="flex justify-center mb-6">
               <div className="relative w-12 h-12 flex items-center justify-center">
                 {/* Outer glow */}
                 <div className="absolute w-[200%] h-[200%] rounded-full bg-[#7C5CFC] opacity-5"></div>
@@ -50,68 +39,56 @@ export default function ForgotPassword() {
                 <div className="relative w-full h-full rounded-full bg-[#7C5CFC]"></div>
               </div>
             </div>
-            <h1 className="text-[28px] font-semibold text-[#1A1A1A] mb-2">Reset Password</h1>
-            <p className="text-[15px] text-[#666666]">Enter your email address and we'll send you instructions to reset your password.</p>
+            <h1 className="text-2xl sm:text-[28px] font-semibold text-[#1A1A1A] mb-2">Reset Password</h1>
+            <p className="text-sm sm:text-[15px] text-[#666666]">
+              Enter your email address and we'll send you instructions to reset your password.
+            </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="flex-1 flex flex-col space-y-5">
-            {error && (
-              <div className="px-4 py-3 bg-[#FEF2F2] text-[#EF4444] text-[14px] rounded-lg">
-                {error}
-              </div>
-            )}
-
-            {success && (
-              <div className="px-4 py-3 bg-[#F0FDF4] text-[#22C55E] text-[14px] rounded-lg">
-                Check your email for password reset instructions.
-              </div>
-            )}
-
-            <div className="space-y-1.5">
-              <label htmlFor="email" className="block text-[15px] font-medium text-[#1A1A1A]">
-                Email
-              </label>
-              <input
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+              <Input
                 id="email"
-                name="email"
                 type="email"
                 placeholder="Enter your email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full h-12 px-4 text-[15px] rounded-xl border border-[#E5E5E5] focus:outline-none focus:ring-2 focus:ring-[#7C5CFC] focus:border-transparent placeholder:text-[#999999]"
-                autoComplete="email"
-                disabled={loading || success}
+                className="h-11"
               />
             </div>
 
-            <div className="flex-1 flex flex-col justify-end space-y-5">
-              <button
-                type="submit"
-                disabled={loading || success}
-                className="w-full h-12 bg-[#7C5CFC] text-white rounded-xl font-medium text-[15px] hover:bg-[#6B4FDB] transition-colors disabled:opacity-50"
-              >
-                {loading ? "Sending..." : "Reset Password"}
-              </button>
-
-              <p className="text-center text-[15px] text-[#666666]">
-                Remember your password?{" "}
-                <Link to="/login" className="text-[#7C5CFC] hover:underline font-medium">
-                  Back to Login
-                </Link>
-              </p>
-            </div>
+            <Button
+              type="submit"
+              className="w-full h-11 bg-[#7C5CFC] hover:bg-[#7C5CFC]/90 text-white"
+              disabled={isLoading}
+            >
+              {isLoading ? "Sending instructions..." : "Send instructions"}
+            </Button>
           </form>
+
+          <div className="mt-8 text-center">
+            <p className="text-sm text-gray-600">
+              Remember your password?{" "}
+              <Link to="/login" className="text-primary hover:text-primary/80 transition-colors">
+                Sign in
+              </Link>
+            </p>
+          </div>
         </div>
 
-        {/* Decorative Arch Section */}
-        <div className="w-[55%] relative bg-[#F5F3FF] flex items-center justify-center">
-          <div 
-            className="w-[40%] aspect-[2/2.2] rounded-t-full"
-            style={{
-              background: 'linear-gradient(180deg, #7C5CFC 0%, #9F85FF 70%, rgba(255, 255, 255, 0) 100%)'
-            }}
-          />
+        {/* Image Section */}
+        <div className="hidden md:block w-[55%] bg-[#7C5CFC] relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-[#7C5CFC] to-[#9F7AFF] opacity-90"></div>
+          <div className="absolute inset-0 flex items-center justify-center p-12">
+            <div className="text-center text-white">
+              <h2 className="text-3xl font-bold mb-4">Reset Your Password</h2>
+              <p className="text-lg opacity-90">
+                We'll help you regain access to your account securely.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>

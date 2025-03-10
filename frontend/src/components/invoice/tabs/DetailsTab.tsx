@@ -67,24 +67,24 @@ export const DetailsTab = ({ formData, onInputChange, onDateChange, isEditing }:
               <span className="ml-2 text-sm text-muted-foreground">(Cannot be changed)</span>
             )}
           </Label>
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2">
             <Input 
               id="invoice-number" 
               placeholder="Enter or generate invoice number"
               value={formData.invoiceNumber}
               onChange={(e) => { onInputChange("", "invoiceNumber", e.target.value); }}
-              className="flex-1"
+              className="w-full"
               disabled={isEditing}
             />
             <Button 
               variant="outline"
               onClick={handleGenerateInvoiceNumber}
               type="button"
-              className="flex gap-2 items-center hover:bg-primary hover:text-white transition-colors disabled:opacity-50"
+              className="w-full sm:w-auto flex gap-2 items-center justify-center hover:bg-primary hover:text-white transition-colors disabled:opacity-50"
               disabled={isEditing}
             >
               <RefreshCcw className="h-4 w-4" />
-              Generate
+              Generate Invoice Number
             </Button>
           </div>
         </div>
