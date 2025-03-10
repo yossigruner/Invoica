@@ -217,30 +217,34 @@ export default function Customers() {
   }
 
   return (
-    <div className="container py-8">
-      <Card className="bg-white shadow-xl border rounded-xl overflow-hidden">
-        <CardHeader className="border-b bg-white p-6 space-y-6">
+    <div className="space-y-4 sm:space-y-6">
+      <Card className="w-full bg-white shadow-xl border rounded-xl overflow-hidden">
+        <CardHeader className="border-b bg-white p-4 sm:p-6 space-y-4 sm:space-y-6">
           {/* Header Section */}
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                <Users className="h-6 w-6 text-primary" />
+              <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Users className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold tracking-tight text-black">Customers</h1>
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-black">Customers</h1>
                 <p className="text-sm font-medium text-gray-600">
                   {meta?.total || 0} total customers
                 </p>
               </div>
             </div>
-            <Button onClick={() => setIsCreateOpen(true)} size="lg" className="font-medium">
-              <UserPlus className="h-4 w-4 mr-2" />
-              Add Customer
+            <Button 
+              onClick={() => setIsCreateOpen(true)} 
+              size="sm" 
+              className="h-9 sm:h-10 px-2 sm:px-3 flex items-center justify-center w-full sm:w-auto"
+            >
+              <UserPlus className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Add Customer</span>
             </Button>
           </div>
 
           {/* Search and Filter Section */}
-          <div className="flex items-end gap-4">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
               <Input
@@ -248,16 +252,15 @@ export default function Customers() {
                 placeholder="Search customers..."
                 onChange={handleSearchChange}
                 value={inputValue}
-                className="pl-9 h-11 w-full"
+                className="pl-10 h-9 sm:h-10 w-full"
               />
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-sm font-medium text-gray-500">Order by</Label>
+            <div className="grid grid-cols-2 sm:flex gap-3 sm:gap-4">
               <Select
                 value={sortBy}
                 onValueChange={(value) => setSortBy(value as typeof sortBy)}
               >
-                <SelectTrigger className="w-[130px] h-11">
+                <SelectTrigger className="h-9 sm:h-10 w-full sm:w-[180px] font-medium">
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent>
@@ -268,14 +271,11 @@ export default function Customers() {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-sm font-medium text-gray-500">Show rows</Label>
               <Select
                 value={pageSize.toString()}
                 onValueChange={handlePageSizeChange}
               >
-                <SelectTrigger className="w-[130px] h-11">
+                <SelectTrigger className="h-9 sm:h-10 w-full sm:w-[180px] font-medium">
                   <SelectValue placeholder="10 per page" />
                 </SelectTrigger>
                 <SelectContent>
@@ -299,21 +299,21 @@ export default function Customers() {
 
           {/* Pagination */}
           {meta && (
-            <div className="flex items-center justify-between p-4 border-t bg-white">
-              <div className="text-sm text-gray-600">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t bg-white">
+              <div className="text-sm text-gray-600 text-center sm:text-left">
                 Showing {((meta.page - 1) * meta.limit) + 1} to{' '}
                 {Math.min(meta.page * meta.limit, meta.total)} of {meta.total} customers
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 w-full sm:w-auto">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setCurrentPage(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className="h-9 font-medium"
+                  className="h-9 font-medium px-2 sm:px-3 flex items-center justify-center flex-1 sm:flex-none"
                 >
-                  <ChevronLeft className="h-4 w-4 mr-1" />
-                  Previous
+                  <ChevronLeft className="h-4 w-4 sm:mr-1" />
+                  <span className="hidden sm:inline">Previous</span>
                 </Button>
                 <span className="flex items-center text-sm font-medium text-gray-600 px-4 bg-white rounded-md border h-9">
                   Page {meta.page} of {meta.totalPages || 1}
@@ -323,10 +323,10 @@ export default function Customers() {
                   size="sm"
                   onClick={() => setCurrentPage(currentPage + 1)}
                   disabled={currentPage === meta.totalPages}
-                  className="h-9 font-medium"
+                  className="h-9 font-medium px-2 sm:px-3 flex items-center justify-center flex-1 sm:flex-none"
                 >
-                  Next
-                  <ChevronRight className="h-4 w-4 ml-1" />
+                  <span className="hidden sm:inline">Next</span>
+                  <ChevronRight className="h-4 w-4 sm:ml-1" />
                 </Button>
               </div>
             </div>

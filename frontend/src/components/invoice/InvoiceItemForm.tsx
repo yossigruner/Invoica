@@ -56,14 +56,14 @@ export const InvoiceItemForm = ({
   };
 
   return (
-    <div className="bg-white/50 backdrop-blur-sm rounded-lg p-6 relative border border-gray-100 shadow-sm hover:shadow-md transition-all">
-      <div className="flex justify-between items-center mb-4">
+    <div className="bg-white/50 backdrop-blur-sm rounded-lg p-4 sm:p-6 relative border border-gray-100 shadow-sm hover:shadow-md transition-all">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
         <h4 className="font-medium">#{index + 1} - {item.name || 'Empty name'}</h4>
-        <div className="flex gap-2">
+        <div className="flex gap-2 w-full sm:w-auto justify-end">
           <Button 
             variant="secondary" 
             size="icon" 
-            className="hover:bg-primary hover:text-white transition-colors"
+            className="h-8 w-8 hover:bg-primary hover:text-white transition-colors"
             onClick={handleMoveUp}
             disabled={isFirst}
           >
@@ -72,7 +72,7 @@ export const InvoiceItemForm = ({
           <Button 
             variant="secondary" 
             size="icon" 
-            className="hover:bg-primary hover:text-white transition-colors"
+            className="h-8 w-8 hover:bg-primary hover:text-white transition-colors"
             onClick={handleMoveDown}
             disabled={isLast}
           >
@@ -81,6 +81,7 @@ export const InvoiceItemForm = ({
           <Button 
             variant="destructive" 
             size="icon"
+            className="h-8 w-8"
             onClick={() => { onRemoveItem(index); }}
           >
             <Trash2 className="h-4 w-4" />
@@ -89,8 +90,8 @@ export const InvoiceItemForm = ({
       </div>
 
       <div className="grid gap-4">
-        <div className="grid grid-cols-3 gap-4">
-          <div className="col-span-2">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="sm:col-span-2">
             <Label htmlFor={`item-name-${index}`}>Name:</Label>
             <Input 
               id={`item-name-${index}`} 
@@ -113,7 +114,8 @@ export const InvoiceItemForm = ({
             />
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-4">
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <Label htmlFor={`item-rate-${index}`}>Rate: ({currency})</Label>
             <Input 
@@ -122,18 +124,21 @@ export const InvoiceItemForm = ({
               min="0"
               step="0.01"
               placeholder="0" 
-              className="mt-1 bg-white/50 focus:bg-white transition-colors"
+              className="mt-1 bg-white/50 focus:bg-white transition-colors h-10"
               value={item.rate}
               onChange={(e) => handleChange("rate", Number(e.target.value))}
             />
           </div>
           <div>
             <Label>Total</Label>
-            <p className="mt-3 font-medium">
-              {((Number(item.quantity) || 0) * (Number(item.rate) || 0)).toFixed(2)} {currency}
-            </p>
+            <div className="mt-1 h-10 flex items-center justify-end bg-gray-50/50 px-3 rounded-md">
+              <span className="font-medium">
+                {((Number(item.quantity) || 0) * (Number(item.rate) || 0)).toFixed(2)} {currency}
+              </span>
+            </div>
           </div>
         </div>
+
         <div>
           <Label htmlFor={`item-description-${index}`}>Description:</Label>
           <Textarea 

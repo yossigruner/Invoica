@@ -15,10 +15,9 @@ import { useInvoices } from "@/hooks/useInvoices";
 import { toast } from "sonner";
 import { logger } from "@/utils/logger";
 import { Loading } from "@/components/ui/loading";
-import { CustomerData, InvoiceFormData, InvoiceFormItem, ProfileData } from "./types/invoice";
+import { CustomerData, InvoiceFormData, } from "./types/invoice";
 import { Invoice, CreateInvoiceDto, invoicesApi } from '@/api/invoices';
-import { Save, Mail, MessageSquare, FileDown } from "lucide-react";
-import html2pdf from "html2pdf.js";
+import { Save, FileDown } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { InvoicePreview } from "./InvoicePreview";
@@ -31,15 +30,6 @@ interface InvoiceFormProps {
   isEditing?: boolean;
 }
 
-interface PreviewProps {
-  profileData: ProfileData | null;
-  formData: InvoiceFormData;
-  showDiscount: boolean;
-  showTax: boolean;
-  showShipping: boolean;
-}
-
-type InputChangeHandler = (section: keyof InvoiceFormData | "", field: string, value: string | number) => void;
 
 interface FormData {
   invoiceNumber: string;
@@ -343,7 +333,7 @@ export const InvoiceForm = ({ initialData, isEditing }: InvoiceFormProps) => {
     }
 
     if (showTax) {
-      transformedData.taxType = formData.adjustments.tax.type === 'amount' ? 'fixed' : 'percentage';
+      transformedData.taxType = 'percentage'; // Always use percentage for tax
       transformedData.taxValue = Number(formData.adjustments.tax.value);
     }
 
@@ -353,16 +343,6 @@ export const InvoiceForm = ({ initialData, isEditing }: InvoiceFormProps) => {
     }
 
     return transformedData;
-  };
-
-  const handleSendEmail = async () => {
-    // TODO: Implement email sending
-    toast.info("Email sending will be implemented soon");
-  };
-
-  const handleSendSMS = async () => {
-    // TODO: Implement SMS sending
-    toast.info("SMS sending will be implemented soon");
   };
 
   const handleSaveInvoice = async () => {
@@ -396,6 +376,7 @@ export const InvoiceForm = ({ initialData, isEditing }: InvoiceFormProps) => {
         invoiceId: initialData?.id
       });
       
+      let result: Invoice;
       if (isEditing && initialData?.id) {
         const updateData = {
           id: initialData.id,
@@ -403,14 +384,13 @@ export const InvoiceForm = ({ initialData, isEditing }: InvoiceFormProps) => {
         };
         
         logger.info('Updating invoice:', updateData);
-        const result = await updateInvoice(updateData);
+        result = await updateInvoice(updateData);
         toast.success("Invoice updated successfully!");
-        setSavedInvoiceId(result.id);
       } else {
-        const result = await createInvoice(transformedData);
+        result = await createInvoice(transformedData);
         toast.success("Invoice created successfully!");
-        setSavedInvoiceId(result.id);
       }
+      setSavedInvoiceId(result.id);
     } catch (error: any) {
       // Handle validation errors
       if (error.response?.data?.message) {
@@ -439,37 +419,37 @@ export const InvoiceForm = ({ initialData, isEditing }: InvoiceFormProps) => {
 
   const handleGeneratePDF = async () => {
     try {
-      const element = document.getElementById('invoice-preview');
-      if (!element) {
-        toast.error("Invoice preview not found");
+      // Save the invoice first if it hasn't been saved
+      if (!savedInvoiceId) {
+        await handleSaveInvoice();
+      }
+
+      if (!savedInvoiceId) {
+        toast.error("Please save the invoice first");
         return;
       }
 
-      const opt = {
-        margin: [0.2, 0.2, 0.2, 0.2] as [number, number, number, number],
-        filename: `invoice-${formData.invoiceNumber}-${format(new Date(), 'yyyy-MM-dd')}.pdf`,
-        image: { type: 'jpeg', quality: 0.95 },
-        html2canvas: { 
-          scale: 1,
-          useCORS: true,
-          logging: false,
-          letterRendering: true
-        },
-        jsPDF: { 
-          unit: 'in', 
-          format: 'a4',
-          orientation: 'portrait',
-          compress: true,
-          precision: 16
-        },
-        pagebreak: { mode: 'avoid-all' }
-      };
-
-      await html2pdf().set(opt).from(element).save();
-      toast.success("PDF generated successfully!");
+      // Download the PDF from the server
+      const blob = await invoicesApi.downloadPdf(savedInvoiceId);
+      
+      // Create a URL for the blob
+      const url = window.URL.createObjectURL(blob);
+      
+      // Create a temporary link element
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `invoice-${formData.invoiceNumber}-${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+      
+      // Append to body, click, and clean up
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success("PDF downloaded successfully!");
     } catch (error) {
-      logger.error('Failed to generate PDF:', error);
-      toast.error("Failed to generate PDF");
+      logger.error('Failed to download PDF:', error);
+      toast.error("Failed to download PDF");
     }
   };
 
@@ -483,107 +463,118 @@ export const InvoiceForm = ({ initialData, isEditing }: InvoiceFormProps) => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto p-4 lg:p-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Form Section */}
-          <div>
-            <Card className="p-6 shadow-lg bg-white/80 backdrop-blur-sm">
-              <div className="space-y-8">
-                <div className="flex justify-between items-center">
+      <div className="container mx-auto p-4">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          {/* Form Section - 50% */}
+          <div className="lg:col-span-6">
+            <Card className="p-4 sm:p-4 shadow-lg bg-white/80 backdrop-blur-sm">
+              <div className="space-y-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                   <div>
-                    <h1 className="text-2xl font-bold text-gray-900">
+                    <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
                       {isEditing ? 'Edit Invoice' : 'Create New Invoice'}
                     </h1>
                     <p className="text-sm text-gray-500">
                       {isEditing ? 'Update your invoice details' : 'Fill in the details to create a new invoice'}
                     </p>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
                     <Button
-                      onClick={async () => {
-                        await handleSaveInvoice();
-                        setShowActionDialog(true);
-                      }}
-                      disabled={isSaving || invoicesLoading}
-                      className="flex items-center gap-2"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate("/")}
+                      className="w-full sm:w-auto h-9"
                     >
-                      <Save className={isSaving ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
-                      {isSaving ? (
-                        isEditing ? "Updating..." : "Saving..."
-                      ) : (
-                        isEditing ? "Update" : "Save"
-                      )}
+                      Cancel
                     </Button>
                     <Button
-                      onClick={handleGeneratePDF}
-                      variant="outline"
-                      className="flex items-center gap-2"
+                      size="sm"
+                      onClick={handleSaveInvoice}
+                      disabled={isSaving}
+                      className="w-full sm:w-auto h-9 flex items-center gap-2"
                     >
-                      <FileDown className="h-4 w-4" />
-                      PDF
+                      {isSaving ? (
+                        <>
+                          <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          <span>Saving...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Save className="h-4 w-4" />
+                          <span>Save</span>
+                        </>
+                      )}
                     </Button>
                   </div>
                 </div>
 
-                <div className="space-y-6">
-                  <InvoiceFormTabs
-                    currentTab={currentTab}
-                    completedTabs={completedTabs}
-                    onTabChange={handleTabChange}
-                  >
-                    <div className="mt-6 max-w-2xl mx-auto">
-                      <TabsContent value="from" className="px-1">
-                        <CustomerInfoTab
-                          formData={formData}
-                          onInputChange={handleInputChange}
-                        />
-                      </TabsContent>
+                <InvoiceFormTabs 
+                  currentTab={currentTab} 
+                  completedTabs={completedTabs}
+                  onTabChange={handleTabChange}
+                >
+                  <div className="mt-6">
+                    <TabsContent value="from">
+                      <CustomerInfoTab
+                        formData={{
+                          to: formData.to
+                        }}
+                        onInputChange={handleInputChange}
+                      />
+                    </TabsContent>
 
-                      <TabsContent value="details" className="px-1">
-                        <DetailsTab
-                          formData={formData}
-                          onInputChange={handleInputChange}
-                          onDateChange={handleDateChange}
-                          isEditing={isEditing}
-                        />
-                      </TabsContent>
+                    <TabsContent value="details">
+                      <DetailsTab
+                        formData={{
+                          invoiceNumber: formData.invoiceNumber,
+                          issueDate: formData.issueDate,
+                          dueDate: formData.dueDate,
+                          currency: formData.currency
+                        }}
+                        onInputChange={handleInputChange}
+                        onDateChange={handleDateChange}
+                        isEditing={isEditing}
+                      />
+                    </TabsContent>
 
-                      <TabsContent value="items" className="px-1">
-                        <ItemsTab
-                          formData={formData}
-                          onItemChange={handleItemChange}
-                          onAddItem={addNewItem}
-                          onRemoveItem={removeItem}
-                          onMoveItem={handleMoveItem}
-                        />
-                      </TabsContent>
+                    <TabsContent value="items">
+                      <ItemsTab
+                        formData={formData}
+                        onItemChange={handleItemChange}
+                        onAddItem={addNewItem}
+                        onRemoveItem={removeItem}
+                        onMoveItem={handleMoveItem}
+                      />
+                    </TabsContent>
 
-                      <TabsContent value="payment" className="px-1">
-                        <PaymentTab
-                          formData={formData}
-                          paymentMethod={paymentMethod}
-                          setPaymentMethod={(value: string) => setPaymentMethod(value as "bank" | "cash" | "card")}
-                          onInputChange={handleInputChange}
-                        />
-                      </TabsContent>
+                    <TabsContent value="payment">
+                      <PaymentTab
+                        formData={{
+                          paymentTerms: formData.paymentTerms,
+                          paymentMethod: formData.paymentMethod
+                        }}
+                        paymentMethod={paymentMethod}
+                        setPaymentMethod={setPaymentMethod}
+                        onInputChange={handleInputChange}
+                      />
+                    </TabsContent>
 
-                      <TabsContent value="summary" className="px-1">
-                        <SummaryTab
-                          formData={formData}
-                          onInputChange={(section: string, field: string, value: string) => handleInputChange(section as keyof InvoiceFormData | "", field, value)}
-                          showDiscount={showDiscount}
-                          showTax={showTax}
-                          showShipping={showShipping}
-                          onShowDiscountChange={setShowDiscount}
-                          onShowTaxChange={setShowTax}
-                          onShowShippingChange={setShowShipping}
-                          onAdjustmentChange={handleAdjustmentChange}
-                          calculateTotal={calculateTotal}
-                        />
-                      </TabsContent>
-                    </div>
-                  </InvoiceFormTabs>
-                </div>
+                    <TabsContent value="summary">
+                      <SummaryTab
+                        formData={formData}
+                        onInputChange={(section: string, field: string, value: string) => handleInputChange(section as keyof InvoiceFormData | "", field, value)}
+                        showDiscount={showDiscount}
+                        showTax={showTax}
+                        showShipping={showShipping}
+                        onShowDiscountChange={setShowDiscount}
+                        onShowTaxChange={setShowTax}
+                        onShowShippingChange={setShowShipping}
+                        onAdjustmentChange={handleAdjustmentChange}
+                        calculateTotal={calculateTotal}
+                      />
+                    </TabsContent>
+                  </div>
+                </InvoiceFormTabs>
 
                 <InvoiceFormNavigation
                   currentTab={currentTab}
@@ -602,28 +593,42 @@ export const InvoiceForm = ({ initialData, isEditing }: InvoiceFormProps) => {
             </Card>
           </div>
 
-          {/* Live Preview Section */}
-          <div>
-            <Card className="p-6 shadow-lg bg-white/80 backdrop-blur-sm">
+          {/* Live Preview Section - 50% */}
+          <div className="lg:col-span-6 lg:sticky lg:top-4 lg:self-start">
+            <Card className="p-4 sm:p-6 shadow-lg bg-white/80 backdrop-blur-sm">
               <div className="space-y-4">
-                <h2 className="text-lg font-semibold text-gray-900">Live Preview</h2>
-                <div id="invoice-preview">
-                  <InvoicePreview
-                    formData={formData}
-                    showDiscount={showDiscount}
-                    showTax={showTax}
-                    showShipping={showShipping}
-                    profileData={profileData}
-                    calculateTotal={calculateTotal}
-                    logo={logo}
-                    signature={signature}
-                  />
+                <div className="flex flex-col gap-3">
+                  <h2 className="text-lg font-semibold text-gray-900">Preview</h2>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleGeneratePDF}
+                    className="w-full sm:w-auto h-9 flex items-center justify-center gap-2"
+                  >
+                    <FileDown className="h-4 w-4" />
+                    <span>Download PDF</span>
+                  </Button>
+                </div>
+                <div className="overflow-x-auto">
+                  <div id="invoice-preview" className="min-w-[800px]">
+                    <InvoicePreview
+                      formData={formData}
+                      showDiscount={showDiscount}
+                      showTax={showTax}
+                      showShipping={showShipping}
+                      profileData={profileData}
+                      calculateTotal={calculateTotal}
+                      logo={logo}
+                      signature={signature}
+                    />
+                  </div>
                 </div>
               </div>
             </Card>
           </div>
         </div>
       </div>
+
       <InvoiceActionDialog
         isOpen={showActionDialog}
         onClose={() => {

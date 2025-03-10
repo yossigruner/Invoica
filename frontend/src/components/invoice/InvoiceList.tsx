@@ -5,32 +5,19 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Search, Calendar, Download, FileDown, Mail, Trash2, Edit, FileText, ChevronLeft, ChevronRight, RefreshCw, CreditCard } from "lucide-react";
 import { useInvoices } from "@/hooks/useInvoices";
-import { useState, useMemo, useEffect } from "react";
+import { useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useNavigate, Link } from "react-router-dom";
-import { Loading } from "@/components/ui/loading";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
-import { type Invoice, type InvoiceStatus, type CreateInvoiceDto, invoicesApi } from "@/api/invoices";
+import { type Invoice, type InvoiceStatus, invoicesApi } from "@/api/invoices";
 import { Progress } from "@/components/ui/progress";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { type UpdateInvoiceDto } from "@/api/invoices";
-
-type PaginatedResponse<T> = {
-  data: T[];
-  meta: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
-};
 
 const PAGE_SIZE_OPTIONS = [5, 10, 25, 50];
 
@@ -48,7 +35,6 @@ const statusColors: StatusColor = {
 
 export const InvoiceList = () => {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
@@ -60,74 +46,18 @@ export const InvoiceList = () => {
   const [downloadingInvoiceNumber, setDownloadingInvoiceNumber] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
 
-  const { data: invoicesData, isLoading, error } = useQuery<PaginatedResponse<Invoice>>({
-    queryKey: ['invoices', currentPage, pageSize, searchQuery, dateRange],
-    queryFn: async () => {
-      try {
-        const params = {
-          page: currentPage,
-          limit: pageSize,
-          searchQuery: searchQuery || undefined,
-          startDate: dateRange?.from?.toISOString(),
-          endDate: dateRange?.to?.toISOString(),
-        };
-        
-        // Log the parameters being sent to the server
-        console.log('Sending request with params:', params);
-        console.log('URL with params:', new URL('/invoices', window.location.origin).toString() + 
-          '?' + new URLSearchParams(
-            Object.entries(params)
-              .filter(([_, value]) => value !== undefined)
-              .map(([key, value]) => [key, String(value)])
-          ).toString()
-        );
-        
-        const response = await invoicesApi.getAll(params);
-        console.log('Server response:', response);
-        return response;
-      } catch (error) {
-        console.error('Error fetching invoices:', error);
-        throw error;
-      }
-    },
-    initialData: {
-      data: [],
-      meta: {
-        total: 0,
-        page: 1,
-        limit: pageSize,
-        totalPages: 0
-      }
-    }
-  });
-
-  // Add debug logging
-  console.log('Final invoicesData:', invoicesData);
-
-  const { mutate: deleteInvoice } = useMutation({
-    mutationFn: invoicesApi.delete,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['invoices'] });
-      toast.success("Invoice deleted successfully");
-      setInvoiceToDelete(null);
-    },
-    onError: () => {
-      toast.error("Failed to delete invoice");
-    },
-  });
-
-  const { mutate: updateInvoice } = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateInvoiceDto }) => 
-      invoicesApi.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['invoices'] });
-      toast.success("Invoice updated successfully");
-      setShowStatusDialog(false);
-      setSelectedInvoice(null);
-    },
-    onError: () => {
-      toast.error("Failed to update invoice");
-    },
+  const { 
+    invoices: invoicesData, 
+    isLoading, 
+    error,
+    deleteInvoice,
+    updateInvoice
+  } = useInvoices({
+    page: currentPage,
+    limit: pageSize,
+    searchQuery: searchQuery || undefined,
+    startDate: dateRange?.from?.toISOString(),
+    endDate: dateRange?.to?.toISOString(),
   });
 
   const handlePageChange = (newPage: number) => {
@@ -149,8 +79,45 @@ export const InvoiceList = () => {
     setCurrentPage(1);
   };
 
+  const handleDelete = (invoice: Invoice) => {
+    setInvoiceToDelete(invoice);
+  };
+
+  const confirmDelete = async () => {
+    if (!invoiceToDelete) return;
+
+    try {
+      await deleteInvoice(invoiceToDelete.id);
+      toast.success("Invoice deleted successfully");
+      setInvoiceToDelete(null);
+    } catch (error) {
+      toast.error("Failed to delete invoice");
+    }
+  };
+
+  const handleStatusUpdate = (invoice: Invoice) => {
+    setSelectedInvoice(invoice);
+    setShowStatusDialog(true);
+  };
+
+  const handleStatusChange = async (newStatus: InvoiceStatus) => {
+    if (!selectedInvoice) return;
+    
+    try {
+      await updateInvoice({
+        id: selectedInvoice.id,
+        data: { status: newStatus }
+      });
+      toast.success("Invoice status updated successfully");
+      setShowStatusDialog(false);
+      setSelectedInvoice(null);
+    } catch (error) {
+      toast.error("Failed to update invoice status");
+    }
+  };
+
   const exportToCSV = () => {
-    if (!invoicesData.data.length) {
+    if (!invoicesData?.data.length) {
       toast.error("No invoices to export");
       return;
     }
@@ -197,43 +164,6 @@ export const InvoiceList = () => {
     });
   };
 
-  const handleDelete = (invoice: Invoice) => {
-    setInvoiceToDelete(invoice);
-  };
-
-  const confirmDelete = async () => {
-    if (!invoiceToDelete) return;
-
-    try {
-      await deleteInvoice(invoiceToDelete.id);
-      toast.success("Invoice deleted successfully");
-      setInvoiceToDelete(null);
-    } catch (error) {
-      toast.error("Failed to delete invoice");
-    }
-  };
-
-  const handleStatusUpdate = (invoice: Invoice) => {
-    setSelectedInvoice(invoice);
-    setShowStatusDialog(true);
-  };
-
-  const handleStatusChange = async (newStatus: InvoiceStatus) => {
-    if (!selectedInvoice) return;
-    
-    try {
-      await updateInvoice({
-        id: selectedInvoice.id,
-        data: { status: newStatus }
-      });
-      toast.success("Invoice status updated successfully");
-      setShowStatusDialog(false);
-      setSelectedInvoice(null);
-    } catch (error) {
-      toast.error("Failed to update invoice status");
-    }
-  };
-
   const handleDownloadPdf = async (invoice: Invoice) => {
     try {
       setDownloadProgress(true);
@@ -248,55 +178,13 @@ export const InvoiceList = () => {
       a.click();
       window.URL.revokeObjectURL(url);
       a.remove();
-
-      toast.success('PDF downloaded successfully');
     } catch (error) {
-      console.error('Error downloading PDF:', error);
-      toast.error('Failed to download PDF');
+      toast.error("Failed to download invoice");
     } finally {
       setDownloadProgress(false);
       setDownloadingInvoiceNumber(null);
     }
   };
-
-  // Add effect for progress animation
-  useEffect(() => {
-    if (downloadProgress) {
-      const timer = setInterval(() => {
-        setProgress((oldProgress) => {
-          const newProgress = oldProgress + 2;
-          return newProgress >= 100 ? 0 : newProgress;
-        });
-      }, 100);
-
-      return () => {
-        clearInterval(timer);
-        setProgress(0);
-      };
-    }
-  }, [downloadProgress]);
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
-        <div className="flex flex-col items-center gap-4 text-center">
-          <div className="h-12 w-12 rounded-full bg-destructive/10 flex items-center justify-center">
-            <FileText className="h-6 w-6 text-destructive" />
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold">Error loading invoices</h3>
-            <p className="text-sm text-gray-500">Please try again later</p>
-          </div>
-          <Button 
-            variant="outline" 
-            onClick={() => queryClient.invalidateQueries({ queryKey: ['invoices'] })}
-          >
-            Try Again
-          </Button>
-        </div>
-      </div>
-    );
-  }
 
   if (isLoading) {
     return (
@@ -309,56 +197,56 @@ export const InvoiceList = () => {
     );
   }
 
-  const totalInvoices = invoicesData.meta.total;
-  const currentPageNumber = invoicesData.meta.page;
-  const currentLimit = invoicesData.meta.limit;
-  const totalPages = invoicesData.meta.totalPages;
+  const totalInvoices = invoicesData?.meta.total || 0;
+  const currentPageNumber = invoicesData?.meta.page || 1;
+  const currentLimit = invoicesData?.meta.limit || pageSize;
+  const totalPages = invoicesData?.meta.totalPages || 0;
 
   return (
-    <div className="space-y-6">
+    <div className="">
       <Card className="bg-white shadow-xl border rounded-xl overflow-hidden">
-        <CardHeader className="border-b bg-white p-6 space-y-6">
+        <CardHeader className="border-b bg-white p-4 sm:p-6 space-y-4 sm:space-y-6">
           {/* Header Section */}
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                <FileText className="h-6 w-6 text-primary" />
+              <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold tracking-tight text-black">Invoices</h1>
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-black">Invoices</h1>
                 <p className="text-sm font-medium text-gray-600">
                   {totalInvoices} total invoices
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               <Button 
                 variant="outline"
                 onClick={exportToCSV}
-                size="lg"
-                className="h-10"
+                size="sm"
+                className="h-9 sm:h-10 px-2 sm:px-3 flex items-center justify-center flex-1 sm:flex-none"
               >
-                <Download className="h-4 w-4 mr-2" />
-                Export CSV
+                <Download className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Export CSV</span>
               </Button>
-              <Link to="/invoices/create">
-                <Button size="lg" className="h-10">
-                  <FileText className="h-4 w-4 mr-2" />
-                  Create Invoice
+              <Link to="/invoices/create" className="flex-1 sm:flex-none">
+                <Button size="sm" className="h-9 sm:h-10 px-2 sm:px-3 flex items-center justify-center w-full">
+                  <FileText className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Create Invoice</span>
                 </Button>
               </Link>
             </div>
           </div>
 
           {/* Search and Filter Section */}
-          <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
               <Input
                 placeholder="Search invoices..."
                 value={searchQuery}
                 onChange={handleSearchChange}
-                className="pl-10 h-10"
+                className="pl-10 h-9 sm:h-10"
               />
             </div>
 
@@ -366,7 +254,7 @@ export const InvoiceList = () => {
               value={pageSize.toString()}
               onValueChange={handlePageSizeChange}
             >
-              <SelectTrigger className="w-[180px] h-10 font-medium">
+              <SelectTrigger className="w-full sm:w-[180px] h-9 sm:h-10 font-medium">
                 <SelectValue placeholder="10 per page" />
               </SelectTrigger>
               <SelectContent>
@@ -383,7 +271,7 @@ export const InvoiceList = () => {
                 <Button
                   variant="outline"
                   className={cn(
-                    "w-full md:w-auto justify-start text-left font-medium h-10",
+                    "w-full sm:w-auto justify-start text-left font-medium h-9 sm:h-10",
                     !dateRange?.from && "text-gray-500"
                   )}
                 >
@@ -417,124 +305,218 @@ export const InvoiceList = () => {
         </CardHeader>
 
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent bg-gray-50">
-                <TableHead className="font-bold text-black">Invoice #</TableHead>
-                <TableHead className="font-bold text-black">Customer</TableHead>
-                <TableHead className="font-bold text-black">Date</TableHead>
-                <TableHead className="font-bold text-black">Amount</TableHead>
-                <TableHead className="font-bold text-black">Status</TableHead>
-                <TableHead className="text-right font-bold text-black">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {invoicesData.data.length > 0 ? (
-                invoicesData.data.map((invoice: Invoice) => (
-                  <TableRow key={invoice.id} className="group hover:bg-gray-50">
-                    <TableCell className="font-semibold text-black">
-                      {invoice.invoiceNumber}
-                    </TableCell>
-                    <TableCell className="font-medium text-gray-900">
-                      {invoice.billingName}
-                    </TableCell>
-                    <TableCell className="text-gray-600 font-medium">
-                      {format(new Date(invoice.issueDate), "MMM d, yyyy")}
-                    </TableCell>
-                    <TableCell className="font-semibold text-black">
-                      {invoice.total.toFixed(2)} {invoice.currency}
-                    </TableCell>
-                    <TableCell>
-                      <Badge 
-                        variant="secondary"
-                        className={cn(statusColors[invoice.status as keyof StatusColor], "font-medium")}
-                      >
-                        {invoice.status.charAt(0) + invoice.status.slice(1).toLowerCase()}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          onClick={() => handleEditInvoice(invoice)}
-                          className="h-8 w-8 text-gray-500 hover:text-primary"
+          <div className="">
+            <Table className="">
+              <TableHeader className="hidden sm:table-header-group">
+                <TableRow className="hover:bg-transparent bg-gray-50">
+                  <TableHead className="font-bold text-black whitespace-nowrap">Invoice #</TableHead>
+                  <TableHead className="font-bold text-black whitespace-nowrap">Customer</TableHead>
+                  <TableHead className="font-bold text-black whitespace-nowrap">Date</TableHead>
+                  <TableHead className="font-bold text-black whitespace-nowrap">Amount</TableHead>
+                  <TableHead className="font-bold text-black whitespace-nowrap">Status</TableHead>
+                  <TableHead className="text-right font-bold text-black whitespace-nowrap">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {invoicesData?.data && invoicesData.data.length > 0 ? (
+                  invoicesData.data.map((invoice: Invoice) => (
+                    <TableRow key={invoice.id} className="group hover:bg-gray-50">
+                      {/* Desktop View */}
+                      <TableCell className="hidden sm:table-cell font-semibold text-black whitespace-nowrap">
+                        {invoice.invoiceNumber}
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell font-medium text-gray-900 whitespace-nowrap">
+                        {invoice.billingName}
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell text-gray-600 font-medium whitespace-nowrap">
+                        {format(new Date(invoice.issueDate), "MMM d, yyyy")}
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell font-semibold text-black whitespace-nowrap">
+                        {invoice.total.toFixed(2)} {invoice.currency}
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell whitespace-nowrap">
+                        <Badge 
+                          variant="secondary"
+                          className={cn(statusColors[invoice.status as keyof StatusColor], "font-medium")}
                         >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          onClick={() => handleStatusUpdate(invoice)}
-                          className="h-8 w-8 text-gray-500 hover:text-primary"
-                        >
-                          <RefreshCw className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          onClick={() => handleDownloadPdf(invoice)}
-                          className="h-8 w-8 text-gray-500 hover:text-primary"
-                        >
-                          <FileDown className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          onClick={() => toast.info("Send email coming soon")}
-                          className="h-8 w-8 text-gray-500 hover:text-primary"
-                        >
-                          <Mail className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          onClick={() => handleDelete(invoice)}
-                          className="h-8 w-8 text-gray-500 hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                        {invoice.status !== 'PAID' && (
+                          {invoice.status.charAt(0) + invoice.status.slice(1).toLowerCase()}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell text-right">
+                        <div className="flex items-center justify-end gap-1 sm:gap-2">
                           <Button 
-                            variant="default"
+                            variant="ghost" 
                             size="icon"
-                            onClick={() => window.open(`/pay/${invoice.id}`, '_blank')}
-                            className="h-8 w-8 bg-primary hover:bg-primary/90"
+                            onClick={() => handleEditInvoice(invoice)}
+                            className="h-8 w-8 text-gray-500 hover:text-primary flex items-center justify-center"
                           >
-                            <CreditCard className="h-4 w-4 text-white" />
+                            <Edit className="h-4 w-4" />
                           </Button>
-                        )}
-                      </div>
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => handleStatusUpdate(invoice)}
+                            className="h-8 w-8 text-gray-500 hover:text-primary flex items-center justify-center"
+                          >
+                            <RefreshCw className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => handleDownloadPdf(invoice)}
+                            className="h-8 w-8 text-gray-500 hover:text-primary flex items-center justify-center"
+                          >
+                            <FileDown className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => toast.info("Send email coming soon")}
+                            className="h-8 w-8 text-gray-500 hover:text-primary flex items-center justify-center"
+                          >
+                            <Mail className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => handleDelete(invoice)}
+                            className="h-8 w-8 text-gray-500 hover:text-destructive flex items-center justify-center"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                          {invoice.status !== 'PAID' && (
+                            <Button 
+                              variant="default"
+                              size="icon"
+                              onClick={() => window.open(`/pay/${invoice.id}`, '_blank')}
+                              className="h-8 w-8 bg-primary hover:bg-primary/90 flex items-center justify-center"
+                            >
+                              <CreditCard className="h-4 w-4 text-white" />
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+
+                      {/* Mobile View */}
+                      <TableCell className="sm:hidden">
+                        <div className="space-y-3 p-4">
+                          <div className="grid grid-cols-2 gap-1">
+                            <div>
+                              <div className="text-sm font-medium text-gray-500 mb-1">Invoice #</div>
+                              <div className="font-semibold text-black">{invoice.invoiceNumber}</div>
+                            </div>
+                            <div>
+                              <div className="text-sm font-medium text-gray-500 mb-1">Customer</div>
+                              <div className="font-medium text-gray-900">{invoice.billingName}</div>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-1">
+                            <div>
+                              <div className="text-sm font-medium text-gray-500 mb-1">Date</div>
+                              <div className="text-gray-600 font-medium">
+                                {format(new Date(invoice.issueDate), "MMM d, yyyy")}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-sm font-medium text-gray-500 mb-1">Amount</div>
+                              <div className="font-semibold text-black">
+                                {invoice.total.toFixed(2)} {invoice.currency}
+                              </div>
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium text-gray-500 mb-1">Status</div>
+                            <Badge 
+                              variant="secondary"
+                              className={cn(statusColors[invoice.status as keyof StatusColor], "font-medium")}
+                            >
+                              {invoice.status.charAt(0) + invoice.status.slice(1).toLowerCase()}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center justify-start gap-2 pt-2 border-t">
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => handleEditInvoice(invoice)}
+                              className="h-8 w-8 text-gray-500 hover:text-primary flex items-center justify-center"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => handleStatusUpdate(invoice)}
+                              className="h-8 w-8 text-gray-500 hover:text-primary flex items-center justify-center"
+                            >
+                              <RefreshCw className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => handleDownloadPdf(invoice)}
+                              className="h-8 w-8 text-gray-500 hover:text-primary flex items-center justify-center"
+                            >
+                              <FileDown className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => toast.info("Send email coming soon")}
+                              className="h-8 w-8 text-gray-500 hover:text-primary flex items-center justify-center"
+                            >
+                              <Mail className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => handleDelete(invoice)}
+                              className="h-8 w-8 text-gray-500 hover:text-destructive flex items-center justify-center"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                            {invoice.status !== 'PAID' && (
+                              <Button 
+                                variant="default"
+                                size="icon"
+                                onClick={() => window.open(`/pay/${invoice.id}`, '_blank')}
+                                className="h-8 w-8 bg-primary hover:bg-primary/90 flex items-center justify-center"
+                              >
+                                <CreditCard className="h-4 w-4 text-white" />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                      No invoices found
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                    No invoices found
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                )}
+              </TableBody>
+            </Table>
+          </div>
 
           {/* Pagination */}
-          <div className="flex items-center justify-between p-4 border-t bg-white">
-            <div className="text-sm text-gray-600">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t bg-white">
+            <div className="text-sm text-gray-600 text-center sm:text-left">
               Showing {((currentPage - 1) * pageSize) + 1} to{' '}
               {Math.min(currentPage * pageSize, totalInvoices)}{' '}
               of {totalInvoices} invoices
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
-                className="h-9 font-medium"
+                className="h-9 font-medium px-2 sm:px-3 flex items-center justify-center flex-1 sm:flex-none"
               >
-                <ChevronLeft className="h-4 w-4 mr-1" />
-                Previous
+                <ChevronLeft className="h-4 w-4 sm:mr-1" />
+                <span className="hidden sm:inline">Previous</span>
               </Button>
               <span className="flex items-center text-sm font-medium text-gray-600 px-4 bg-white rounded-md border h-9">
                 Page {currentPage} of {totalPages}
@@ -544,10 +526,10 @@ export const InvoiceList = () => {
                 size="sm"
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className="h-9 font-medium"
+                className="h-9 font-medium px-2 sm:px-3 flex items-center justify-center flex-1 sm:flex-none"
               >
-                Next
-                <ChevronRight className="h-4 w-4 ml-1" />
+                <span className="hidden sm:inline">Next</span>
+                <ChevronRight className="h-4 w-4 sm:ml-1" />
               </Button>
             </div>
           </div>

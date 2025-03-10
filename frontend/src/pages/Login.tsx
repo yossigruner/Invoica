@@ -1,67 +1,35 @@
-import { useState, useCallback, FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Link } from "react-router-dom";
+import { toast } from "sonner";
 
 export default function Login() {
   const { login } = useAuth();
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
-  const [rememberMe, setRememberMe] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = useCallback(async (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    e.stopPropagation();
-    
-    if (!formData.email || !formData.password) {
-      setError("Please fill in all fields");
-      return;
-    }
+    setIsLoading(true);
 
     try {
-      setError(null);
-      const response = await login(formData);
-      
-      if (response?.access_token) {
-        navigate('/', { replace: true });
-      }
+      await login({ email, password });
     } catch (error) {
-      if (error instanceof Error) {
-        console.error('Login error:', error.message);
-
-        if (error.message.includes('User not found')) {
-          setError("Account not found. Please register first or check your email.");
-        } else if (error.message.includes('Invalid credentials')) {
-          setError("Invalid password. Please try again.");
-        } else {
-          setError("An unexpected error occurred. Please try again.");
-        }
-      } else {
-        setError("An unexpected error occurred. Please try again.");
-      }
+      // Error handling is done in the AuthContext
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
-  }, [formData, login, navigate]);
-
-  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    if (error) setError(null);
-  }, [error]);
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#FAFAFA]">
-      <div className="w-full max-w-[1100px] min-h-[600px] flex bg-white rounded-[32px] shadow-sm overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-[#FAFAFA] p-4">
+      <div className="w-full max-w-[1100px] min-h-[600px] flex flex-col md:flex-row bg-white rounded-[32px] shadow-sm overflow-hidden">
         {/* Login Form Section */}
-        <div className="w-[45%] p-12 flex flex-col">
+        <div className="w-full md:w-[45%] p-6 sm:p-8 md:p-12 flex flex-col">
           <div className="mb-8 text-center">
             <div className="flex justify-center mb-6">
               <div className="relative w-12 h-12 flex items-center justify-center">
@@ -72,102 +40,77 @@ export default function Login() {
                 <div className="relative w-full h-full rounded-full bg-[#7C5CFC]"></div>
               </div>
             </div>
-            <h1 className="text-[28px] font-semibold text-[#1A1A1A] mb-2">Welcome back</h1>
-            <p className="text-[15px] text-[#666666]">Welcome back! Please enter your details.</p>
+            <h1 className="text-2xl sm:text-[28px] font-semibold text-[#1A1A1A] mb-2">Welcome back</h1>
+            <p className="text-sm sm:text-[15px] text-[#666666]">Welcome back! Please enter your details.</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="flex-1 flex flex-col space-y-5" noValidate>
-            {error && (
-              <div className="px-4 py-3 bg-[#FEF2F2] text-[#EF4444] text-[14px] rounded-lg">
-                {error}
-              </div>
-            )}
-
-            <div className="space-y-1.5">
-              <label htmlFor="email" className="block text-[15px] font-medium text-[#1A1A1A]">
-                Email
-              </label>
-              <input
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+              <Input
                 id="email"
-                name="email"
                 type="email"
                 placeholder="Enter your email"
-                value={formData.email}
-                onChange={handleChange}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full h-12 px-4 text-[15px] rounded-xl border border-[#E5E5E5] focus:outline-none focus:ring-2 focus:ring-[#7C5CFC] focus:border-transparent placeholder:text-[#999999]"
-                autoComplete="email"
-                disabled={loading}
+                className="h-11"
+                disabled={isLoading}
               />
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <label htmlFor="password" className="block text-[15px] font-medium text-[#1A1A1A]">
-                  Password
-                </label>
+                <Label htmlFor="password" className="text-sm font-medium">Password</Label>
                 <Link
                   to="/forgot-password"
-                  className="text-[15px] text-[#7C5CFC] hover:underline font-medium"
+                  className="text-sm text-primary hover:text-primary/80 transition-colors"
                 >
                   Forgot password?
                 </Link>
               </div>
-              <input
+              <Input
                 id="password"
-                name="password"
                 type="password"
-                placeholder="••••••"
-                value={formData.password}
-                onChange={handleChange}
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full h-12 px-4 text-[15px] rounded-xl border border-[#E5E5E5] focus:outline-none focus:ring-2 focus:ring-[#7C5CFC] focus:border-transparent placeholder:text-[#999999]"
-                autoComplete="current-password"
-                disabled={loading}
+                className="h-11"
+                disabled={isLoading}
               />
             </div>
 
-            <div className="flex items-center">
-              <input
-                id="remember"
-                name="remember"
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                className="h-4 w-4 rounded-[4px] border-2 border-[#E5E5E5] text-[#7C5CFC] focus:ring-[#7C5CFC] focus:ring-offset-0"
-              />
-              <label htmlFor="remember" className="ml-2 text-[15px] text-[#666666]">
-                Remember me
-              </label>
-            </div>
-
-            <div className="flex-1 flex flex-col justify-end space-y-5">
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full h-12 bg-[#7C5CFC] text-white rounded-xl font-medium text-[15px] hover:bg-[#6B4FDB] transition-colors disabled:opacity-50"
-              >
-                {loading ? "Signing in..." : "Sign in"}
-              </button>
-
-              <p className="text-center text-[15px] text-[#666666]">
-                Don't have an account?{" "}
-                <Link to="/register" className="text-[#7C5CFC] hover:underline font-medium">
-                  Sign up
-                </Link>
-              </p>
-            </div>
+            <Button
+              type="submit"
+              className="w-full h-11 bg-[#7C5CFC] hover:bg-[#7C5CFC]/90 text-white"
+              disabled={isLoading}
+            >
+              {isLoading ? "Signing in..." : "Sign in"}
+            </Button>
           </form>
+
+          <div className="mt-8 text-center">
+            <p className="text-sm text-gray-600">
+              Don't have an account?{" "}
+              <Link to="/register" className="text-primary hover:text-primary/80 transition-colors">
+                Sign up
+              </Link>
+            </p>
+          </div>
         </div>
 
-        {/* Decorative Arch Section */}
-        <div className="w-[55%] relative bg-[#F5F3FF] flex items-center justify-center">
-          <div 
-            className="w-[40%] aspect-[2/2.2] rounded-t-full"
-            style={{
-              background: 'linear-gradient(180deg, #7C5CFC 0%, #9F85FF 70%, rgba(255, 255, 255, 0) 100%)'
-            }}
-          />
+        {/* Image Section */}
+        <div className="hidden md:block w-[55%] bg-[#7C5CFC] relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-[#7C5CFC] to-[#9F7AFF] opacity-90"></div>
+          <div className="absolute inset-0 flex items-center justify-center p-12">
+            <div className="text-center text-white">
+              <h2 className="text-3xl font-bold mb-4">Streamline Your Invoicing</h2>
+              <p className="text-lg opacity-90">
+                Create, manage, and send professional invoices in minutes.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>

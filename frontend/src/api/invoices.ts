@@ -93,6 +93,14 @@ export interface GetInvoicesParams {
   endDate?: string;
 }
 
+interface PaymentResponse {
+  paymentId: string;
+  amount: number;
+  status: string;
+  createdAt: string;
+  href: string;
+}
+
 export const invoicesApi = {
   async create(data: CreateInvoiceDto): Promise<Invoice> {
     logger.info('Creating invoice with data:', data);
@@ -136,12 +144,7 @@ export const invoicesApi = {
     await api.delete(`/invoices/${id}`);
   },
 
-  async generatePaymentLink(id: string): Promise<{
-    paymentId: string;
-    amount: number;
-    status: string;
-    createdAt: string;
-  }> {
+  async generatePaymentLink(id: string): Promise<PaymentResponse> {
     const response = await publicApi.post(`/invoices/${id}/payment`);
     return response.data;
   },

@@ -3,14 +3,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { InvoiceFormData } from "../types/invoice";
 import { logger } from "@/utils/logger";
+import { Dispatch, SetStateAction } from "react";
 
 interface PaymentTabProps {
   formData: {
     paymentTerms: string;
     paymentMethod: string;
   };
-  paymentMethod: string;
-  setPaymentMethod: (value: string) => void;
+  paymentMethod: "bank" | "cash" | "card";
+  setPaymentMethod: Dispatch<SetStateAction<"bank" | "cash" | "card">>;
   onInputChange: (section: "" | keyof InvoiceFormData, field: string, value: string | number) => void;
 }
 
@@ -32,7 +33,7 @@ export const PaymentTab = ({
       to: value,
       currentPaymentMethod: paymentMethod 
     });
-    setPaymentMethod(value);
+    setPaymentMethod(value as "bank" | "cash" | "card");
     onInputChange("", "paymentMethod", value);
   };
 
