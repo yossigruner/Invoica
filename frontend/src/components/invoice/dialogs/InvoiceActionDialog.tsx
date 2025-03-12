@@ -114,7 +114,6 @@ export const InvoiceActionDialog = ({
             className="h-6 w-6 text-gray-500 hover:text-gray-900"
             onClick={onClose}
           >
-            <X className="h-4 w-4" />
           </Button>
         </div>
         <div className="p-6 space-y-6">

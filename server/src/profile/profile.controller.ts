@@ -5,8 +5,11 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes } from '
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
-import { diskStorage } from 'multer';
 import { extname } from 'path';
+import { bucket, getSignedUrl } from '../config/storage.config';
+import { Readable } from 'stream';
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 @ApiTags('profile')
 @Controller('profile')
@@ -28,7 +31,11 @@ export class ProfileController {
   @ApiResponse({ status: 200, description: 'Profile successfully updated.' })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   async updateProfile(@Request() req: any, @Body() updateProfileDto: UpdateProfileDto) {
-    return this.profileService.update(req.user.id, updateProfileDto);
+    const updatedProfile = await this.profileService.update(req.user.id, updateProfileDto);
+    return {
+      profile: updatedProfile,
+      redirectUrl: '/'
+    };
   }
 
   @Post('upload/logo')
@@ -36,28 +43,43 @@ export class ProfileController {
   @ApiConsumes('multipart/form-data')
   @ApiResponse({ status: 201, description: 'Logo uploaded successfully.' })
   @UseInterceptors(FileInterceptor('file', {
-    storage: diskStorage({
-      destination: './uploads/logos',
-      filename: (req, file, cb) => {
-        const userId = (req as any).user.id;
-        const fileExt = extname(file.originalname);
-        cb(null, `${userId}-logo${fileExt}`);
-      },
-    }),
-    fileFilter: (req, file, cb) => {
-      if (!file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)) {
-        cb(new Error('Only image files are allowed!'), false);
-      }
-      cb(null, true);
-    },
     limits: {
-      fileSize: 5 * 1024 * 1024, // 5MB
-    },
+      fileSize: MAX_FILE_SIZE
+    }
   }))
   async uploadLogo(@Request() req: any, @UploadedFile() file: Express.Multer.File) {
-    const imageUrl = `/profile/images/${file.filename}`;
-    await this.profileService.update(req.user.id, { companyLogo: imageUrl });
-    return { imageUrl };
+    if (!file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)) {
+      throw new Error('Only image files are allowed!');
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      throw new Error('File size exceeds 10MB limit!');
+    }
+
+    const userId = req.user.id;
+    const fileExt = extname(file.originalname);
+    const filename = `logos/${userId}-logo${fileExt}`;
+    
+    const fileStream = Readable.from(file.buffer);
+    const blob = bucket.file(filename);
+    const blobStream = blob.createWriteStream({
+      metadata: {
+        contentType: file.mimetype,
+      },
+    });
+
+    await new Promise((resolve, reject) => {
+      fileStream
+        .pipe(blobStream)
+        .on('error', reject)
+        .on('finish', resolve);
+    });
+
+    const imageUrl = await getSignedUrl(filename);
+    await this.profileService.update(req.user.id, { companyLogo: filename });
+    return { 
+      imageUrl,
+      redirectUrl: '/'
+    };
   }
 
   @Post('upload/signature')
@@ -65,35 +87,62 @@ export class ProfileController {
   @ApiConsumes('multipart/form-data')
   @ApiResponse({ status: 201, description: 'Signature uploaded successfully.' })
   @UseInterceptors(FileInterceptor('file', {
-    storage: diskStorage({
-      destination: './uploads/signatures',
-      filename: (req, file, cb) => {
-        const userId = (req as any).user.id;
-        const fileExt = extname(file.originalname);
-        cb(null, `${userId}-signature${fileExt}`);
-      },
-    }),
-    fileFilter: (req, file, cb) => {
-      if (!file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)) {
-        cb(new Error('Only image files are allowed!'), false);
-      }
-      cb(null, true);
-    },
     limits: {
-      fileSize: 5 * 1024 * 1024, // 5MB
-    },
+      fileSize: MAX_FILE_SIZE
+    }
   }))
   async uploadSignature(@Request() req: any, @UploadedFile() file: Express.Multer.File) {
-    const imageUrl = `/profile/images/${file.filename}`;
-    await this.profileService.update(req.user.id, { signature: imageUrl });
-    return { imageUrl };
+    if (!file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)) {
+      throw new Error('Only image files are allowed!');
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      throw new Error('File size exceeds 10MB limit!');
+    }
+
+    const userId = req.user.id;
+    const fileExt = extname(file.originalname);
+    const filename = `signatures/${userId}-signature${fileExt}`;
+    
+    const fileStream = Readable.from(file.buffer);
+    const blob = bucket.file(filename);
+    const blobStream = blob.createWriteStream({
+      metadata: {
+        contentType: file.mimetype,
+      },
+    });
+
+    await new Promise((resolve, reject) => {
+      fileStream
+        .pipe(blobStream)
+        .on('error', reject)
+        .on('finish', resolve);
+    });
+
+    const imageUrl = await getSignedUrl(filename);
+    await this.profileService.update(req.user.id, { signature: filename });
+    return { 
+      imageUrl,
+      redirectUrl: '/'
+    };
   }
 
   @Get('images/:filename')
   @ApiOperation({ summary: 'Get profile image' })
   @ApiResponse({ status: 200, description: 'Return the image file.' })
   async getImage(@Param('filename') filename: string, @Res() res: Response) {
-    const filePath = `./uploads/${filename.includes('logo') ? 'logos' : 'signatures'}/${filename}`;
-    return res.sendFile(filePath, { root: '.' });
+    const profile = await this.profileService.findByImage(filename);
+    if (!profile) {
+      res.status(404).send('Image not found');
+      return;
+    }
+
+    const imageKey = filename.includes('logo') ? profile.companyLogo : profile.signature;
+    if (!imageKey) {
+      res.status(404).send('Image not found');
+      return;
+    }
+
+    const signedUrl = await getSignedUrl(imageKey);
+    res.redirect(signedUrl);
   }
 } 

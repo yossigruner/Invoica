@@ -6,11 +6,21 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   constructor() {
     super({
       log: ['error', 'warn'],
+      datasources: {
+        db: {
+          url: process.env.DATABASE_URL,
+        },
+      },
     });
   }
 
   async onModuleInit() {
-    await this.$connect();
+    try {
+      await this.$connect();
+    } catch (error) {
+      console.error('Failed to connect to the database:', error);
+      throw error;
+    }
   }
 
   async onModuleDestroy() {
@@ -18,23 +28,15 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   }
 
   async cleanDatabase() {
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error('cleanDatabase not allowed in production');
-    }
+    if (process.env.NODE_ENV === 'production') return;
     
-    const models = Reflect.ownKeys(this).filter((key) => {
-      return typeof key === 'string' && 
-             typeof (this as any)[key] === 'object' && 
-             (this as any)[key].deleteMany;
-    });
-
-    return Promise.all(
-      models.map((modelKey) => {
-        if (typeof modelKey === 'string') {
-          return (this as any)[modelKey].deleteMany();
-        }
-        return Promise.resolve();
-      })
-    );
+    return Promise.all([
+      this.user.deleteMany(),
+      this.profile.deleteMany(),
+      this.invoice.deleteMany(),
+      this.invoiceItem.deleteMany(),
+      this.customer.deleteMany(),
+      this.cloverIntegration.deleteMany(),
+    ]);
   }
 } 

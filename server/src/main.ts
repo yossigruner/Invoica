@@ -3,9 +3,13 @@ import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import cors from 'cors';
+import { json } from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Configure body parser limits
+  app.use(json({ limit: '50mb' }));
 
   // Enable CORS with complete configuration
   app.use(cors({

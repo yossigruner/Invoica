@@ -69,16 +69,22 @@ const CloverIntegration: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 rounded-lg bg-gray-50/50 p-6 transition-all hover:bg-white hover:shadow-md">
+      <div className="flex items-center justify-between border-b border-gray-200 pb-2">
         <div className="flex items-center gap-2">
-          <CreditCard className="h-5 w-5 text-primary" />
-          <h3 className="text-lg font-semibold">Clover Integration</h3>
+          <div className="bg-primary-100 p-2 rounded-lg">
+            <CreditCard className="w-5 h-5 text-primary-600" />
+          </div>
+          <h2 className="text-xl font-semibold text-gray-800">Payment Integration</h2>
         </div>
         {cloverStatus?.connected ? (
           <Dialog open={isDisconnectDialogOpen} onOpenChange={setIsDisconnectDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="text-muted-foreground hover:text-destructive hover:border-destructive">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-11 transition-all border-gray-200 hover:border-destructive-300 hover:text-destructive-600 focus:border-destructive-500 focus:ring-destructive-500/20"
+              >
                 <Trash2 className="h-4 w-4 mr-2" />
                 Disconnect
               </Button>
@@ -95,6 +101,7 @@ const CloverIntegration: React.FC = () => {
                   variant="outline"
                   onClick={() => setIsDisconnectDialogOpen(false)}
                   disabled={disconnectMutation.isPending}
+                  className="h-11"
                 >
                   Cancel
                 </Button>
@@ -102,6 +109,7 @@ const CloverIntegration: React.FC = () => {
                   variant="destructive"
                   onClick={handleDisconnect}
                   disabled={disconnectMutation.isPending}
+                  className="h-11"
                 >
                   {disconnectMutation.isPending ? 'Disconnecting...' : 'Disconnect'}
                 </Button>
@@ -114,7 +122,7 @@ const CloverIntegration: React.FC = () => {
             size="sm"
             onClick={handleConnect}
             disabled={connectMutation.isPending}
-            className="text-muted-foreground hover:text-primary hover:border-primary"
+            className="h-11 transition-all border-gray-200 hover:border-primary-300 hover:text-primary-600 focus:border-primary-500 focus:ring-primary-500/20"
           >
             <Store className="h-4 w-4 mr-2" />
             {connectMutation.isPending ? 'Connecting...' : 'Connect to Clover'}
@@ -123,14 +131,14 @@ const CloverIntegration: React.FC = () => {
       </div>
 
       {error && (
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="mt-4">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
       {success && (
-        <Alert>
+        <Alert className="mt-4">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>{success}</AlertDescription>
         </Alert>
@@ -140,7 +148,7 @@ const CloverIntegration: React.FC = () => {
         <div className="p-4 bg-primary-50 rounded-lg border border-primary-100">
           <div className="flex items-start gap-3">
             <Store className="w-5 h-5 text-primary-600 mt-0.5" />
-            <div className="text-sm">
+            <div>
               <p className="text-primary-900 font-medium">Connected to Clover</p>
               <p className="text-primary-700 mt-1">
                 Your account is connected to Clover. You can now accept credit card payments for your invoices.
@@ -149,12 +157,17 @@ const CloverIntegration: React.FC = () => {
           </div>
         </div>
       ) : (
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Connect your Clover account to enable credit card payments for your invoices.
-          </AlertDescription>
-        </Alert>
+        <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-gray-600 mt-0.5" />
+            <div>
+              <p className="text-gray-900 font-medium">Not Connected</p>
+              <p className="text-gray-700 mt-1">
+                Connect your Clover account to enable credit card payments for your invoices.
+              </p>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

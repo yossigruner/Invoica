@@ -190,10 +190,9 @@ const Profile = () => {
       const finalProfileData = { ...profileData, ...optionalFields };
 
       await updateProfile(finalProfileData);
-      toast.success('Profile updated successfully!');
+      navigate('/');
     } catch (error) {
       logger.error('Failed to update profile', error);
-      toast.error('Failed to update profile. Please try again.');
     }
   };
 
@@ -218,7 +217,7 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-100">
+    <div className="min-h-screen from-primary-50 via-white to-primary-100">
       <div className="container mx-auto px-4 py-12">
         <Card className="max-w-4xl mx-auto p-8 shadow-xl bg-white/90 backdrop-blur-sm border-0 relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary-300 via-primary-500 to-primary-700" />

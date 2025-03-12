@@ -32,7 +32,7 @@ export const Register = () => {
       setError(null);
       await register(formData);
       toast.success("Account created successfully");
-      navigate("/dashboard");
+      navigate("/");
     } catch (error) {
       if (error instanceof Error) {
         console.error('Registration error:', error.message);

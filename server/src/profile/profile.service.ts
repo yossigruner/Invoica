@@ -24,4 +24,15 @@ export class ProfileService {
 
     return profile;
   }
+
+  async findByImage(filename: string) {
+    return this.prisma.profile.findFirst({
+      where: {
+        OR: [
+          { companyLogo: { contains: filename } },
+          { signature: { contains: filename } }
+        ]
+      }
+    });
+  }
 } 
