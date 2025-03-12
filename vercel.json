@@ -2,15 +2,20 @@
   "version": 2,
   "builds": [
     {
-      "src": "server/dist/main.js",
-      "use": "@vercel/node"
+      "src": "server/src/main.ts",
+      "use": "@vercel/node",
+      "config": {
+        "buildCommand": "cd server && npm install && npx prisma generate && npm run build",
+        "installCommand": "npm install",
+        "outputDirectory": "server/dist"
+      }
     },
     {
       "src": "frontend/package.json",
       "use": "@vercel/static-build",
       "config": {
-        "buildCommand": "npm run build",
-        "outputDirectory": "dist"
+        "buildCommand": "cd frontend && npm install && npm run build",
+        "outputDirectory": "frontend/dist"
       }
     }
   ],
@@ -23,5 +28,8 @@
       "src": "/(.*)",
       "dest": "frontend/dist/$1"
     }
-  ]
+  ],
+  "env": {
+    "NODE_OPTIONS": "--openssl-legacy-provider"
+  }
 } 

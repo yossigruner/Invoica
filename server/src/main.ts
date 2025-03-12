@@ -2,7 +2,6 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
-import cors from 'cors';
 import { json } from 'express';
 
 async function bootstrap() {
@@ -12,7 +11,7 @@ async function bootstrap() {
   app.use(json({ limit: '50mb' }));
 
   // Enable CORS with complete configuration
-  app.use(cors({
+  app.enableCors({
     origin: [
       'http://localhost:8080',
       'http://localhost:5173',
@@ -21,7 +20,7 @@ async function bootstrap() {
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
-  }));
+  });
 
   // Enable validation pipes
   app.useGlobalPipes(new ValidationPipe({

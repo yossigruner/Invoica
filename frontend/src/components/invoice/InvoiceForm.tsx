@@ -386,9 +386,11 @@ export const InvoiceForm = ({ initialData, isEditing }: InvoiceFormProps) => {
         logger.info('Updating invoice:', updateData);
         result = await updateInvoice(updateData);
         toast.success("Invoice updated successfully!");
+        navigate("/");
       } else {
         result = await createInvoice(transformedData);
         toast.success("Invoice created successfully!");
+        navigate("/");
       }
       setSavedInvoiceId(result.id);
     } catch (error: any) {
