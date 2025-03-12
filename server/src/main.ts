@@ -15,9 +15,11 @@ async function bootstrap() {
     origin: [
       'http://localhost:8080',
       'http://localhost:5173',
+      'https://invoica-frontend-yossigruner-gmailcoms-projects.vercel.app',
+      'https://invoica.vercel.app',
       process.env.VITE_FRONTEND_URL
     ].filter((origin): origin is string => !!origin),
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
   });

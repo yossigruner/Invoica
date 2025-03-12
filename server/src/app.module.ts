@@ -9,6 +9,8 @@ import { InvoicesModule } from './invoices/invoices.module';
 import { CommunicationsModule } from './communications/communications.module';
 import { CloverModule } from './clover/clover.module';
 import { CustomersModule } from './customers/customers.module';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
 
 @Module({
   imports: [
@@ -29,5 +31,7 @@ import { CustomersModule } from './customers/customers.module';
     CloverModule,
     CustomersModule,
   ],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {} 
