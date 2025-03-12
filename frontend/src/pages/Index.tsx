@@ -6,7 +6,7 @@ import { InvoiceList } from "@/components/invoice/InvoiceList";
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-100">
+    <div className="min-h-screen  from-primary-50 via-white to-primary-100">
       <div className="container mx-auto px-4 pt-24 pb-12">
         <Card className="p-4 md:p-8 shadow-lg bg-white/80 backdrop-blur-sm">
           <div className="space-y-6">

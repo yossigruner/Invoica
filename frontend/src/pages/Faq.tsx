@@ -35,7 +35,7 @@ const faqs = [
 
 const Faq = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-100">
+    <div className="min-h-screen from-primary-50 via-white to-primary-100">
       <div className="container mx-auto px-4 py-12 sm:py-16 md:py-24">
         <div className="max-w-3xl mx-auto">
           <h1 className="text-3xl sm:text-4xl font-bold text-center bg-gradient-to-r from-primary-500 to-primary-700 bg-clip-text text-transparent mb-4 sm:mb-6">
