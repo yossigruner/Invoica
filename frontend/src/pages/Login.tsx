@@ -5,21 +5,46 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function Login() {
   const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError(null);
 
     try {
       await login({ email, password });
     } catch (error) {
-      // Error handling is done in the AuthContext
+      let errorMessage = "An unexpected error occurred. Please try again.";
+      
+      if (error instanceof Error) {
+        // Handle specific error messages
+        switch (error.message) {
+          case "Invalid credentials":
+            errorMessage = "Invalid email or password. Please try again.";
+            break;
+          case "Network Error":
+            errorMessage = "Unable to connect to the server. Please check your internet connection.";
+            break;
+          case "Account locked":
+            errorMessage = "Your account has been locked. Please contact support.";
+            break;
+          default:
+            if (error.message) {
+              errorMessage = error.message;
+            }
+        }
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -44,6 +69,18 @@ export default function Login() {
             <p className="text-sm sm:text-[15px] text-[#666666]">Welcome back! Please enter your details.</p>
           </div>
 
+          {error && (
+            <div className="flex justify-center mb-6">
+              <Alert 
+                variant="destructive" 
+                className="animate-in fade-in slide-in-from-top-1 w-full flex items-center gap-2 bg-red-50 text-red-600 border-red-200"
+              >
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription className="text-center flex-grow">{error}</AlertDescription>
+              </Alert>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-medium">Email</Label>
@@ -52,9 +89,12 @@ export default function Login() {
                 type="email"
                 placeholder="Enter your email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setError(null); // Clear error when user starts typing
+                }}
                 required
-                className="h-11"
+                className={`h-11 transition-colors duration-200 ${error ? 'border-red-500 focus:border-red-500' : ''}`}
                 disabled={isLoading}
               />
             </div>
@@ -74,9 +114,12 @@ export default function Login() {
                 type="password"
                 placeholder="Enter your password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setError(null); // Clear error when user starts typing
+                }}
                 required
-                className="h-11"
+                className={`h-11 transition-colors duration-200 ${error ? 'border-red-500 focus:border-red-500' : ''}`}
                 disabled={isLoading}
               />
             </div>

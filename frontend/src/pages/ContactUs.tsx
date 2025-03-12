@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, FormEvent, ChangeEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,15 +7,22 @@ import { Card } from "@/components/ui/card";
 import { Mail, Phone, MapPin } from "lucide-react";
 import { toast } from "sonner";
 
+interface FormData {
+  name: string;
+  email: string;
+  message: string;
+}
+
+
 const ContactUs = () => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     name: "",
     email: "",
     message: "",
   });
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
 
@@ -31,7 +38,7 @@ const ContactUs = () => {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -40,20 +47,22 @@ const ContactUs = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-100">
+    <div className="min-h-screen from-primary-50/50 via-white to-primary-100/50">
       <div className="container mx-auto px-4 py-12 sm:py-16 md:py-24">
-        <div className="max-w-3xl mx-auto">
-          <h1 className="text-3xl sm:text-4xl font-bold text-center bg-gradient-to-r from-primary-500 to-primary-700 bg-clip-text text-transparent mb-4 sm:mb-6">
-            Contact Us
-          </h1>
-          
-          <p className="text-base sm:text-lg text-gray-600 text-center mb-8 sm:mb-12">
-            Have questions? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
-          </p>
+        <Card className="max-w-4xl mx-auto p-8 sm:p-10 shadow-xl bg-white/80 backdrop-blur-sm border-primary/10">
+          <div className="text-center space-y-4 mb-12">
+            <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent">
+              Contact Us
+            </h1>
+            
+            <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto">
+              Have questions? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
+            </p>
+          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-12">
-            <div className="space-y-6">
-              <Card className="p-6 sm:p-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12">
+            <div className="space-y-8">
+              <Card className="p-6 sm:p-8 shadow-md hover:shadow-lg transition-shadow duration-300 border-primary/10">
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="space-y-2">
                     <Label htmlFor="name" className="text-sm font-medium">Name</Label>
@@ -64,7 +73,7 @@ const ContactUs = () => {
                       value={formData.name}
                       onChange={handleChange}
                       required
-                      className="h-11"
+                      className="h-12 bg-white/70 backdrop-blur-sm focus:bg-white transition-colors duration-200"
                     />
                   </div>
 
@@ -78,7 +87,7 @@ const ContactUs = () => {
                       value={formData.email}
                       onChange={handleChange}
                       required
-                      className="h-11"
+                      className="h-12 bg-white/70 backdrop-blur-sm focus:bg-white transition-colors duration-200"
                     />
                   </div>
 
@@ -91,13 +100,13 @@ const ContactUs = () => {
                       value={formData.message}
                       onChange={handleChange}
                       required
-                      className="min-h-[120px] resize-none"
+                      className="min-h-[150px] bg-white/70 backdrop-blur-sm focus:bg-white transition-colors duration-200 resize-none"
                     />
                   </div>
 
                   <Button
                     type="submit"
-                    className="w-full h-11 bg-[#7C5CFC] hover:bg-[#7C5CFC]/90 text-white"
+                    className="w-full h-12 bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white shadow-md hover:shadow-lg transition-all duration-300"
                     disabled={isLoading}
                   >
                     {isLoading ? "Sending..." : "Send Message"}
@@ -106,37 +115,37 @@ const ContactUs = () => {
               </Card>
             </div>
 
-            <div className="space-y-6">
-              <Card className="p-6 sm:p-8">
-                <h2 className="text-xl sm:text-2xl font-semibold mb-6">Get in Touch</h2>
-                <div className="space-y-6">
-                  <div className="flex items-start space-x-4">
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <Mail className="w-5 h-5 text-primary" />
+            <div className="space-y-8">
+              <Card className="p-6 sm:p-8 shadow-md hover:shadow-lg transition-shadow duration-300 border-primary/10">
+                <h2 className="text-2xl font-semibold mb-8 bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent">Get in Touch</h2>
+                <div className="space-y-8">
+                  <div className="flex items-start space-x-4 group">
+                    <div className="w-12 h-12 rounded-xl bg-primary-100 flex items-center justify-center flex-shrink-0 group-hover:bg-primary-200 transition-colors duration-300">
+                      <Mail className="w-6 h-6 text-primary-600" />
                     </div>
                     <div>
-                      <h3 className="font-medium mb-1">Email</h3>
-                      <p className="text-sm text-gray-600">support@invoica.com</p>
+                      <h3 className="font-semibold text-lg mb-1">Email</h3>
+                      <p className="text-gray-600 hover:text-primary-600 transition-colors duration-200">support@invoica.com</p>
                     </div>
                   </div>
 
-                  <div className="flex items-start space-x-4">
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <Phone className="w-5 h-5 text-primary" />
+                  <div className="flex items-start space-x-4 group">
+                    <div className="w-12 h-12 rounded-xl bg-primary-100 flex items-center justify-center flex-shrink-0 group-hover:bg-primary-200 transition-colors duration-300">
+                      <Phone className="w-6 h-6 text-primary-600" />
                     </div>
                     <div>
-                      <h3 className="font-medium mb-1">Phone</h3>
-                      <p className="text-sm text-gray-600">+1 (555) 123-4567</p>
+                      <h3 className="font-semibold text-lg mb-1">Phone</h3>
+                      <p className="text-gray-600 hover:text-primary-600 transition-colors duration-200">+1 (555) 123-4567</p>
                     </div>
                   </div>
 
-                  <div className="flex items-start space-x-4">
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <MapPin className="w-5 h-5 text-primary" />
+                  <div className="flex items-start space-x-4 group">
+                    <div className="w-12 h-12 rounded-xl bg-primary-100 flex items-center justify-center flex-shrink-0 group-hover:bg-primary-200 transition-colors duration-300">
+                      <MapPin className="w-6 h-6 text-primary-600" />
                     </div>
                     <div>
-                      <h3 className="font-medium mb-1">Office</h3>
-                      <p className="text-sm text-gray-600">
+                      <h3 className="font-semibold text-lg mb-1">Office</h3>
+                      <p className="text-gray-600">
                         123 Business Street<br />
                         Suite 100<br />
                         San Francisco, CA 94105
@@ -146,17 +155,26 @@ const ContactUs = () => {
                 </div>
               </Card>
 
-              <Card className="p-6 sm:p-8">
-                <h2 className="text-xl sm:text-2xl font-semibold mb-6">Business Hours</h2>
-                <div className="space-y-2 text-sm text-gray-600">
-                  <p>Monday - Friday: 9:00 AM - 6:00 PM</p>
-                  <p>Saturday: 10:00 AM - 4:00 PM</p>
-                  <p>Sunday: Closed</p>
+              <Card className="p-6 sm:p-8 shadow-md hover:shadow-lg transition-shadow duration-300 border-primary/10">
+                <h2 className="text-2xl font-semibold mb-6 bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent">Business Hours</h2>
+                <div className="space-y-3 text-base text-gray-600">
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span>Monday - Friday</span>
+                    <span className="font-medium">9:00 AM - 6:00 PM</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span>Saturday</span>
+                    <span className="font-medium">10:00 AM - 4:00 PM</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2">
+                    <span>Sunday</span>
+                    <span className="font-medium text-primary-600">Closed</span>
+                  </div>
                 </div>
               </Card>
             </div>
           </div>
-        </div>
+        </Card>
       </div>
     </div>
   );

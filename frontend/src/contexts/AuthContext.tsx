@@ -105,6 +105,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const profile = await authApi.getProfile();
       setUser(profile);
       
+
+      console.log('response', response);
       navigate('/', { replace: true });
       toast.success('Registration successful');
     } catch (error) {

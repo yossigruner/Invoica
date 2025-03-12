@@ -164,13 +164,8 @@ export function Navbar() {
           ) : (
             <div className="flex items-center space-x-2">
               <Link to="/login">
-                <Button variant="ghost" className="text-gray-600 hover:text-gray-900">
-                  Login
-                </Button>
-              </Link>
-              <Link to="/register">
-                <Button className="bg-primary hover:bg-primary-600 text-white shadow-sm">
-                  Sign up
+              <Button className="bg-primary hover:bg-primary-600 text-white shadow-sm">
+              Login
                 </Button>
               </Link>
             </div>
