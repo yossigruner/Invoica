@@ -22,25 +22,22 @@ export const publicApi = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
+    const isDevelopment = process.env.NODE_ENV === 'development';
     
-    // Log the request details
-    console.log('🚀 Request:', {
-      method: config.method?.toUpperCase(),
-      url: config.url,
-      data: config.data,
-      hasToken: !!token,
-      authHeader: config.headers.Authorization,
-    });
+    if (isDevelopment) {
+      console.log('🚀 Request:', {
+        method: config.method?.toUpperCase(),
+        url: config.url,
+        data: config.data,
+        hasToken: !!token,
+      });
+    }
     
-    // Set auth token if it exists
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      console.log('🔑 Added token to request:', {
-        tokenExists: true,
-        headerSet: !!config.headers.Authorization
-      });
-    } else {
-      console.log('⚠️ No token found for request');
+      if (isDevelopment) {
+        console.log('🔑 Added token to request');
+      }
     }
     
     return config;
@@ -54,28 +51,33 @@ api.interceptors.request.use(
 // Response interceptor for API calls
 api.interceptors.response.use(
   (response) => {
-    // Log the response details
-    console.log('✅ Response:', {
-      status: response.status,
-      url: response.config.url,
-      hasData: !!response.data,
-      authHeader: response.config.headers.Authorization,
-    });
+    if (process.env.NODE_ENV === 'development') {
+      console.log('✅ Response:', {
+        status: response.status,
+        url: response.config.url,
+        hasData: !!response.data,
+      });
+    }
     return response;
   },
   async (error) => {
-    // Log the error response details
-    console.error('❌ Response Error:', {
-      status: error.response?.status,
-      url: error.config?.url,
-      data: error.response?.data,
-      message: error.message,
-      authHeader: error.config?.headers?.Authorization,
-    });
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    
+    // Only log detailed error info in development
+    if (isDevelopment) {
+      console.error('❌ Response Error:', {
+        status: error.response?.status,
+        url: error.config?.url,
+        data: error.response?.data,
+        message: error.message,
+      });
+    }
 
     // Handle authentication errors
     if (error.response?.status === 401) {
-      console.log('🔒 Authentication error detected, clearing token...');
+      if (isDevelopment) {
+        console.log('🔒 Authentication error detected, clearing token...');
+      }
       localStorage.removeItem('token');
       delete api.defaults.headers.common['Authorization'];
       window.location.href = '/login';

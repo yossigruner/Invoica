@@ -25,6 +25,7 @@
     "@mui/material": "^6.4.6",
     "@sendgrid/mail": "^8.1.4",
     "axios": "^1.8.1",
+    "puppeteer": "^24.4.0",
     "twilio": "^5.4.5"
   }
 }

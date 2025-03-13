@@ -604,9 +604,14 @@ export const InvoiceList = () => {
               Generating PDF for invoice #{downloadingInvoiceNumber}
             </DialogDescription>
           </DialogHeader>
-          <div className="py-6">
-            <Progress value={progress} className="w-full animate-pulse" />
-            <p className="text-sm text-gray-500 mt-2 text-center">Please wait while we prepare your download...</p>
+          <div className="py-8 flex flex-col items-center justify-center gap-4">
+            <div className="relative">
+              <div className="h-16 w-16 animate-spin rounded-full border-4 border-[#8B5CF6] border-t-transparent" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#8B5CF6]/30 border-t-transparent animate-[spin_0.8s_linear_infinite]" />
+              </div>
+            </div>
+            <p className="text-sm text-gray-500 text-center">Please wait while we prepare your download...</p>
           </div>
         </DialogContent>
       </Dialog>

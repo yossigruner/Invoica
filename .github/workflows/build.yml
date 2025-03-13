@@ -1,0 +1,71 @@
+# name: Build and Deploy
+
+# on:
+#   push:
+#     branches: [ "main" ]
+#   pull_request:
+#     branches: [ "main" ]
+
+# env:
+#   FRONTEND_IMAGE: frontend-app
+#   BACKEND_IMAGE: backend-app
+#   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+#   GCP_REGION: ${{ secrets.GCP_REGION }}
+
+# jobs:
+#   build-and-push:
+#     name: Build and Push
+#     runs-on: ubuntu-latest
+
+#     permissions:
+#       contents: 'read'
+#       id-token: 'write'
+
+#     steps:
+#     - uses: actions/checkout@v4
+    
+#     - name: Google Auth
+#       id: auth
+#       uses: 'google-github-actions/auth@v2'
+#       with:
+#         credentials_json: '${{ secrets.GCP_SA_KEY }}'
+    
+#     - name: Set up Cloud SDK
+#       uses: 'google-github-actions/setup-gcloud@v2'
+
+#     - name: Configure Docker for GCP
+#       run: gcloud auth configure-docker
+    
+#     # Build and push frontend
+#     - name: Build Frontend Docker image
+#       run: |
+#         docker build \
+#           --build-arg VITE_API_URL=${{ secrets.VITE_API_URL }} \
+#           --build-arg VITE_FRONTEND_URL=${{ secrets.VITE_FRONTEND_URL }} \
+#           -t gcr.io/${{ env.GCP_PROJECT_ID }}/${{ env.FRONTEND_IMAGE }}:${{ github.sha }} \
+#           -t gcr.io/${{ env.GCP_PROJECT_ID }}/${{ env.FRONTEND_IMAGE }}:latest \
+#           -f docker/frontend.Dockerfile .
+
+#     - name: Push Frontend image to GCR
+#       run: |
+#         docker push gcr.io/${{ env.GCP_PROJECT_ID }}/${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
+#         docker push gcr.io/${{ env.GCP_PROJECT_ID }}/${{ env.FRONTEND_IMAGE }}:latest
+    
+#     # Build and push backend
+#     - name: Build Backend Docker image
+#       run: |
+#         docker build \
+#           --build-arg DATABASE_URL=${{ secrets.DATABASE_URL }} \
+#           --build-arg JWT_SECRET=${{ secrets.JWT_SECRET }} \
+#           --build-arg CLOVER_API_KEY=${{ secrets.CLOVER_API_KEY }} \
+#           --build-arg CLOVER_MERCHANT_ID=${{ secrets.CLOVER_MERCHANT_ID }} \
+#           --build-arg CLOVER_API_URL=${{ secrets.CLOVER_API_URL }} \
+#           --build-arg FRONTEND_URL=${{ secrets.FRONTEND_URL }} \
+#           -t gcr.io/${{ env.GCP_PROJECT_ID }}/${{ env.BACKEND_IMAGE }}:${{ github.sha }} \
+#           -t gcr.io/${{ env.GCP_PROJECT_ID }}/${{ env.BACKEND_IMAGE }}:latest \
+#           -f docker/backend.Dockerfile .
+
+#     - name: Push Backend image to GCR
+#       run: |
+#         docker push gcr.io/${{ env.GCP_PROJECT_ID }}/${{ env.BACKEND_IMAGE }}:${{ github.sha }}
+#         docker push gcr.io/${{ env.GCP_PROJECT_ID }}/${{ env.BACKEND_IMAGE }}:latest 

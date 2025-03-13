@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 interface LogEntry {
@@ -11,6 +13,7 @@ class Logger {
   private static instance: Logger;
   private readonly MAX_LOGS = 1000; // Maximum number of logs to keep
   private readonly STORAGE_KEY = 'app_logs';
+  private readonly IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
   private styles = {
     debug: 'color: #9B9B9B',
@@ -20,7 +23,9 @@ class Logger {
   };
 
   private constructor() {
-    console.log('🔧 Logger initialized');
+    if (!this.IS_PRODUCTION) {
+      console.log('🔧 Logger initialized in development mode');
+    }
   }
 
   public static getInstance(): Logger {
@@ -31,6 +36,9 @@ class Logger {
   }
 
   private saveLog(level: LogLevel, title: string, data?: any) {
+    // Only save logs in development or if they are errors
+    if (this.IS_PRODUCTION && level !== 'error') return;
+
     try {
       // Create new log entry
       const entry: LogEntry = {
@@ -84,10 +92,15 @@ class Logger {
 
   public clearLogs(): void {
     localStorage.removeItem(this.STORAGE_KEY);
-    console.log('Logs cleared');
+    if (!this.IS_PRODUCTION) {
+      console.log('Logs cleared');
+    }
   }
 
   private logWithGroup(level: LogLevel, title: string, data?: any) {
+    // Skip non-error logs in production
+    if (this.IS_PRODUCTION && level !== 'error') return;
+
     const timestamp = new Date().toLocaleTimeString();
     const formattedTitle = `[${timestamp}] ${level.toUpperCase()} ${title}`;
     
@@ -103,15 +116,21 @@ class Logger {
   }
 
   public debug(title: string, data?: any) {
-    this.logWithGroup('debug', `🔍 ${title}`, data);
+    if (!this.IS_PRODUCTION) {
+      this.logWithGroup('debug', `🔍 ${title}`, data);
+    }
   }
 
   public info(title: string, data?: any) {
-    this.logWithGroup('info', `ℹ️ ${title}`, data);
+    if (!this.IS_PRODUCTION) {
+      this.logWithGroup('info', `ℹ️ ${title}`, data);
+    }
   }
 
   public warn(title: string, data?: any) {
-    this.logWithGroup('warn', `⚠️ ${title}`, data);
+    if (!this.IS_PRODUCTION || process.env.REACT_APP_SHOW_WARNINGS === 'true') {
+      this.logWithGroup('warn', `⚠️ ${title}`, data);
+    }
   }
 
   public error(title: string, error?: any) {
@@ -122,15 +141,21 @@ class Logger {
   }
 
   public auth(title: string, data?: any) {
-    this.logWithGroup('info', `🔐 ${title}`, data);
+    if (!this.IS_PRODUCTION) {
+      this.logWithGroup('info', `🔐 ${title}`, data);
+    }
   }
 
   public api(title: string, data?: any) {
-    this.logWithGroup('info', `🌐 ${title}`, data);
+    if (!this.IS_PRODUCTION) {
+      this.logWithGroup('info', `🌐 ${title}`, data);
+    }
   }
 
   public success(title: string, data?: any) {
-    this.logWithGroup('info', `✅ ${title}`, data);
+    if (!this.IS_PRODUCTION) {
+      this.logWithGroup('info', `✅ ${title}`, data);
+    }
   }
 
   // Helper method to get logs as text
@@ -160,5 +185,7 @@ class Logger {
 
 export const logger = Logger.getInstance();
 
-// Log when logger is imported
-logger.info('Logger Ready', { timestamp: new Date().toISOString() }); 
+// Only log in development
+if (process.env.NODE_ENV !== 'production') {
+  logger.info('Logger Ready', { timestamp: new Date().toISOString() });
+} 
