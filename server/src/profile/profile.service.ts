@@ -4,14 +4,16 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 
 @Injectable()
 export class ProfileService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) {}
 
   async findOne(userId: string) {
-    const profile = await this.prisma.profile.findUniqueOrThrow({
-      where: {
-        userId: userId
-      },
+    const profile = await this.prisma.profile.findUnique({
+      where: { userId }
     });
+
+    if (!profile) {
+      throw new NotFoundException('Profile not found');
+    }
 
     return profile;
   }

@@ -28,12 +28,13 @@ import axios from 'axios';
 import { ConfigService } from '@nestjs/config';
 import { ProfileService } from '../profile/profile.service';
 import { CommunicationsService } from '../communications/communications.service';
-import { PdfService } from './services/pdf.service';
+import { PdfService } from '../pdf/pdf.service';
 import { Throttle } from '@nestjs/throttler';
 import { RateLimitGuard } from '../common/guards/rate-limit.guard';
 import { QueryInvoiceDto } from './dto/query-invoice.dto';
 import { CloverService } from '../clover/clover.service';
 import { IsTaxId } from 'class-validator';
+import { EmailService } from '../email/email.service';
 
 interface RequestWithUser extends ExpressRequest {
   user: {
@@ -55,6 +56,7 @@ export class InvoicesController {
     private readonly communicationsService: CommunicationsService,
     private readonly pdfService: PdfService,
     private readonly cloverService: CloverService,
+    private readonly emailService: EmailService,
   ) {}
 
   // Public endpoint for getting an invoice by ID without authentication
@@ -289,5 +291,31 @@ export class InvoicesController {
     response.setHeader('Content-Type', 'application/pdf');
     response.setHeader('Content-Disposition', `attachment; filename="invoice-${invoice.invoiceNumber || 'download'}.pdf"`);
     response.send(pdf);
+  }
+
+  @Post(':id/send')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  async sendInvoice(@Param('id') id: string, @Request() req: RequestWithUser) {
+    const invoice = await this.invoicesService.findOne(req.user.id, id);
+    const profile = await this.profileService.findOne(req.user.id);
+    const pdfBuffer = await this.pdfService.generatePdf(invoice, profile);
+    
+    const subject = `Invoice ${invoice.invoiceNumber} from ${profile.companyName || req.user.email}`;
+    
+    await this.emailService.sendInvoiceEmail(
+      invoice.billingEmail,
+      subject,
+      invoice,
+      profile,
+      pdfBuffer
+    );
+
+    // Update invoice status to sent if it was in draft
+    if (invoice.status === 'DRAFT') {
+      await this.invoicesService.update(req.user.id, id, { status: 'SENT' });
+    }
+
+    return { message: 'Invoice sent successfully' };
   }
 } 

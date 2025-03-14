@@ -45,6 +45,7 @@ export const InvoiceList = () => {
   const [downloadProgress, setDownloadProgress] = useState(false);
   const [downloadingInvoiceNumber, setDownloadingInvoiceNumber] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
+  const [sendingInvoiceId, setSendingInvoiceId] = useState<string | null>(null);
 
   const { 
     invoices: invoicesData, 
@@ -183,6 +184,19 @@ export const InvoiceList = () => {
     } finally {
       setDownloadProgress(false);
       setDownloadingInvoiceNumber(null);
+    }
+  };
+
+  const handleSendInvoice = async (invoice: Invoice) => {
+    try {
+      setSendingInvoiceId(invoice.id);
+      await invoicesApi.sendInvoice(invoice.id);
+      toast.success("Invoice sent successfully!");
+    } catch (error) {
+      console.error('Error sending invoice:', error);
+      toast.error("Failed to send invoice. Please try again.");
+    } finally {
+      setSendingInvoiceId(null);
     }
   };
 
@@ -371,10 +385,15 @@ export const InvoiceList = () => {
                           <Button 
                             variant="ghost" 
                             size="icon"
-                            onClick={() => toast.info("Send email coming soon")}
+                            onClick={() => handleSendInvoice(invoice)}
+                            disabled={sendingInvoiceId === invoice.id}
                             className="h-8 w-8 text-gray-500 hover:text-primary flex items-center justify-center"
                           >
-                            <Mail className="h-4 w-4" />
+                            {sendingInvoiceId === invoice.id ? (
+                              <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                            ) : (
+                              <Mail className="h-4 w-4" />
+                            )}
                           </Button>
                           <Button 
                             variant="ghost" 
@@ -461,10 +480,15 @@ export const InvoiceList = () => {
                             <Button 
                               variant="ghost" 
                               size="icon"
-                              onClick={() => toast.info("Send email coming soon")}
+                              onClick={() => handleSendInvoice(invoice)}
+                              disabled={sendingInvoiceId === invoice.id}
                               className="h-8 w-8 text-gray-500 hover:text-primary flex items-center justify-center"
                             >
-                              <Mail className="h-4 w-4" />
+                              {sendingInvoiceId === invoice.id ? (
+                                <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                              ) : (
+                                <Mail className="h-4 w-4" />
+                              )}
                             </Button>
                             <Button 
                               variant="ghost" 

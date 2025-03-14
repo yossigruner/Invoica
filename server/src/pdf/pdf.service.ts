@@ -1,77 +1,69 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import * as puppeteer from 'puppeteer';
-import chromium from '@sparticuz/chromium';
-import { PuppeteerLaunchOptions } from 'puppeteer';
-
-interface InvoiceItem {
-  name: string;
-  description?: string;
-  quantity: number;
-  rate: number;
-}
+import { format } from 'date-fns';
 
 @Injectable()
 export class PdfService {
-  private generateInvoiceTemplate(invoice: any, profile: any, options: { isEmail?: boolean } = {}): string {
-    // Convert the invoice data to match the InvoicePreview component's props
-    const formattedData = {
-      invoiceNumber: invoice.invoiceNumber,
-      issueDate: invoice.issueDate,
-      dueDate: invoice.dueDate,
-      to: {
-        name: invoice.billingName,
-        address: invoice.billingAddress,
-        zip: invoice.billingZip,
-        city: invoice.billingCity,
-        country: invoice.billingCountry,
-        email: invoice.billingEmail,
-        phone: invoice.billingPhone,
-        province: invoice.billingProvince,
-      },
-      items: invoice.items.map((item: InvoiceItem) => ({
-        name: item.name,
-        description: item.description,
-        quantity: item.quantity,
-        rate: item.rate,
-      })),
-      currency: invoice.currency,
-      paymentTerms: invoice.paymentTerms,
-      additionalNotes: invoice.additionalNotes,
-      adjustments: {
-        discount: {
-          type: invoice.discountType,
-          value: invoice.discountValue
+  constructor(private configService: ConfigService) {}
+
+  async generatePdf(invoice: any, profile: any): Promise<Buffer> {
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox']
+    });
+
+    try {
+      const page = await browser.newPage();
+      const html = this.generatePdfHtml(invoice, profile);
+      await page.setContent(html, { waitUntil: 'networkidle0' });
+      
+      const pdf = await page.pdf({
+        format: 'A4',
+        margin: {
+          top: '0',
+          right: '0',
+          bottom: '0',
+          left: '0'
         },
-        tax: {
-          type: invoice.taxType,
-          value: invoice.taxValue
-        },
-        shipping: {
-          type: invoice.shippingType,
-          value: invoice.shippingValue
-        }
-      },
-      paymentMethod: invoice.paymentMethod,
+        printBackground: true,
+        preferCSSPageSize: true
+      });
+
+      return pdf;
+    } finally {
+      await browser.close();
+    }
+  }
+
+  private generatePdfHtml(invoice: any, profile: any): string {
+    const items = invoice.items.map((item: any) => `
+      <tr>
+        <td>
+          <div>${item.name}</div>
+          ${item.description ? `<div class="item-description">${item.description}</div>` : ''}
+        </td>
+        <td class="text-center">${item.quantity}</td>
+        <td class="text-right">${item.rate.toFixed(2)} ${invoice.currency}</td>
+        <td class="text-right">${(item.quantity * item.rate).toFixed(2)} ${invoice.currency}</td>
+      </tr>
+    `).join('');
+
+    const calculateTaxAmount = (subtotal: number, taxValue: number, taxType: string) => {
+      if (!taxValue || taxValue === 0) return 0;
+      return taxType === 'percentage' ? (subtotal * taxValue) / 100 : taxValue;
     };
 
-    const getImageSrc = (imageData: string | null | undefined): string | undefined => {
-      if (!imageData) return undefined;
-      try {
-        if (imageData.startsWith('data:')) return imageData;
-        if (imageData.startsWith('/')) {
-          const baseUrl = process.env.API_URL || '';
-          return `${baseUrl}${imageData}`;
-        }
-        if (imageData.startsWith('http://') || imageData.startsWith('https://')) {
-          return imageData;
-        }
-        return `data:image/png;base64,${imageData}`;
-      } catch (error) {
-        return undefined;
-      }
+    const calculateDiscountAmount = (subtotal: number, discountValue: number, discountType: string) => {
+      if (!discountValue || discountValue === 0) return 0;
+      return discountType === 'percentage' ? (subtotal * discountValue) / 100 : discountValue;
     };
 
-    // Create HTML template based on InvoicePreview component
+    const subtotal = invoice.subtotal || 0;
+    const taxAmount = calculateTaxAmount(subtotal, invoice.taxValue, invoice.taxType);
+    const discountAmount = calculateDiscountAmount(subtotal, invoice.discountValue, invoice.discountType);
+    const shippingAmount = invoice.shippingValue || 0;
+
     return `
       <!DOCTYPE html>
       <html>
@@ -85,16 +77,15 @@ export class PdfService {
               font-family: 'Inter', system-ui, -apple-system, sans-serif;
               margin: 0;
               padding: 0;
-              background: ${options.isEmail ? '#7C3AED' : 'white'};
+              background: white;
               color: #111827;
             }
             
             .container {
               padding: 24px;
-              max-width: ${options.isEmail ? '400px' : '210mm'};
+              max-width: 210mm;
               margin: 0 auto;
               background: white;
-              ${options.isEmail ? 'border-radius: 16px; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);' : ''}
             }
             
             .header {
@@ -249,43 +240,16 @@ export class PdfService {
             .discount {
               color: #DC2626;
             }
-
-            ${options.isEmail ? `
-              .email-wrapper {
-                padding: 40px 20px;
-                background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%);
-              }
-              .pay-button {
-                display: inline-block;
-                background-color: #7C3AED;
-                color: #FFFFFF !important;
-                padding: 12px 24px;
-                border-radius: 8px;
-                text-decoration: none;
-                font-weight: 600;
-                margin: 24px 0;
-                transition: background-color 0.2s;
-              }
-              .pay-button:hover {
-                background-color: #6D28D9;
-                color: #FFFFFF !important;
-              }
-              .button-container {
-                text-align: center;
-                margin: 24px 0;
-              }
-            ` : ''}
           </style>
         </head>
         <body>
-          ${options.isEmail ? '<div class="email-wrapper">' : ''}
           <div class="container">
             <!-- Header Section -->
             <div class="header">
               <div class="company-info">
                 ${profile.companyLogo ? `
                   <img 
-                    src="${getImageSrc(profile.companyLogo)}" 
+                    src="${profile.companyLogo}" 
                     alt="Company Logo" 
                     class="company-logo"
                   />
@@ -298,18 +262,10 @@ export class PdfService {
                 </div>
               </div>
               <div class="invoice-info">
-                <div class="invoice-number">Invoice #${formattedData.invoiceNumber}</div>
+                <div class="invoice-number">Invoice #${invoice.invoiceNumber}</div>
                 <div class="invoice-dates">
-                  <div>Issue date: ${new Date(formattedData.issueDate).toLocaleDateString('en-US', { 
-                    month: 'long', 
-                    day: 'numeric', 
-                    year: 'numeric'
-                  })}</div>
-                  <div>Due date: ${new Date(formattedData.dueDate).toLocaleDateString('en-US', { 
-                    month: 'long', 
-                    day: 'numeric', 
-                    year: 'numeric'
-                  })}</div>
+                  <div>Issue date: ${format(new Date(invoice.issueDate), 'MMM dd, yyyy')}</div>
+                  <div>Due date: ${format(new Date(invoice.dueDate), 'MMM dd, yyyy')}</div>
                 </div>
               </div>
             </div>
@@ -318,17 +274,17 @@ export class PdfService {
             <div class="bill-to">
               <div class="bill-to-title">Bill to:</div>
               <div class="bill-to-details">
-                <div class="bill-to-name">${formattedData.to.name}</div>
+                <div class="bill-to-name">${invoice.billingName}</div>
                 <div class="bill-to-address">
-                  <div>${formattedData.to.address}</div>
+                  <div>${invoice.billingAddress}</div>
                   <div>
-                    ${formattedData.to.city}
-                    ${formattedData.to.province ? `, ${formattedData.to.province}` : ''}
-                    ${formattedData.to.zip ? `, ${formattedData.to.zip}` : ''}
-                    ${formattedData.to.country ? `, ${formattedData.to.country}` : ''}
+                    ${invoice.billingCity}
+                    ${invoice.billingProvince ? `, ${invoice.billingProvince}` : ''}
+                    ${invoice.billingZip ? `, ${invoice.billingZip}` : ''}
+                    ${invoice.billingCountry ? `, ${invoice.billingCountry}` : ''}
                   </div>
-                  <div>${formattedData.to.email}</div>
-                  <div>${formattedData.to.phone}</div>
+                  <div>${invoice.billingEmail}</div>
+                  <div>${invoice.billingPhone}</div>
                 </div>
               </div>
             </div>
@@ -344,19 +300,7 @@ export class PdfService {
                 </tr>
               </thead>
               <tbody>
-                ${formattedData.items.map((item: InvoiceItem) => `
-                  <tr>
-                    <td>
-                      <div>${item.name}</div>
-                      ${item.description ? `
-                        <div class="item-description">${item.description}</div>
-                      ` : ''}
-                    </td>
-                    <td class="text-center">${item.quantity}</td>
-                    <td class="text-right">${item.rate.toFixed(2)} ${formattedData.currency}</td>
-                    <td class="text-right">${(item.quantity * item.rate).toFixed(2)} ${formattedData.currency}</td>
-                  </tr>
-                `).join('')}
+                ${items}
               </tbody>
             </table>
 
@@ -364,7 +308,7 @@ export class PdfService {
             <div class="summary">
               <div class="summary-row">
                 <div class="summary-label">Subtotal:</div>
-                <div class="summary-value">${invoice.subtotal.toFixed(2)} ${formattedData.currency}</div>
+                <div class="summary-value">${invoice.subtotal.toFixed(2)} ${invoice.currency}</div>
               </div>
               
               ${invoice.discountValue > 0 ? `
@@ -378,7 +322,7 @@ export class PdfService {
                     -${(invoice.discountType === 'percentage' ? 
                       (invoice.subtotal * invoice.discountValue / 100) : 
                       invoice.discountValue
-                    ).toFixed(2)} ${formattedData.currency}
+                    ).toFixed(2)} ${invoice.currency}
                   </div>
                 </div>
               ` : ''}
@@ -394,7 +338,7 @@ export class PdfService {
                     +${(invoice.taxType === 'percentage' ? 
                       ((invoice.subtotal - (invoice.discountValue || 0)) * invoice.taxValue / 100) : 
                       invoice.taxValue
-                    ).toFixed(2)} ${formattedData.currency}
+                    ).toFixed(2)} ${invoice.currency}
                   </div>
                 </div>
               ` : ''}
@@ -410,33 +354,25 @@ export class PdfService {
                     +${(invoice.shippingType === 'percentage' ? 
                       (invoice.subtotal * invoice.shippingValue / 100) : 
                       invoice.shippingValue
-                    ).toFixed(2)} ${formattedData.currency}
+                    ).toFixed(2)} ${invoice.currency}
                   </div>
                 </div>
               ` : ''}
               
               <div class="summary-row total-row">
                 <div class="summary-label">Total:</div>
-                <div class="summary-value">${invoice.total.toFixed(2)} ${formattedData.currency}</div>
+                <div class="summary-value">${invoice.total.toFixed(2)} ${invoice.currency}</div>
               </div>
             </div>
 
-            ${options.isEmail ? `
-              <div class="button-container">
-                <a href="${process.env.FRONTEND_URL}/pay/${invoice.id}" class="pay-button">
-                  Click Here to Pay Now
-                </a>
-              </div>
-            ` : ''}
-
-            ${formattedData.paymentTerms ? `
+            ${invoice.paymentTerms ? `
               <div class="section">
                 <div class="section-title">Payment Terms:</div>
-                <div class="section-content">${formattedData.paymentTerms}</div>
+                <div class="section-content">${invoice.paymentTerms}</div>
               </div>
             ` : ''}
 
-            ${formattedData.paymentMethod === 'bank' ? `
+            ${invoice.paymentMethod === 'bank' ? `
               <div class="section">
                 <div class="section-title">Payment Details:</div>
                 <div class="section-content">
@@ -456,10 +392,10 @@ export class PdfService {
               </div>
             </div>
 
-            ${formattedData.additionalNotes ? `
+            ${invoice.additionalNotes ? `
               <div class="section">
                 <div class="section-title">Additional Notes:</div>
-                <div class="section-content">${formattedData.additionalNotes}</div>
+                <div class="section-content">${invoice.additionalNotes}</div>
               </div>
             ` : ''}
 
@@ -467,83 +403,153 @@ export class PdfService {
               <div class="section">
                 <div class="section-title">Signature:</div>
                 <img 
-                  src="${getImageSrc(profile.signature)}" 
+                  src="${profile.signature}" 
                   alt="Signature" 
                   class="signature-image"
                 />
               </div>
             ` : ''}
           </div>
-          ${options.isEmail ? '</div>' : ''}
         </body>
       </html>
     `;
   }
 
-  async generatePdf(invoice: any, profile: any): Promise<Buffer> {
-    const html = this.generateInvoiceTemplate(invoice, profile, { isEmail: false });
-    
-    const isProduction = !!process.env.AWS_LAMBDA_FUNCTION_VERSION;
-    
-    // Configure chrome to use custom args for Lambda
-    const options: PuppeteerLaunchOptions = {
-      args: chromium.args,
-      defaultViewport: {
-        width: 1200,
-        height: 1800,
-        deviceScaleFactor: 2,
-      },
-      executablePath: await chromium.executablePath(),
-      headless: true,
-      ignoreHTTPSErrors: true,
-      env: {
-        ...process.env,
-        PATH: process.env.PATH + ':/tmp/chromium'
-      }
-    };
-
-    if (!isProduction) {
-      options.args = [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage'
-      ];
-      options.executablePath = undefined;
-    }
-    
-    const browser = await puppeteer.launch(options);
-    
-    try {
-      const page = await browser.newPage();
-      
-      // Set a longer timeout and wait for network idle
-      await page.setDefaultNavigationTimeout(0);
-      await page.setContent(html, { 
-        waitUntil: 'networkidle0',
-        timeout: 30000 
-      });
-      
-      const pdf = await page.pdf({
-        format: 'A4',
-        margin: {
-          top: '0',
-          right: '0',
-          bottom: '0',
-          left: '0'
-        },
-        printBackground: true,
-        preferCSSPageSize: true
-      });
-      
-      return pdf;
-    } finally {
-      if (browser) {
-        await browser.close();
-      }
-    }
-  }
-
   getEmailTemplate(invoice: any, profile: any): string {
-    return this.generateInvoiceTemplate(invoice, profile, { isEmail: true });
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Invoice ${invoice.invoiceNumber}</title>
+          <style>
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+              line-height: 1.6;
+              margin: 0;
+              padding: 0;
+              background-color: #7C3AED;
+              color: #333;
+            }
+            .email-wrapper {
+              padding: 40px 20px;
+              background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%);
+            }
+            .email-container {
+              max-width: 400px;
+              margin: 0 auto;
+              padding: 40px;
+              background-color: white;
+              border-radius: 16px;
+              box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            }
+            .logo-container {
+              text-align: center;
+              margin-bottom: 32px;
+            }
+            .logo-circle {
+              width: 64px;
+              height: 64px;
+              background-color: #7C3AED;
+              border-radius: 50%;
+              display: inline-block;
+            }
+            .content-card {
+              background-color: white;
+              border-radius: 12px;
+              padding: 24px;
+              margin-bottom: 24px;
+            }
+            h1 {
+              color: #111827;
+              font-size: 24px;
+              font-weight: 600;
+              text-align: center;
+              margin: 0 0 24px 0;
+            }
+            p {
+              color: #6B7280;
+              font-size: 16px;
+              text-align: center;
+              margin: 16px 0;
+              line-height: 1.5;
+            }
+            .amount {
+              font-size: 24px;
+              font-weight: 600;
+              color: #7C3AED;
+              text-align: center;
+              margin: 24px 0;
+            }
+            .invoice-details {
+              background-color: #F9FAFB;
+              border-radius: 8px;
+              padding: 16px;
+              margin: 24px 0;
+              text-align: center;
+            }
+            .footer {
+              text-align: center;
+              color: #6B7280;
+              font-size: 14px;
+              background-color: #F9FAFB;
+              border-radius: 12px;
+              padding: 24px;
+              margin-top: 24px;
+            }
+            .footer p {
+              margin: 8px 0;
+              font-size: 14px;
+            }
+            .pay-button {
+              display: inline-block;
+              background-color: #7C3AED;
+              color: #FFFFFF !important;
+              padding: 12px 24px;
+              border-radius: 8px;
+              text-decoration: none;
+              font-weight: 600;
+              margin: 24px 0;
+              transition: background-color 0.2s;
+            }
+            .pay-button:hover {
+              background-color: #6D28D9;
+              color: #FFFFFF !important;
+            }
+            .button-container {
+              text-align: center;
+              margin: 24px 0;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="email-wrapper">
+            <div class="email-container">
+              <div class="logo-container">
+                <div class="logo-circle"></div>
+              </div>
+              <div class="content-card">
+                <h1>Invoice ${invoice.invoiceNumber}</h1>
+                <div class="invoice-details">
+                  <p>Amount Due</p>
+                  <div class="amount">${invoice.currency} ${invoice.total.toFixed(2)}</div>
+                </div>
+                <p>Please find attached the invoice for your records.</p>
+                <div class="button-container">
+                  <a href="${this.configService.get('FRONTEND_URL')}/pay/${invoice.id}" class="pay-button">
+                    Click Here to Pay Now
+                  </a>
+                </div>
+              </div>
+              <div class="footer">
+                <p>This is an automated message from Invoica.</p>
+                <p>If you have any questions, please contact us.</p>
+              </div>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
   }
 } 

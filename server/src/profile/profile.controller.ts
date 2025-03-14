@@ -11,6 +11,13 @@ import { Readable } from 'stream';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
+interface RequestWithUser {
+  user: {
+    id: string;
+    email: string;
+  };
+}
+
 @ApiTags('profile')
 @Controller('profile')
 @UseGuards(JwtAuthGuard)
@@ -22,7 +29,7 @@ export class ProfileController {
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiResponse({ status: 200, description: 'Return the user profile.' })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
-  async getProfile(@Request() req: any) {
+  async findOne(@Request() req: RequestWithUser) {
     return this.profileService.findOne(req.user.id);
   }
 

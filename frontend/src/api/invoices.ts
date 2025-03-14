@@ -5,7 +5,7 @@ import axios from 'axios';
 export interface InvoiceItem {
   id: string;
   name: string;
-  description?: string;
+  description: string | null;
   quantity: number;
   rate: number;
   amount: number;
@@ -15,7 +15,7 @@ export type InvoiceStatus = 'DRAFT' | 'SENT' | 'PAID' | 'OVERDUE' | 'CANCELLED';
 
 export interface Invoice {
   id: string;
-  customerId?: string;
+  userId: string;
   invoiceNumber: string;
   issueDate: string;
   dueDate: string;
@@ -167,6 +167,11 @@ export const invoicesApi = {
     const response = await publicApi.get(`/invoices/${invoiceId}/pdf`, {
       responseType: 'blob'
     });
+    return response.data;
+  },
+
+  sendInvoice: async (id: string) => {
+    const response = await api.post(`/invoices/${id}/send`);
     return response.data;
   }
 }; 

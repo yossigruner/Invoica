@@ -66,28 +66,34 @@ export interface Invoice {
   user_id: string;
   invoice_number: string;
   issue_date: string;
-  due_date: string | null;
-  currency: string;
-  payment_method: string;
-  payment_terms: string;
-  additional_notes: string | null;
-  status: 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled';
+  due_date: string;
   billing_name: string;
   billing_email: string;
-  billing_phone: string;
   billing_address: string;
   billing_city: string;
+  billing_state: string;
   billing_zip: string;
   billing_country: string;
-  discount_value: number;
-  discount_type: 'percentage' | 'amount';
-  tax_value: number;
-  tax_type: 'percentage' | 'amount';
-  shipping_value: number;
-  shipping_type: 'percentage' | 'amount';
+  items: Array<{
+    description: string;
+    quantity: number;
+    unit_price: number;
+    amount: number;
+  }>;
   subtotal: number;
+  tax_rate: number;
+  tax_amount: number;
   total: number;
+  currency: string;
+  status: 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled';
+  notes: string;
   created_at: string;
   updated_at: string;
-  items: InvoiceItem[];
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
 } 

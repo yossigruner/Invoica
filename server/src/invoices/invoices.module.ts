@@ -1,16 +1,24 @@
 import { Module } from '@nestjs/common';
 import { InvoicesController } from './invoices.controller';
 import { InvoicesService } from './invoices.service';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaModule } from '../prisma/prisma.module';
+import { PdfModule } from '../pdf/pdf.module';
+import { CloverModule } from '../clover/clover.module';
+import { EmailModule } from '../email/email.module';
 import { ProfileModule } from '../profile/profile.module';
 import { CommunicationsModule } from '../communications/communications.module';
-import { PdfService } from './services/pdf.service';
-import { CloverModule } from '../clover/clover.module';
 
 @Module({
-  imports: [ProfileModule, CommunicationsModule, CloverModule],
+  imports: [
+    PrismaModule, 
+    PdfModule, 
+    CloverModule, 
+    EmailModule,
+    ProfileModule,
+    CommunicationsModule
+  ],
   controllers: [InvoicesController],
-  providers: [InvoicesService, PrismaService, PdfService],
+  providers: [InvoicesService],
   exports: [InvoicesService],
 })
 export class InvoicesModule {} 

@@ -2,7 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { MailService } from '@sendgrid/mail';
 import mailgun from 'mailgun-js';
-import type { Mailgun, messages } from 'mailgun-js';
+import type { Mailgun } from 'mailgun-js';
+import { PdfService } from '../pdf/pdf.service';
 
 @Injectable()
 export class EmailService {
@@ -11,7 +12,10 @@ export class EmailService {
   private emailProvider: string;
   private fromEmail: string;
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    private pdfService: PdfService
+  ) {
     this.emailProvider = this.configService.get<string>('EMAIL_PROVIDER') || 'sendgrid';
     
     // Initialize SendGrid
@@ -40,6 +44,11 @@ export class EmailService {
       throw new Error('FROM_EMAIL not configured for the selected email provider');
     }
 
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL');
+    if (!frontendUrl) {
+      throw new Error('FRONTEND_URL not configured');
+    }
+
     this.fromEmail = fromEmail;
   }
 
@@ -64,6 +73,45 @@ export class EmailService {
     }
   }
 
+  async sendInvoiceEmail(to: string, subject: string, invoice: any, profile: any, pdfBuffer: Buffer): Promise<void> {
+    const html = this.pdfService.getEmailTemplate(invoice, profile);
+
+    try {
+      if (this.emailProvider === 'sendgrid') {
+        const emailData = {
+          to,
+          from: this.fromEmail,
+          subject,
+          html,
+          attachments: [{
+            filename: `Invoice-${invoice.invoiceNumber}-${new Date().toISOString().split('T')[0]}.pdf`,
+            content: pdfBuffer.toString('base64'),
+            type: 'application/pdf',
+            disposition: 'attachment'
+          }]
+        };
+        await this.sendWithSendGrid(emailData);
+      } else {
+        const emailData = {
+          to,
+          from: this.fromEmail,
+          subject,
+          html,
+          attachment: new this.mailgun.Attachment({
+            data: pdfBuffer,
+            filename: `Invoice-${invoice.invoiceNumber}.pdf`,
+            contentType: 'application/pdf'
+          })
+        };
+        await this.sendWithMailgun(emailData);
+      }
+      console.log(`Invoice email sent successfully to ${to} using ${this.emailProvider}`);
+    } catch (error) {
+      console.error(`Failed to send invoice email: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw error;
+    }
+  }
+
   private async sendWithSendGrid(emailData: any): Promise<void> {
     if (!this.sendgrid) {
       throw new Error('SendGrid is not configured');
@@ -76,13 +124,23 @@ export class EmailService {
       throw new Error('Mailgun is not configured');
     }
     return new Promise((resolve, reject) => {
-      this.mailgun.messages().send(emailData, (err, body) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve();
-        }
-      });
+      if (emailData.formData) {
+        this.mailgun.messages().send(emailData.formData, (err, body) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve();
+          }
+        });
+      } else {
+        this.mailgun.messages().send(emailData, (err, body) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve();
+          }
+        });
+      }
     });
   }
 } 

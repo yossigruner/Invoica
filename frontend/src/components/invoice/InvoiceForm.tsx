@@ -600,16 +600,8 @@ export const InvoiceForm = ({ initialData, isEditing }: InvoiceFormProps) => {
             <Card className="p-4 sm:p-6 shadow-lg bg-white/80 backdrop-blur-sm">
               <div className="space-y-4">
                 <div className="flex flex-col gap-3">
-                  <h2 className="text-lg font-semibold text-gray-900">Preview</h2>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleGeneratePDF}
-                    className="w-full sm:w-auto h-9 flex items-center justify-center gap-2"
-                  >
-                    <FileDown className="h-4 w-4" />
-                    <span>Download PDF</span>
-                  </Button>
+                  <h2 className="text-lg font-semibold text-gray-900">Live Preview</h2>
+                  <div className="h-px bg-gray-200 w-full"></div>
                 </div>
                 <div className="overflow-x-auto">
                   <div id="invoice-preview" className="min-w-[800px]">
