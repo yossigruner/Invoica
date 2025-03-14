@@ -159,4 +159,47 @@ export class UsersService {
 
     return null;
   }
+
+  async createPasswordReset(data: { email: string; token: string; expiresAt: Date }): Promise<void> {
+    await this.prisma.passwordReset.create({
+      data: {
+        email: data.email,
+        token: data.token,
+        expiresAt: data.expiresAt,
+      },
+    });
+  }
+
+  async findPasswordReset(token: string) {
+    return this.prisma.passwordReset.findUnique({
+      where: { token },
+    });
+  }
+
+  async updatePassword(email: string, hashedPassword: string): Promise<void> {
+    const user = await this.prisma.user.findFirst({
+      where: {
+        email: {
+          equals: email,
+          mode: 'insensitive'
+        }
+      }
+    });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { password: hashedPassword },
+    });
+  }
+
+  async markPasswordResetAsUsed(token: string): Promise<void> {
+    await this.prisma.passwordReset.update({
+      where: { token },
+      data: { used: true },
+    });
+  }
 } 

@@ -1,31 +1,67 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Link } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-export default function ForgotPassword() {
-  const { resetPassword } = useAuth();
-  const [email, setEmail] = useState("");
+export default function ResetPassword() {
+  const { confirmPasswordReset } = useAuth();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get("token");
+
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isSuccess, setIsSuccess] = useState(false);
+
+  useEffect(() => {
+    // Only redirect if there's no token and we're on the reset password page
+    if (!token && window.location.pathname === '/reset-password') {
+      navigate("/login", { replace: true });
+    }
+  }, [token, navigate]);
+
+  // Only return null if we're actually redirecting
+  if (!token && window.location.pathname === '/reset-password') {
+    return null;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
-    setIsSuccess(false);
+
+    if (newPassword !== confirmPassword) {
+      setError("Passwords do not match");
+      setIsLoading(false);
+      return;
+    }
+
+    // Check password requirements
+    if (newPassword.length < 8 || !/[A-Za-z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+      setError("Password must be at least 8 characters long and contain at least one letter and one number");
+      setIsLoading(false);
+      return;
+    }
+
+    if (!token) {
+      setError("Invalid reset token");
+      setIsLoading(false);
+      return;
+    }
 
     try {
-      await resetPassword(email);
-      setIsSuccess(true);
-      setEmail(""); // Clear the form
+      await confirmPasswordReset(token, newPassword, confirmPassword);
+      navigate("/login", { 
+        replace: true,
+        state: { message: "Password has been reset successfully. Please log in with your new password." }
+      });
     } catch (error) {
-      let errorMessage = "Failed to send reset instructions. Please try again.";
+      let errorMessage = "Failed to reset password. Please try again.";
       
       if (error instanceof Error) {
         errorMessage = error.message;
@@ -54,7 +90,7 @@ export default function ForgotPassword() {
             </div>
             <h1 className="text-2xl sm:text-[28px] font-semibold text-[#1A1A1A] mb-2">Reset your password</h1>
             <p className="text-sm sm:text-[15px] text-[#666666]">
-              Enter your email and we'll send you instructions to reset your password.
+              Enter your new password below.
             </p>
           </div>
 
@@ -70,31 +106,37 @@ export default function ForgotPassword() {
             </div>
           )}
 
-          {isSuccess && (
-            <div className="flex justify-center mb-6">
-              <Alert className="animate-in fade-in slide-in-from-top-1 w-full flex items-center gap-2 bg-green-50 text-green-600 border-green-200">
-                <AlertDescription className="text-center flex-grow">
-                  If an account exists for this email, you will receive password reset instructions shortly.
-                </AlertDescription>
-              </Alert>
-            </div>
-          )}
-
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+              <Label htmlFor="newPassword" className="text-sm font-medium">New Password</Label>
               <Input
-                id="email"
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  setError(null);
-                }}
+                id="newPassword"
+                name="newPassword"
+                type="password"
+                autoComplete="new-password"
                 required
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
                 className={`h-11 transition-colors duration-200 ${error ? 'border-red-500 focus:border-red-500' : ''}`}
-                disabled={isLoading}
+                placeholder="Enter your new password"
+              />
+              <p className="text-xs text-gray-500">
+                Password must be at least 8 characters long and contain at least one letter and one number
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword" className="text-sm font-medium">Confirm Password</Label>
+              <Input
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                autoComplete="new-password"
+                required
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className={`h-11 transition-colors duration-200 ${error ? 'border-red-500 focus:border-red-500' : ''}`}
+                placeholder="Confirm your new password"
               />
             </div>
 
@@ -103,16 +145,16 @@ export default function ForgotPassword() {
               className="w-full h-11 bg-[#7C5CFC] hover:bg-[#7C5CFC]/90 text-white"
               disabled={isLoading}
             >
-              {isLoading ? "Sending..." : "Send Reset Instructions"}
+              {isLoading ? "Resetting..." : "Reset Password"}
             </Button>
           </form>
 
           <div className="mt-8 text-center">
             <p className="text-sm text-gray-600">
               Remember your password?{" "}
-              <Link to="/login" className="text-primary hover:text-primary/80 transition-colors">
+              <a href="/login" className="text-[#7C5CFC] hover:text-[#7C5CFC]/80 transition-colors">
                 Sign in
-              </Link>
+              </a>
             </p>
           </div>
         </div>
@@ -132,4 +174,4 @@ export default function ForgotPassword() {
       </div>
     </div>
   );
-}
+} 

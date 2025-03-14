@@ -88,8 +88,16 @@ CLOVER_REDIRECT_URI=http://localhost:8080/clover/callback
 CLOVER_API_URL=https://sandbox.dev.clover.com
 
 # Email Configuration
+EMAIL_PROVIDER=mailgun # Options: sendgrid, mailgun
+
+# SendGrid Configuration (if using SendGrid)
 SENDGRID_API_KEY=your_sendgrid_api_key
-SENDGRID_FROM_EMAIL=your_verified_email@example.com
+SENDGRID_FROM_EMAIL=Invoica <noreply@yourdomain.com>
+
+# Mailgun Configuration (if using Mailgun)
+MAILGUN_API_KEY=your_mailgun_api_key
+MAILGUN_DOMAIN=mg.yourdomain.com
+MAILGUN_FROM_EMAIL=Invoica <noreply@mg.yourdomain.com>
 
 # SMS Configuration
 TWILIO_ACCOUNT_SID=your_twilio_account_sid
@@ -286,3 +294,30 @@ The application includes integration with Clover for processing credit card paym
 2. Create a test merchant account in the Clover sandbox
 3. Use test card numbers provided by Clover for payment testing
 4. Monitor the application logs for any integration issues
+
+## Email Provider Configuration
+
+The application supports two email providers: SendGrid and Mailgun. You can choose which provider to use by setting the `EMAIL_PROVIDER` environment variable.
+
+### SendGrid Setup
+1. Create a SendGrid account at https://sendgrid.com
+2. Create an API key with email sending permissions
+3. Verify your sender email address or domain
+4. Update your .env file with:
+   ```env
+   EMAIL_PROVIDER=sendgrid
+   SENDGRID_API_KEY=your_api_key
+   SENDGRID_FROM_EMAIL=Invoica <noreply@yourdomain.com>
+   ```
+
+### Mailgun Setup
+1. Create a Mailgun account at https://mailgun.com
+2. Get your API key and domain from the dashboard
+3. Verify your domain with Mailgun
+4. Update your .env file with:
+   ```env
+   EMAIL_PROVIDER=mailgun
+   MAILGUN_API_KEY=your_api_key
+   MAILGUN_DOMAIN=mg.yourdomain.com
+   MAILGUN_FROM_EMAIL=Invoica <noreply@mg.yourdomain.com>
+   ```

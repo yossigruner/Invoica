@@ -7,6 +7,13 @@ import { json } from 'express';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Enable validation pipe
+  app.useGlobalPipes(new ValidationPipe({
+    whitelist: true,
+    transform: true,
+    forbidNonWhitelisted: true,
+  }));
+
   // Configure body parser limits
   app.use(json({ limit: '50mb' }));
 
@@ -17,19 +24,12 @@ async function bootstrap() {
       'http://localhost:5173',
       'https://invoica-frontend-yossigruner-gmailcoms-projects.vercel.app',
       'https://invoica.vercel.app',
-      process.env.VITE_FRONTEND_URL
+      process.env.FRONTEND_URL
     ].filter((origin): origin is string => !!origin),
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
   });
-
-  // Enable validation pipes
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,
-    transform: true,
-    forbidNonWhitelisted: true,
-  }));
 
   // Setup Swagger documentation
   const config = new DocumentBuilder()

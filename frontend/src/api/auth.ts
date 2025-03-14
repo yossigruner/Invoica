@@ -93,11 +93,26 @@ export const authApi = {
 
   async resetPassword(email: string): Promise<ResetPasswordResponse> {
     try {
-      const response = await api.post('/auth/reset-password', { email });
+      const response = await api.post('/auth/forgot-password', { email });
       return response.data;
     } catch (error: any) {
       if (error.response?.status === 404) {
         throw new Error('User not found with this email.');
+      }
+      throw error;
+    }
+  },
+
+  async confirmPasswordReset(token: string, newPassword: string, confirmPassword: string): Promise<void> {
+    try {
+      await api.post('/auth/reset-password', {
+        token,
+        newPassword,
+        confirmPassword,
+      });
+    } catch (error: any) {
+      if (error.response?.status === 400) {
+        throw new Error(error.response.data.message || 'Invalid or expired reset token');
       }
       throw error;
     }

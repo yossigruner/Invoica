@@ -17,13 +17,14 @@ interface AuthContextType {
   register: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
+  confirmPasswordReset: (token: string, newPassword: string, confirmPassword: string) => Promise<void>;
   isAuthenticated: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // List of public routes that don't require authentication
-const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password', '/about', '/contact', '/faq'];
+const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password', '/reset-password', '/about', '/contact', '/faq'];
 const PUBLIC_ROUTE_PREFIXES = ['/pay/', '/invoices/'];
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -145,6 +146,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const confirmPasswordReset = async (token: string, newPassword: string, confirmPassword: string) => {
+    try {
+      await authApi.confirmPasswordReset(token, newPassword, confirmPassword);
+      toast.success('Password has been reset successfully');
+      navigate('/login', { 
+        replace: true,
+        state: { message: 'Password has been reset successfully. Please log in with your new password.' }
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error('Failed to reset password. Please try again.');
+      }
+      throw error;
+    }
+  };
+
   const value = {
     user,
     loading,
@@ -152,6 +171,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     register,
     logout,
     resetPassword,
+    confirmPasswordReset,
     isAuthenticated: !!user,
   };
 

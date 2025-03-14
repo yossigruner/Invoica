@@ -151,3 +151,15 @@ model CloverIntegration {
   @@index([userId])
   @@index([merchantId])
 }
+
+model PasswordReset {
+  id        String   @id @default(uuid())
+  email     String
+  token     String   @unique
+  used      Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([token])
+  @@index([email])
+}
