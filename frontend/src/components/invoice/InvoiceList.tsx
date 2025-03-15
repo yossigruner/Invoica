@@ -217,7 +217,7 @@ export const InvoiceList = () => {
   const totalPages = invoicesData?.meta.totalPages || 0;
 
   return (
-    <div className="">
+    <div className="w-full">
       <Card className="bg-white shadow-xl border rounded-xl overflow-hidden">
         <CardHeader className="border-b bg-white p-4 sm:p-6 space-y-4 sm:space-y-6">
           {/* Header Section */}

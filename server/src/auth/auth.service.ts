@@ -5,6 +5,8 @@ import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
 import { v4 as uuidv4 } from 'uuid';
 import { EmailService } from '../email/email.service';
+import { User } from '@prisma/client';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class AuthService {
@@ -16,21 +18,19 @@ export class AuthService {
   ) {}
 
   async validateUser(email: string, password: string): Promise<any> {
-    const user = await this.usersService.findByEmail(email);
-    if (user && await bcrypt.compare(password, user.password)) {
-      const { password, ...result } = user;
-      return result;
-    }
-    return null;
+    return this.usersService.validatePassword(email, password);
   }
 
   async login(user: any) {
     const payload = { email: user.email, sub: user.id };
+    const fullUser = await this.usersService.findOne(user.id);
+    
     return {
       access_token: this.jwtService.sign(payload),
       user: {
         id: user.id,
-        email: user.email
+        email: user.email,
+        role: fullUser.role
       }
     };
   }

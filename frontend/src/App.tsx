@@ -11,10 +11,12 @@ import Faq from "@/pages/Faq";
 import { PayPage } from "@/pages/PayPage";
 import { Layout } from "@/components/layout/Layout";
 import { PrivateRoute } from "@/components/PrivateRoute";
+import { AdminRoute } from "@/components/AdminRoute";
 import Invoices from "@/pages/Invoices";
 import CreateInvoice from "@/pages/CreateInvoice";
 import Customers from "@/pages/Customers";
 import Profile from "@/pages/Profile";
+import UsersPage from "@/pages/admin/UsersPage";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const queryClient = new QueryClient({
@@ -56,6 +58,11 @@ function App() {
                 <Route path="/invoices/:id/edit" element={<CreateInvoice />} />
                 <Route path="/customers" element={<Customers />} />
                 <Route path="/profile" element={<Profile />} />
+                
+                {/* Admin Routes */}
+                <Route element={<AdminRoute />}>
+                  <Route path="/admin/users" element={<UsersPage />} />
+                </Route>
               </Route>
             </Route>
           </Routes>

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { authApi, LoginCredentials, RegisterData, AuthResponse, ResetPasswordResponse } from '@/api/auth';
+import { authApi, RegisterData, AuthResponse } from '@/api/auth';
 import { toast } from 'sonner';
 
 interface User {
@@ -8,6 +8,7 @@ interface User {
   email: string;
   firstName?: string;
   lastName?: string;
+  role?: string;
 }
 
 interface AuthContextType {

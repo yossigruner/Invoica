@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import * as bcrypt from 'bcrypt';
+import { UserRole, Prisma } from '@prisma/client';
 
 @Injectable()
 export class UsersService {
@@ -46,24 +47,63 @@ export class UsersService {
     return result;
   }
 
-  async findAll() {
-    const users = await this.prisma.user.findMany({
-      include: {
-        profile: true,
-      },
-    });
+  async findAll(params: { page?: number; limit?: number; search?: string; sortBy?: string } = {}) {
+    const { page = 1, limit = 10, search, sortBy } = params;
+    const skip = (page - 1) * limit;
 
-    return users.map(user => {
-      const { password, ...result } = user;
-      return result;
-    });
+    const where: Prisma.UserWhereInput = search ? {
+      OR: [
+        { email: { contains: search, mode: 'insensitive' } },
+        { profile: { 
+          OR: [
+            { firstName: { contains: search, mode: 'insensitive' } },
+            { lastName: { contains: search, mode: 'insensitive' } }
+          ]
+        }}
+      ]
+    } : {};
+
+    const [users, total] = await Promise.all([
+      this.prisma.user.findMany({
+        where,
+        skip,
+        take: limit,
+        include: {
+          profile: true,
+        },
+        orderBy: sortBy ? {
+          [sortBy]: 'asc'
+        } : {
+          createdAt: 'desc'
+        }
+      }),
+      this.prisma.user.count({ where })
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data: users,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages
+      }
+    };
   }
 
   async findOne(id: string) {
     const user = await this.prisma.user.findUnique({
       where: { id },
-      include: {
+      select: {
+        id: true,
+        email: true,
+        password: true,
+        role: true,
         profile: true,
+        createdAt: true,
+        updatedAt: true,
       },
     });
 
@@ -200,6 +240,24 @@ export class UsersService {
     await this.prisma.passwordReset.update({
       where: { token },
       data: { used: true },
+    });
+  }
+
+  async updateRole(id: string, role: UserRole) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
+    return this.prisma.user.update({
+      where: { id },
+      data: { 
+        role: role as UserRole 
+      },
+      include: {
+        profile: true,
+      },
     });
   }
 } 

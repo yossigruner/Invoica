@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/sheet";
 
 export function Navbar() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -50,6 +50,20 @@ export function Navbar() {
           >
             Customers
           </Link>
+          {user?.role === 'ADMIN' && (
+            <Link
+              to="/admin/users"
+              className={cn(
+                "px-4 py-2 rounded-md text-sm font-medium transition-colors",
+                isActiveRoute("/admin/users")
+                  ? "bg-primary/10 text-primary"
+                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+              )}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Users
+            </Link>
+          )}
           <div className="relative inline-flex items-center">
             <Link
               to="#"
@@ -64,6 +78,7 @@ export function Navbar() {
               </span>
             </Link>
           </div>
+         
         </>
       )}
     </>
